@@ -15,6 +15,7 @@ type Robot interface {
 	MergeMaps(neighbourMaps []Map)
 }
 
+// Assuming same coordinate system, and each robot has difference ExploredPath
 func (r *RobotStruct) MergeMaps(neighbourMaps []Map) error {
 	newMap := Map{}
 	for _, robotMap := range neighbourMaps {
