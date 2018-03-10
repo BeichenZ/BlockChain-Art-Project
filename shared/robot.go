@@ -10,6 +10,26 @@ type RobotStruct struct {
 	CurPath         Path
 }
 
-type Robot interface{
+type Robot interface {
 	SendMyMap(rID uint, rMap Map)
+	MergeMaps(neighbourMaps []Map)
+}
+
+func (r *RobotStruct) MergeMaps(neighbourMaps []Map) error {
+	newMap := Map{}
+	for _, robotMap := range neighbourMaps {
+		for _, coordinate := range robotMap.ExploredPath {
+			for _, newCor := range newMap.ExploredPath {
+				if (newCor.Point.X == coordinate.Point.X) && (newCor.Point.Y == coordinate.Point.Y) {
+					if coordinate.TraversedTime > newCor.TraversedTime {
+						newCor.Point.X = coordinate.Point.X
+						newCor.Point.Y = coordinate.Point.Y
+					}
+				} else {
+					newMap.ExploredPath = append(newMap.ExploredPath, coordinate)
+				}
+			}
+		}
+	}
+	return nil
 }
