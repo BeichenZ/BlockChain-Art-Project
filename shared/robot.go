@@ -14,6 +14,8 @@ type RobotStruct struct {
 	JoiningSig      chan bool
 	BusySig         chan bool
 	WaitingSig      chan bool
+	FreeSpaceSig    chan bool
+	WallSig         chan bool
 }
 
 type Robot interface {
@@ -36,10 +38,19 @@ func (r *RobotStruct) Explore() error {
 			// TODO do joining thing
 		case <-r.BusySig:
 			// TODO do busy thing
+			// TODO merge map here?
 		case <-r.WaitingSig:
 			// TODO do waiting thing
 		default:
-			// TODO walk around randomly
+			select {
+			case <-r.FreeSpaceSig:
+				// TODO what happens after a button is pressed
+			case <-r.WallSig:
+				// TODO update when hitting a wall
+			default:
+				// TODO walk around randomly 1 unit
+			}
+
 		}
 	}
 }
