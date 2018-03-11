@@ -19,7 +19,7 @@ type RobotStruct struct {
 type Robot interface {
 	SendMyMap(rID uint, rMap Map)
 	MergeMaps(neighbourMaps []Map) error
-	Explore() //make a step base on the robat's current path
+	Explore() error//make a step base on the robat's current path
 	GetMap() Map
 }
 
