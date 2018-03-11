@@ -1,6 +1,8 @@
 package shared
 
-import "net/rpc"
+import (
+	"net/rpc"
+)
 
 type RobotStruct struct {
 	RobotID         uint // hardcoded
@@ -12,24 +14,53 @@ type RobotStruct struct {
 
 type Robot interface {
 	SendMyMap(rID uint, rMap Map)
-	MergeMaps(neighbourMaps []Map)
+	MergeMaps(neighbourMaps []Map) error
+	Explore() //make a step base on the robat's current path
+	GetMap() Map
+}
+
+var robotStruct RobotStruct
+
+func (r *RobotStruct) SendMyMap(rId uint, rMap Map){
+	return
+}
+
+func (r *RobotStruct)Explore(){
+	return
 }
 
 func (r *RobotStruct) MergeMaps(neighbourMaps []Map) error {
-	newMap := Map{}
+	newMap := r.RMap
+
 	for _, robotMap := range neighbourMaps {
 		for _, coordinate := range robotMap.ExploredPath {
-			for _, newCor := range newMap.ExploredPath {
-				if (newCor.Point.X == coordinate.Point.X) && (newCor.Point.Y == coordinate.Point.Y) {
-					if coordinate.TraversedTime > newCor.TraversedTime {
-						newCor.Point.X = coordinate.Point.X
-						newCor.Point.Y = coordinate.Point.Y
+			if len(newMap.ExploredPath) == 0 {
+				r.RMap.ExploredPath = append(r.RMap.ExploredPath, coordinate)
+			} else {
+
+				for _, newCor := range newMap.ExploredPath {
+					if (newCor.Point.X == coordinate.Point.X) && (newCor.Point.Y == coordinate.Point.Y) {
+						if coordinate.TraversedTime > newCor.TraversedTime {
+							newCor.Point.X = coordinate.Point.X
+							newCor.Point.Y = coordinate.Point.Y
+						}
+					} else {
+						r.RMap.ExploredPath = append(r.RMap.ExploredPath, coordinate)
+						r.RMap.FrameOfRef = r.RobotID
 					}
-				} else {
-					newMap.ExploredPath = append(newMap.ExploredPath, coordinate)
 				}
 			}
 		}
 	}
 	return nil
+}
+
+func (r *RobotStruct) GetMap() Map {
+	return r.RMap
+}
+
+func InitRobot(rID uint, initMap Map) Robot{
+	robotStruct.RobotID = rID
+	robotStruct.RMap = initMap
+	return &robotStruct
 }
