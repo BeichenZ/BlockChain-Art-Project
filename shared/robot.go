@@ -11,6 +11,9 @@ type RobotStruct struct {
 	RMap            Map
 	CurPath         Path
 	CurLocation     PointStruct
+	JoiningSig      chan bool
+	BusySig         chan bool
+	WaitingSig      chan bool
 }
 
 type Robot interface {
@@ -26,9 +29,18 @@ func (r *RobotStruct) SendMyMap(rId uint, rMap Map) {
 	return
 }
 
-func (r *RobotStruct) Explore() {
+func (r *RobotStruct) Explore() error {
 	for {
-
+		select {
+		case <-r.JoiningSig:
+			// TODO do joining thing
+		case <-r.BusySig:
+			// TODO do busy thing
+		case <-r.WaitingSig:
+			// TODO do waiting thing
+		default:
+			// TODO walk around randomly
+		}
 	}
 }
 
