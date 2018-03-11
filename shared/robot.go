@@ -10,6 +10,7 @@ type RobotStruct struct {
 	RobotListenConn *rpc.Client
 	RMap            Map
 	CurPath         Path
+	CurLocation     PointStruct
 }
 
 type Robot interface {
@@ -21,12 +22,14 @@ type Robot interface {
 
 var robotStruct RobotStruct
 
-func (r *RobotStruct) SendMyMap(rId uint, rMap Map){
+func (r *RobotStruct) SendMyMap(rId uint, rMap Map) {
 	return
 }
 
-func (r *RobotStruct)Explore(){
-	return
+func (r *RobotStruct) Explore() {
+	for {
+
+	}
 }
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
@@ -60,8 +63,12 @@ func (r *RobotStruct) GetMap() Map {
 	return r.RMap
 }
 
-func InitRobot(rID uint, initMap Map) Robot{
+func InitRobot(rID uint, initMap Map) Robot {
 	robotStruct.RobotID = rID
 	robotStruct.RMap = initMap
 	return &robotStruct
+}
+
+func (r *RobotStruct) SetCurrentLocation(location PointStruct) {
+	r.CurLocation = location
 }
