@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="6d9d076e-fbfa-4ac4-aa1b-398d571419c5" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/shared/Task.go" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/shared/robotRPC.go" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-    </list>
+    <list default="true" id="6d9d076e-fbfa-4ac4-aa1b-398d571419c5" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
