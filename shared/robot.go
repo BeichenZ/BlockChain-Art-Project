@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"fmt"
 	"math/rand"
 	"net/rpc"
 	"time"
@@ -35,7 +36,7 @@ func (r *RobotStruct) SendMyMap(rId uint, rMap Map) {
 	return
 }
 
-func (r *RobotStruct) TakeRandomStep(){
+func (r *RobotStruct) TakeRandomStep() {
 	randomNum := rand.Intn(3)
 	if randomNum == 0 {
 		// go north
@@ -53,9 +54,10 @@ func (r *RobotStruct) TakeRandomStep(){
 }
 
 //error is not nil when the task queue is empty
-func (r *RobotStruct) TakeNextTask() error {
+func (r *RobotStruct) TakeNextTask() (Path, error) {
 	//r.NextStep = r.CurPath.ListOfPCoordinates //need to convert ListOfPCoordinates to the directions
-	return nil
+	newTask := Path{}
+	return newTask, nil
 }
 
 func (r *RobotStruct) Explore() error {
@@ -71,48 +73,60 @@ func (r *RobotStruct) Explore() error {
 			// TODO do waiting thing
 		default:
 
-			error := r.TakeNextTask()
-			if error != nil{
-				r.TakeRandomStep()
+			if len(r.CurPath.ListOfPCoordinates) == 0 {
+				newTask, err := r.TakeNextTask()
+				if err != nil {
+					fmt.Println("error generating task")
+				}
+				r.NextStep = Coordinate{newTask.ListOfPCoordinates[0].Point.X, newTask.ListOfPCoordinates[0].Point.Y}
+				r.CurPath = newTask
+				// DISPLAY task with GPIO
 			}
 
 			select {
 			case <-r.FreeSpaceSig:
 				r.UpdateLocation(true)
-
+				r.TakeOneStep()
+				// Display task with GPIO
 			case <-r.WallSig:
 				r.UpdateLocation(false)
+				r.TakeOneStep()
+				// Display task with GPIO
 			}
 
 		}
 	}
 }
 
+func (r *RobotStruct) TakeOneStep() {
+	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
+}
+
 //pointkind: true => freespace, false  => wall
-func (r *RobotStruct) UpdateLocation(pointKind bool){
+func (r *RobotStruct) UpdateLocation(pointKind bool) {
 
-		newLocation := PointStruct{
-			Point: Coordinate{
-				X: r.CurLocation.Point.X + r.NextStep.X,
-				Y: r.CurLocation.Point.Y + r.NextStep.Y,
-			},
-			PointKind:     pointKind,
-			TraversedTime: time.Now().Unix(),
-			Traversed:     true,
-		}
+	newLocation := PointStruct{
+		Point: Coordinate{
+			X: r.CurLocation.Point.X + r.NextStep.X,
+			Y: r.CurLocation.Point.Y + r.NextStep.Y,
+		},
+		PointKind:     pointKind,
+		TraversedTime: time.Now().Unix(),
+		Traversed:     true,
+	}
 
-		exist, index := CheckExist(newLocation, r.RMap.ExploredPath)
+	exist, index := CheckExist(newLocation, r.RMap.ExploredPath)
 
-		if exist {
-			oldcoor := &(r.RMap.ExploredPath[index])
-			oldcoor.Point.X = newLocation.Point.X
-			oldcoor.Point.Y = newLocation.Point.Y
-			oldcoor.TraversedTime = newLocation.TraversedTime
-			oldcoor.Traversed = newLocation.Traversed
-			oldcoor.PointKind = newLocation.PointKind
-		} else {
-			r.RMap.ExploredPath = append(r.RMap.ExploredPath, newLocation)
-		}
+	if exist {
+		oldcoor := &(r.RMap.ExploredPath[index])
+		oldcoor.Point.X = newLocation.Point.X
+		oldcoor.Point.Y = newLocation.Point.Y
+		oldcoor.TraversedTime = newLocation.TraversedTime
+		oldcoor.Traversed = newLocation.Traversed
+		oldcoor.PointKind = newLocation.PointKind
+	} else {
+		r.RMap.ExploredPath = append(r.RMap.ExploredPath, newLocation)
+	}
 }
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
@@ -151,8 +165,6 @@ func InitRobot(rID uint, initMap Map) Robot {
 	robotStruct.RMap = initMap
 	return &robotStruct
 }
-
-
 
 func (r *RobotStruct) SetCurrentLocation(location PointStruct) {
 	r.CurLocation = location
