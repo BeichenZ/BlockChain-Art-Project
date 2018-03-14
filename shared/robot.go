@@ -6,27 +6,27 @@ import (
 	"time"
 )
 
-const XMIN  = "xmin"
-const XMAX  = "xmax"
-const YMIN  = "ymix"
-const YMAX  = "ymax"
-
+const XMIN = "xmin"
+const XMAX = "xmax"
+const YMIN = "ymix"
+const YMAX = "ymax"
 
 type RobotStruct struct {
-	RobotID         uint // hardcoded
-	RobotIP         string
-	RobotListenConn *rpc.Client
+	RobotID           uint // hardcoded
+	RobotIP           string
+	RobotListenConn   *rpc.Client
 	RobotNeighbourNum int
-	RMap            Map
-	CurPath         Path
-	CurLocation     PointStruct
+	RMap              Map
+	CurPath           Path
+	CurLocation       PointStruct
+	NeighboursAddr    []string
 	//CurrentStep        	Coordinate
-	JoiningSig      chan bool
-	BusySig         chan bool
-	WaitingSig      chan bool
-	FreeSpaceSig    chan bool
-	WallSig         chan bool
-	WalkSig         chan bool
+	JoiningSig   chan bool
+	BusySig      chan bool
+	WaitingSig   chan bool
+	FreeSpaceSig chan bool
+	WallSig      chan bool
+	WalkSig      chan bool
 }
 
 type Robot interface {
@@ -43,11 +43,10 @@ func (r *RobotStruct) SendMyMap(rId uint, rMap Map) {
 	return
 }
 
-func (r *RobotStruct) SendFreeSpaceSig(){
+func (r *RobotStruct) SendFreeSpaceSig() {
 	fmt.Println("got here")
 	r.FreeSpaceSig <- true
 }
-
 
 //error is not nil when the task queue is empty
 func (r *RobotStruct) TaskCreation() (Path, error) {
@@ -57,25 +56,22 @@ func (r *RobotStruct) TaskCreation() (Path, error) {
 	ymin := r.findMapExtrema(YMIN)
 	ymax := r.findMapExtrema(YMAX)
 
-
-	if (r.RobotNeighbourNum == 0){
+	if r.RobotNeighbourNum == 0 {
 
 	}
 
 	//hard coded the newTask for testing purpose
-	for i:= 0; i<5; i++{
-		pointToAdd := PointStruct{Coordinate{float64(i) , float64(i + 1)}, true, 0, false}
+	for i := 0; i < 5; i++ {
+		pointToAdd := PointStruct{Coordinate{float64(i), float64(i + 1)}, true, 0, false}
 		newTask.ListOfPCoordinates = append(newTask.ListOfPCoordinates, pointToAdd)
 	}
 
 	return newTask, nil
 }
 
-func (r *RobotStruct) findMapExtrema(e string) float64{
+func (r *RobotStruct) findMapExtrema(e string) float64 {
 
 }
-
-
 
 func (r *RobotStruct) Explore() error {
 	for {
@@ -131,7 +127,7 @@ func (r *RobotStruct) ModifyPathForWall() {
 	tempList := r.CurPath.ListOfPCoordinates
 	//tempList := make([]Coordinate, 0)
 	for i, c := range tempList {
-		if (wallCoor == c ){
+		if wallCoor == c {
 			continue
 		}
 		r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[i:]
@@ -226,4 +222,13 @@ func CheckExist(coordinate PointStruct, cooArr []PointStruct) (bool, int) {
 		}
 	}
 	return false, -1
+}
+
+func (r *RobotStruct) AllocateTaskToNeighbours() {
+	for _, neighbourRoboAddr := range r.NeighboursAddr {
+		neighbourClient, error := rpc.Dial("tcp", neighbourRoboAddr)
+		alive := false
+		// Here I send my robot the task
+		err := neighbourClient.Call("RobotRPC.ReceiveTask", alive, &alive)
+	}
 }
