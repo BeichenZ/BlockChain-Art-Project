@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 	"../shared"
-	"log"
+	"fmt"
 )
 const NEIGHBOURS = 1
 const NEIGHBOURPATH = 2
@@ -24,8 +24,20 @@ func RandomMapGenerator() shared.Map{
 	return sampleMap
 }
 
+func GetStartTestTitle(e string) string  {
+	return "<===================  Starting test case ["+ e + "]  ===================>\n"
+}
+
+func GetEndTestTitle(e string) string  {
+	return "<===================  Ending test case ["+ e + "] ===================>\n\n"
+}
+
 //User with non-empty map doing a merge
 func TestMapMerge_withNonEmptyMap(t *testing.T) {
+
+	fmt.Printf(GetStartTestTitle("MapMerge_withNonEmptyMap"))
+
+
 	var sampleMap = []shared.Map{}
 	newMap := shared.Map{
 		ExploredPath: []shared.PointStruct{
@@ -52,13 +64,18 @@ func TestMapMerge_withNonEmptyMap(t *testing.T) {
 		sampleMap = append(sampleMap, *myMap)
 	}
 
+	fmt.Printf("Map before merged ==> %v\n", robot.GetMap())
 	_ = robot.MergeMaps(sampleMap)
-	shared.PrettyPrint_Map(robot.GetMap())
+	fmt.Printf("Map after merged ==> %v\n", robot.GetMap())
+
+	fmt.Printf(GetEndTestTitle("MapMerge_withNonEmptyMap"))
 
 }
 
 //User with empty doing a merge
 func TestMapMerge_withEmptyMap(t *testing.T) {
+	fmt.Printf(GetStartTestTitle("MapMerge_withEmptyMap"))
+
 	var sampleMap = []shared.Map{}
 
 	var robot = shared.InitRobot(0, shared.Map{})
@@ -74,12 +91,19 @@ func TestMapMerge_withEmptyMap(t *testing.T) {
 		sampleMap = append(sampleMap, *myMap)
 	}
 
+	fmt.Printf("Map before merged ==> %v\n", robot.GetMap())
 	_ = robot.MergeMaps(sampleMap)
-	shared.PrettyPrint_Map(robot.GetMap())
-	return
+	fmt.Printf("Map after merged ==> %v\n", robot.GetMap())
+
+	//shared.PrettyPrint_Map(robot.GetMap())
+
+	fmt.Println(GetEndTestTitle("MapMerge_withEmptyMap"))
+
 }
 
 func TestModifyPathForWall(t *testing.T){
+
+	fmt.Printf(GetStartTestTitle("ModifyPathForWall"))
 
 	robotStruct := shared.RobotStruct{}
 	sampleTask := []shared.PointStruct{}
@@ -97,24 +121,32 @@ func TestModifyPathForWall(t *testing.T){
 
 	//finish generating sample data
 
-	log.Printf("Task before modified =>")
-	shared.PrettyPrint_Path(robotStruct.CurPath.ListOfPCoordinates)
+	fmt.Printf("Task before modified => %v\n", robotStruct.CurPath.ListOfPCoordinates)
+	//shared.PrettyPrint_Path(robotStruct.CurPath.ListOfPCoordinates)
 
 	robotStruct.ModifyPathForWall()
 
-	log.Printf("Task after modified =>")
-	shared.PrettyPrint_Path(robotStruct.CurPath.ListOfPCoordinates)
+	fmt.Printf("Task after modified => %v\n", robotStruct.CurPath.ListOfPCoordinates )
+	//shared.PrettyPrint_Path(robotStruct.CurPath.ListOfPCoordinates)
 
 	if len(robotStruct.CurPath.ListOfPCoordinates) != 3{
 		t.Errorf("The actual is %d but the expected value is %d",len(robotStruct.CurPath.ListOfPCoordinates), 3 )
 	}
+
+	fmt.Println(GetEndTestTitle("ModifyPathForWall"))
+
 }
 
 func TestTaskCreation(t *testing.T){
+	fmt.Printf(GetStartTestTitle("Task Creation"))
+
 	robotStruct := shared.RobotStruct{}
 	robotStruct.RMap = RandomMapGenerator()
+	robotStruct.RobotNeighbourNum = 2
 	robotStruct.CurLocation = shared.PointStruct{Point:shared.Coordinate{float64(3.0), float64(4.0)}}
 
-	task, error :=robotStruct.TaskCreation()
+	task, _ :=robotStruct.TaskCreation()
+	fmt.Printf("The created task is %v\n", task)
 
+	fmt.Println(GetEndTestTitle("Task Creation"))
 }

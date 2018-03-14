@@ -70,22 +70,14 @@ func (r *RobotStruct) TaskCreation() (Path, error) {
 	// move DestpointForMe to beginning of list TODO
 	//asuming  the destPoint in DestPoints is unuque
 
-	DestPointsToReturn := []PointStruct{}
-	firstHalf := DestPoints[1:]
-	for idx, value := range firstHalf{
+	tempEle := DestPoints[0]
+	for idx, value := range DestPoints{
 		if value == DestPointForMe{
-			if len(DestPoints) == 1{
-				break
-			}else{
-				secondHalf := DestPoints[:idx]
-				thirdHalf := DestPoints[idx + 1:]
-				DestPointsToReturn = append(firstHalf, secondHalf...)
-				DestPointsToReturn = append(DestPointsToReturn, thirdHalf...)
-			}
-
+			DestPoints[0] = value
+			DestPoints[idx] = tempEle
+			break
 		}
 	}
-
 
 	////assumpting destination points are unique TEST
 	//for idx, val := range DestPoints{
