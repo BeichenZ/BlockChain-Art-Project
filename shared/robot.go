@@ -52,8 +52,9 @@ func (r *RobotStruct) SendFreeSpaceSig(){
 
 
 //error is not nil when the task queue is empty
+//? Array of destination points?
 func (r *RobotStruct) TaskCreation() (Path, error) {
-	newTask := Path{}
+	//newTask := Path{}
 	xmin := r.FindMapExtrema(XMIN)
 	xmax := r.FindMapExtrema(XMAX)
 	ymin := r.FindMapExtrema(YMIN)
@@ -63,27 +64,77 @@ func (r *RobotStruct) TaskCreation() (Path, error) {
 
 	DestNum := r.RobotNeighbourNum + 1;
 
-	DestPoints := FindDestPoint(DestNum, center)
+	DestPoints := r.FindDestPoints(DestNum, center)
 
-	if (r.RobotNeighbourNum == 0){
+	DestPointForMe := r.FindClosestDest(DestPoints)
+	// move DestpointForMe to beginning of list TODO
+	//asuming  the destPoint in DestPoints is unuque
 
+	DestPointsToReturn := []PointStruct{}
+	firstHalf := DestPoints[1:]
+	for idx, value := range firstHalf{
+		if value == DestPointForMe{
+			if len(DestPoints) == 1{
+				break
+			}else{
+				secondHalf := DestPoints[:idx]
+				thirdHalf := DestPoints[idx + 1:]
+				DestPointsToReturn = append(firstHalf, secondHalf...)
+				DestPointsToReturn = append(DestPointsToReturn, thirdHalf...)
+			}
+
+		}
 	}
+
+
+	////assumpting destination points are unique TEST
+	//for idx, val := range DestPoints{
+	//	if val == DestPointForMe{
+	//
+	//		if len(DestPoints) == 1{
+	//			DestPoints = []PointStruct{}
+	//			break
+	//		}
+	//
+	//		temp1 := DestPoints[:idx]
+	//		temp2 := DestPoints[idx + 1:]
+	//		DestPoints = append(temp1, temp2...)
+	//		break
+	//	}
+	//}
 
 	//hard coded the newTask for testing purpose
-	for i:= 0; i<5; i++{
-		pointToAdd := PointStruct{Coordinate{float64(i) , float64(i + 1)}, true, 0, false}
-		newTask.ListOfPCoordinates = append(newTask.ListOfPCoordinates, pointToAdd)
-	}
+	//for i:= 0; i<5; i++{
+	//	pointToAdd := PointStruct{Coordinate{float64(i) , float64(i + 1)}, true, 0, false}
+	//	newTask.ListOfPCoordinates = append(newTask.ListOfPCoordinates, pointToAdd)
+	//}
 
-	return newTask, nil
+	return Path{DestPoints}, nil
 }
 
 func (r *RobotStruct) FindMapExtrema(e string) float64{
+	// TODO
+	return 0.0
+}
 
+func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
+	dist := math.MaxFloat64
+	var rdp PointStruct
+	for _, dp := range lodp{
+		if (DistBtwnTwoPoints(r.CurLocation, dp) < dist) {
+			rdp = dp;
+		}
+	}
+	return rdp;
+}
+
+func (r *RobotStruct) CreatePathToDest(dp PointStruct) Path  {
+	var myPath Path
+	return myPath
 }
 
 //return the list of dest points
-func (r *RobotStruct) FindDestPoint(desNum int, center PointStruct) []PointStruct{
+func (r *RobotStruct) FindDestPoints(desNum int, center PointStruct) []PointStruct{
 
 	destPointsToReturn := []PointStruct{}
 
@@ -115,13 +166,22 @@ func (r *RobotStruct) Explore() error {
 		case <-r.WaitingSig:
 			// TODO do waiting thing
 		default:
-
 			if len(r.CurPath.ListOfPCoordinates) == 0 {
-				newTask, err := r.TaskCreation()
+				dpts, err := r.TaskCreation()
+				var newPath Path
+
+				if (len(dpts.ListOfPCoordinates) == 1) {
+
+					//TODO don't really get what to put in the argument of the following code
+					newPath = r.CreatePathToDest(dpts.ListOfPCoordinates[0])
+
+				} else {
+					// send task to neighbours
+				}
 				if err != nil {
 					fmt.Println("error generating task")
 				}
-				r.CurPath = newTask
+				r.CurPath = newPath
 				// DISPLAY task with GPIO
 			}
 
