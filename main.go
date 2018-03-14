@@ -4,12 +4,10 @@ import (
 	"log"
 	"net"
 	"net/rpc"
-
 	"./shared"
 )
 
 // TODO: Include golang GPIO
-import shared "./shared"
 
 func main() {
 	/// Need to change to different ip address. May to use a different library due to ad-hoc

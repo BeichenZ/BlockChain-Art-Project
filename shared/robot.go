@@ -2,19 +2,25 @@ package shared
 
 import (
 	"fmt"
-	"math/rand"
 	"net/rpc"
 	"time"
 )
+
+const XMIN  = "xmin"
+const XMAX  = "xmax"
+const YMIN  = "ymix"
+const YMAX  = "ymax"
+
 
 type RobotStruct struct {
 	RobotID         uint // hardcoded
 	RobotIP         string
 	RobotListenConn *rpc.Client
+	RobotNeighbourNum int
 	RMap            Map
 	CurPath         Path
 	CurLocation     PointStruct
-	NextStep        Coordinate
+	//CurrentStep        	Coordinate
 	JoiningSig      chan bool
 	BusySig         chan bool
 	WaitingSig      chan bool
@@ -28,6 +34,7 @@ type Robot interface {
 	MergeMaps(neighbourMaps []Map) error
 	Explore() error //make a step base on the robat's current path
 	GetMap() Map
+	SendFreeSpaceSig()
 }
 
 var robotStruct RobotStruct
@@ -36,29 +43,39 @@ func (r *RobotStruct) SendMyMap(rId uint, rMap Map) {
 	return
 }
 
-func (r *RobotStruct) TakeRandomStep() {
-	randomNum := rand.Intn(3)
-	if randomNum == 0 {
-		// go north
-		r.NextStep = Coordinate{0.0, 1.0}
-	} else if randomNum == 1 {
-		// go east
-		r.NextStep = Coordinate{1.0, 0.0}
-	} else if randomNum == 2 {
-		// go south
-		r.NextStep = Coordinate{0.0, -1.0}
-	} else {
-		// go west
-		r.NextStep = Coordinate{-1.0, 0.0}
-	}
+func (r *RobotStruct) SendFreeSpaceSig(){
+	fmt.Println("got here")
+	r.FreeSpaceSig <- true
 }
 
+
 //error is not nil when the task queue is empty
-func (r *RobotStruct) TakeNextTask() (Path, error) {
-	//r.NextStep = r.CurPath.ListOfPCoordinates //need to convert ListOfPCoordinates to the directions
+func (r *RobotStruct) TaskCreation() (Path, error) {
 	newTask := Path{}
+	xmin := r.findMapExtrema(XMIN)
+	xmax := r.findMapExtrema(XMAX)
+	ymin := r.findMapExtrema(YMIN)
+	ymax := r.findMapExtrema(YMAX)
+
+
+	if (r.RobotNeighbourNum == 0){
+
+	}
+
+	//hard coded the newTask for testing purpose
+	for i:= 0; i<5; i++{
+		pointToAdd := PointStruct{Coordinate{float64(i) , float64(i + 1)}, true, 0, false}
+		newTask.ListOfPCoordinates = append(newTask.ListOfPCoordinates, pointToAdd)
+	}
+
 	return newTask, nil
 }
+
+func (r *RobotStruct) findMapExtrema(e string) float64{
+
+}
+
+
 
 func (r *RobotStruct) Explore() error {
 	for {
@@ -74,23 +91,30 @@ func (r *RobotStruct) Explore() error {
 		default:
 
 			if len(r.CurPath.ListOfPCoordinates) == 0 {
-				newTask, err := r.TakeNextTask()
+				newTask, err := r.TaskCreation()
 				if err != nil {
 					fmt.Println("error generating task")
 				}
-				r.NextStep = Coordinate{newTask.ListOfPCoordinates[0].Point.X, newTask.ListOfPCoordinates[0].Point.Y}
 				r.CurPath = newTask
 				// DISPLAY task with GPIO
 			}
 
+			fmt.Println("\nWaiting for signal to proceed.....")
+
 			select {
 			case <-r.FreeSpaceSig:
-				r.UpdateLocation(true)
-				r.TakeOneStep()
+
+				r.UpdateMap(true)
+				r.SetCurrentLocation()
+				r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
+				//r.UpdateCurrentStep()
+
 				// Display task with GPIO
 			case <-r.WallSig:
-				r.UpdateLocation(false)
-				r.TakeOneStep()
+				r.UpdateMap(false)
+				// Change wall path
+				r.ModifyPathForWall()
+				//r.UpdateCurrentStep()
 				// Display task with GPIO
 			}
 
@@ -98,17 +122,34 @@ func (r *RobotStruct) Explore() error {
 	}
 }
 
-func (r *RobotStruct) TakeOneStep() {
+//func (r *RobotStruct) UpdateCurrentStep() {
+//	r.CurrentStep = Coordinate{X:r.CurPath.ListOfPCoordinates[0].Point.X, Y: r.CurPath.ListOfPCoordinates[0].Point.Y}
+//}
+func (r *RobotStruct) ModifyPathForWall() {
+
+	wallCoor := r.CurPath.ListOfPCoordinates[0]
+	tempList := r.CurPath.ListOfPCoordinates
+	//tempList := make([]Coordinate, 0)
+	for i, c := range tempList {
+		if (wallCoor == c ){
+			continue
+		}
+		r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[i:]
+		break
+	}
+}
+
+func (r *RobotStruct) TookOneStep() {
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
 }
 
 //pointkind: true => freespace, false  => wall
-func (r *RobotStruct) UpdateLocation(pointKind bool) {
+func (r *RobotStruct) UpdateMap(pointKind bool) {
 
 	newLocation := PointStruct{
 		Point: Coordinate{
-			X: r.CurLocation.Point.X + r.NextStep.X,
-			Y: r.CurLocation.Point.Y + r.NextStep.Y,
+			X: r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X,
+			Y: r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y,
 		},
 		PointKind:     pointKind,
 		TraversedTime: time.Now().Unix(),
@@ -163,11 +204,19 @@ func (r *RobotStruct) GetMap() Map {
 func InitRobot(rID uint, initMap Map) Robot {
 	robotStruct.RobotID = rID
 	robotStruct.RMap = initMap
+	robotStruct.FreeSpaceSig = make(chan bool)
+
+	//JoiningSig      chan bool
+	//BusySig         chan bool
+	//WaitingSig      chan bool
+	//FreeSpaceSig    chan bool
+	//WallSig         chan bool
+	//WalkSig         chan bool
 	return &robotStruct
 }
 
-func (r *RobotStruct) SetCurrentLocation(location PointStruct) {
-	r.CurLocation = location
+func (r *RobotStruct) SetCurrentLocation() {
+	r.CurLocation = r.CurPath.ListOfPCoordinates[0]
 }
 
 func CheckExist(coordinate PointStruct, cooArr []PointStruct) (bool, int) {

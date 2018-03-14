@@ -3,9 +3,15 @@ package test
 import (
 	"testing"
 	"../shared"
+	"log"
 )
 const NEIGHBOURS = 1
 const NEIGHBOURPATH = 2
+
+var WEST = shared.PointStruct{shared.Coordinate{-1.0, 0.0}, false, 0, false}
+var EAST = shared.PointStruct{shared.Coordinate{1.0, 0.0}, false, 0, false}
+var NORTH = shared.PointStruct{shared.Coordinate{0.0, 1.0}, false, 0, false}
+var SOUTH = shared.PointStruct{shared.Coordinate{0.0, -1.0}, false, 0, false}
 
 //User with non-empty map doing a merge
 func TestMapMerge_withNonEmptyMap(t *testing.T) {
@@ -61,3 +67,36 @@ func TestMapMerge_withEmptyMap(t *testing.T) {
 	shared.PrettyPrint_Map(robot.GetMap())
 	return
 }
+
+func TestModifyPathForWall(t *testing.T){
+
+	robotStruct := shared.RobotStruct{}
+	sampleTask := []shared.PointStruct{}
+
+	//generate sample directions
+	for i:= 0; i< 4 ; i++{
+		sampleTask = append(sampleTask, EAST)
+	}
+
+	for i:= 0; i< 3 ; i++{
+		sampleTask = append(sampleTask, NORTH)
+	}
+
+	robotStruct.CurPath.ListOfPCoordinates = sampleTask
+
+	//finish generating sample data
+
+	log.Printf("Task before modified =>")
+	shared.PrettyPrint_Path(robotStruct.CurPath.ListOfPCoordinates)
+
+	robotStruct.ModifyPathForWall()
+
+	log.Printf("Task after modified =>")
+	shared.PrettyPrint_Path(robotStruct.CurPath.ListOfPCoordinates)
+
+	if len(robotStruct.CurPath.ListOfPCoordinates) != 3{
+		t.Errorf("The actual is %d but the expected value is %d",len(robotStruct.CurPath.ListOfPCoordinates), 3 )
+	}
+
+}
+
