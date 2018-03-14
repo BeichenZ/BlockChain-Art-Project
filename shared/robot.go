@@ -83,6 +83,7 @@ func (r *RobotStruct) Explore() error {
 		case <-r.BusySig:
 			// TODO do busy thing
 			// TODO merge map here?
+			// TODO exchange tasks
 		case <-r.WaitingSig:
 			// TODO do waiting thing
 		default:
@@ -225,10 +226,15 @@ func CheckExist(coordinate PointStruct, cooArr []PointStruct) (bool, int) {
 	return false, -1
 }
 
-func (r *RobotStruct) WaitForEnoughTask() {
+func (r *RobotStruct) WaitForEnoughTaskFromNeighbours() {
+WaitingForEnoughTask:
 	for {
 		if len(r.ReceivedTask) == len(r.NeighboursAddr) {
+			fmt.Println("waiting for my neighbours to send me tasks")
 			// choose task
+			// r.CurPath = something
+			// should enter default Roaming state, aka don't need to do anything
+			break WaitingForEnoughTask
 		}
 	}
 }
