@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"net/rpc"
 	"time"
+	"math"
 )
 
 const XMIN  = "xmin"
 const XMAX  = "xmax"
 const YMIN  = "ymix"
 const YMAX  = "ymax"
+const EXRADIUS = 6
 
 
 type RobotStruct struct {
@@ -52,11 +54,16 @@ func (r *RobotStruct) SendFreeSpaceSig(){
 //error is not nil when the task queue is empty
 func (r *RobotStruct) TaskCreation() (Path, error) {
 	newTask := Path{}
-	xmin := r.findMapExtrema(XMIN)
-	xmax := r.findMapExtrema(XMAX)
-	ymin := r.findMapExtrema(YMIN)
-	ymax := r.findMapExtrema(YMAX)
+	xmin := r.FindMapExtrema(XMIN)
+	xmax := r.FindMapExtrema(XMAX)
+	ymin := r.FindMapExtrema(YMIN)
+	ymax := r.FindMapExtrema(YMAX)
 
+	center := PointStruct{Point: Coordinate{float64((xmax-xmin)/2), float64((ymax-ymin)/2)}}
+
+	DestNum := r.RobotNeighbourNum + 1;
+
+	DestPoints := FindDestPoint(DestNum, center)
 
 	if (r.RobotNeighbourNum == 0){
 
@@ -71,10 +78,29 @@ func (r *RobotStruct) TaskCreation() (Path, error) {
 	return newTask, nil
 }
 
-func (r *RobotStruct) findMapExtrema(e string) float64{
+func (r *RobotStruct) FindMapExtrema(e string) float64{
 
 }
 
+//return the list of dest points
+func (r *RobotStruct) FindDestPoint(desNum int, center PointStruct) []PointStruct{
+
+	destPointsToReturn := []PointStruct{}
+
+	circumference := 2*math.Pi*EXRADIUS;
+	arcLength := circumference / float64(desNum);
+	theta := arcLength / EXRADIUS;
+	delPoint := PointStruct{Point: Coordinate{float64(EXRADIUS*math.Cos(theta)) , float64(EXRADIUS*math.Sin(theta))}}
+
+	for i := 0; i< desNum ; i++{
+		destPoint := PointStruct{}
+		destPoint.Point.X = center.Point.X + float64(i+1)*delPoint.Point.X
+		destPoint.Point.Y = center.Point.Y + float64(i+1)*delPoint.Point.Y
+		destPointsToReturn = append(destPointsToReturn, destPoint)
+	}
+
+	return destPointsToReturn
+}
 
 
 func (r *RobotStruct) Explore() error {
