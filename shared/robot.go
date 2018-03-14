@@ -20,6 +20,7 @@ type RobotStruct struct {
 	CurPath           Path
 	CurLocation       PointStruct
 	NeighboursAddr    []string
+	ReceivedTask      []string // change this later
 	//CurrentStep        	Coordinate
 	JoiningSig   chan bool
 	BusySig      chan bool
@@ -222,6 +223,14 @@ func CheckExist(coordinate PointStruct, cooArr []PointStruct) (bool, int) {
 		}
 	}
 	return false, -1
+}
+
+func (r *RobotStruct) WaitForEnoughTask() {
+	for {
+		if len(r.ReceivedTask) == len(r.NeighboursAddr) {
+			// choose task
+		}
+	}
 }
 
 func (r *RobotStruct) AllocateTaskToNeighbours() {
