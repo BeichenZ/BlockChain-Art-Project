@@ -202,8 +202,12 @@ func (r *RobotStruct) GetMap() Map {
 func InitRobot(rID uint, initMap Map) Robot {
 	robotStruct.RobotID = rID
 	robotStruct.RMap = initMap
+	robotStruct.JoiningSig = make(chan bool)
+	robotStruct.BusySig = make(chan bool)
+	robotStruct.WaitingSig = make(chan bool)
 	robotStruct.FreeSpaceSig = make(chan bool)
-
+	robotStruct.WallSig = make(chan bool)
+	robotStruct.WalkSig = make(chan bool)
 	//JoiningSig      chan bool
 	//BusySig         chan bool
 	//WaitingSig      chan bool
