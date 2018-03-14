@@ -7,11 +7,22 @@ import (
 )
 const NEIGHBOURS = 1
 const NEIGHBOURPATH = 2
+const NUMOFPATHTOGENERATE = 10
 
 var WEST = shared.PointStruct{shared.Coordinate{-1.0, 0.0}, false, 0, false}
 var EAST = shared.PointStruct{shared.Coordinate{1.0, 0.0}, false, 0, false}
 var NORTH = shared.PointStruct{shared.Coordinate{0.0, 1.0}, false, 0, false}
 var SOUTH = shared.PointStruct{shared.Coordinate{0.0, -1.0}, false, 0, false}
+
+func RandomMapGenerator() shared.Map{
+	var sampleMap = shared.Map{}
+	for j := 0; j< NUMOFPATHTOGENERATE; j++{
+		myPoint := shared.Coordinate{float64(j%4), float64(j)}
+		sampleMap.ExploredPath = append(sampleMap.ExploredPath, shared.PointStruct{myPoint, false, 0, false})
+	}
+
+	return sampleMap
+}
 
 //User with non-empty map doing a merge
 func TestMapMerge_withNonEmptyMap(t *testing.T) {
@@ -97,6 +108,13 @@ func TestModifyPathForWall(t *testing.T){
 	if len(robotStruct.CurPath.ListOfPCoordinates) != 3{
 		t.Errorf("The actual is %d but the expected value is %d",len(robotStruct.CurPath.ListOfPCoordinates), 3 )
 	}
-
 }
 
+func TestTaskCreation(t *testing.T){
+	robotStruct := shared.RobotStruct{}
+	robotStruct.RMap = RandomMapGenerator()
+	robotStruct.CurLocation = shared.PointStruct{Point:shared.Coordinate{float64(3.0), float64(4.0)}}
+
+	task, error :=robotStruct.TaskCreation()
+
+}

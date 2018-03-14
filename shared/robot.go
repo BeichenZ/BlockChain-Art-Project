@@ -113,8 +113,40 @@ func (r *RobotStruct) TaskCreation() (Path, error) {
 }
 
 func (r *RobotStruct) FindMapExtrema(e string) float64{
-	// TODO
-	return 0.0
+
+	if e == XMAX{
+		var xMax float64 = math.MinInt64
+		for _, point := range r.RMap.ExploredPath{
+			if xMax < point.Point.X{
+				xMax = point.Point.X
+			}
+		}
+		return xMax
+	}else if e == XMIN{
+		var xMin float64 = math.MaxFloat64
+		for _, point := range r.RMap.ExploredPath{
+			if xMin > point.Point.X{
+				xMin = point.Point.X
+			}
+		}
+		return xMin
+	}else if e == YMAX{
+		var yMax float64 = math.MinInt64
+		for _, point := range r.RMap.ExploredPath{
+			if yMax < point.Point.Y{
+				yMax = point.Point.Y
+			}
+		}
+		return yMax
+	}else{
+		var yMin float64 = math.MaxFloat64
+		for _, point := range r.RMap.ExploredPath{
+			if yMin > point.Point.Y{
+				yMin = point.Point.Y
+			}
+		}
+		return yMin
+	}
 }
 
 func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
@@ -172,7 +204,7 @@ func (r *RobotStruct) Explore() error {
 
 				if (len(dpts.ListOfPCoordinates) == 1) {
 
-					//TODO don't really get what to put in the argument of the following code
+					//TODO
 					newPath = r.CreatePathToDest(dpts.ListOfPCoordinates[0])
 
 				} else {
@@ -193,14 +225,12 @@ func (r *RobotStruct) Explore() error {
 				r.UpdateMap(true)
 				r.SetCurrentLocation()
 				r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
-				//r.UpdateCurrentStep()
 
 				// Display task with GPIO
 			case <-r.WallSig:
 				r.UpdateMap(false)
 				// Change wall path
 				r.ModifyPathForWall()
-				//r.UpdateCurrentStep()
 				// Display task with GPIO
 			}
 
@@ -229,7 +259,7 @@ func (r *RobotStruct) TookOneStep() {
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
 }
 
-//pointkind: true => freespace, false  => wall
+//update pointkind: true => freespace, false  => wall
 func (r *RobotStruct) UpdateMap(pointKind bool) {
 
 	newLocation := PointStruct{
@@ -291,13 +321,11 @@ func InitRobot(rID uint, initMap Map) Robot {
 	robotStruct.RobotID = rID
 	robotStruct.RMap = initMap
 	robotStruct.FreeSpaceSig = make(chan bool)
-
-	//JoiningSig      chan bool
-	//BusySig         chan bool
-	//WaitingSig      chan bool
-	//FreeSpaceSig    chan bool
-	//WallSig         chan bool
-	//WalkSig         chan bool
+	robotStruct.JoiningSig = make(chan bool)
+	robotStruct.BusySig = make(chan bool)
+	robotStruct.WaitingSig = make(chan bool)
+	robotStruct.WallSig = make(chan bool)
+	robotStruct.WalkSig = make(chan bool)
 	return &robotStruct
 }
 
