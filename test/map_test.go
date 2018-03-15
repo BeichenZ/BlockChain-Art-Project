@@ -143,7 +143,7 @@ func TestTaskCreation(t *testing.T){
 
 	robotStruct := shared.RobotStruct{}
 	robotStruct.RMap = RandomMapGenerator()
-	robotStruct.RobotNeighbourNum = 7
+	robotStruct.RobotNeighbourNum = 3
 	robotStruct.CurLocation = shared.PointStruct{Point:shared.Coordinate{float64(3.0), float64(4.0)}}
 
 	task, _ :=robotStruct.TaskCreation()

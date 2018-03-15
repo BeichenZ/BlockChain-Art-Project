@@ -66,18 +66,18 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 
 	DestPoints := r.FindDestPoints(DestNum, center)
 
-	DestPointForMe := r.FindClosestDest(DestPoints)
-	// move DestpointForMe to beginning of list
-	//assuming  the destPoint in DestPoints is unique
-
-	tempEle := DestPoints[0]
-	for idx, value := range DestPoints{
-		if value == DestPointForMe{
-			DestPoints[0] = value
-			DestPoints[idx] = tempEle
-			break
-		}
-	}
+	//DestPointForMe := r.FindClosestDest(DestPoints)
+	//// move DestpointForMe to beginning of list
+	////assuming  the destPoint in DestPoints is unique
+	//
+	//tempEle := DestPoints[0]
+	//for idx, value := range DestPoints{
+	//	if value == DestPointForMe{
+	//		DestPoints[0] = value
+	//		DestPoints[idx] = tempEle
+	//		break
+	//	}
+	//}
 
 	return DestPoints, nil
 }
@@ -166,11 +166,9 @@ func (r *RobotStruct) CreatePathBetweenTwoPoints(sp PointStruct, dp PointStruct)
 func (r *RobotStruct) FindDestPoints(desNum int, center PointStruct) []PointStruct{
 
 	destPointsToReturn := []PointStruct{}
-	circumference := 2*math.Pi*EXRADIUS;
-	arcLength := circumference / float64(desNum);
 
 	for i := 0; i< desNum ; i++{
-		theta := float64(i)*arcLength / EXRADIUS;
+		theta := float64(i)*2*math.Pi / float64(desNum);
 		delPoint := PointStruct{Point: Coordinate{float64(EXRADIUS*math.Cos(theta)) , float64(EXRADIUS*math.Sin(theta))}}
 		destPoint := PointStruct{}
 		destPoint.Point.X = center.Point.X + delPoint.Point.X
