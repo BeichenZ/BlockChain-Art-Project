@@ -16,6 +16,7 @@ const YMAX = "ymax"
 const EXRADIUS = 6
 
 type RobotStruct struct {
+	CurrTask          Task
 	RobotID           int // hardcoded
 	RobotIP           string
 	RobotListenConn   *rpc.Client
@@ -212,7 +213,6 @@ func (r *RobotStruct) Explore() error {
 	for {
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
-			fmt.Printf("%+v", dpts)
 			var newPath Path
 
 			if len(dpts) == 1 {
@@ -248,7 +248,7 @@ func (r *RobotStruct) Explore() error {
 		case <-r.JoiningSig:
 			// TODO do joining thing
 			r.NeighboursAddr = append(r.NeighboursAddr, ":8080")
-			fmt.Println(r.NeighboursAddr)
+			r.AllocateTaskToNeighbours()
 			fmt.Println("join sig received")
 		case <-r.BusySig:
 			// TODO do busy thing
@@ -364,13 +364,21 @@ WaitingForEnoughTask:
 
 func (r *RobotStruct) AllocateTaskToNeighbours() {
 	for _, neighbourRoboAddr := range r.NeighboursAddr {
-		task := Task{
-			senderID:         r.RobotID,
-			listOfDirections: make([]Coordinate, 0),
+		// task := Task{
+		// 	SenderID:         r.RobotID,
+		// 	ListOfDirections: make([]Coordinate, 0),
+		// }
+		fmt.Println(neighbourRoboAddr)
+		neighbourClient, err := rpc.Dial("tcp", neighbourRoboAddr)
+		if err != nil {
+			fmt.Println(err)
 		}
-		neighbourClient, _ := rpc.Dial("tcp", neighbourRoboAddr)
+		fmt.Printf("%+v", neighbourClient)
 		alive := false
 		// Here I send my robot the task
-		neighbourClient.Call("RobotRPC.ReceiveTask", &task, &alive)
+		err = neighbourClient.Call("RobotRPC.ReceiveTask", "hi", &alive)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }

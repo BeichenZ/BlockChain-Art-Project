@@ -17,24 +17,24 @@ func main() {
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	IPAddr := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
-	resolvedIPAddress, error := net.ResolveTCPAddr("tcp", IPAddr)
-	if error != nil {
-		log.Fatal("Unable to resolve IP Address", error)
-	}
-
-	listener, error := net.ListenTCP("tcp", resolvedIPAddress)
-
-	if error != nil {
-		log.Fatal("Unable to create a listner", error)
-	}
+	resolvedIPAddr := IPAddr
+	// resolvedIPAddress, error := net.ResolveTCPAddr("tcp", IPAddr)
+	// if error != nil {
+	// 	log.Fatal("Unable to resolve IP Address", error)
+	// }
 
 	robot := InitRobot(RobotID, shared.Map{
 		ExploredPath: make([]shared.PointStruct, 0),
 		FrameOfRef:   1,
 	})
 
-	robotRPC := shared.RobotRPC{}
+	robotRPC := &shared.RobotRPC{PiRobot: robot}
 	rpc.Register(robotRPC)
+	listener, error := net.Listen("tcp", resolvedIPAddr)
+
+	if error != nil {
+		log.Fatal("Unable to create a listner", error)
+	}
 	go rpc.Accept(listener)
 	fmt.Println("Robot listening on port" + string(IPAddr))
 	// for {

@@ -1,6 +1,6 @@
 package shared
 
 type Task struct {
-	senderID         int
-	listOfDirections []Coordinate
+	SenderID         int
+	ListOfDirections []Coordinate
 }
