@@ -151,3 +151,18 @@ func TestTaskCreation(t *testing.T){
 
 	fmt.Println(GetEndTestTitle("Task Creation"))
 }
+
+func TestPathCreation(t *testing.T){
+	fmt.Println(GetStartTestTitle("CreatePathBetweenTwoPoints"))
+
+	p1 :=shared.PointStruct{Point:shared.Coordinate{0.0, 0.0}}
+	p2 :=shared.PointStruct{Point:shared.Coordinate{8.0, 8.0}}
+	robotStruct := shared.RobotStruct{}
+	path :=robotStruct.CreatePathBetweenTwoPoints(p1, p2)
+
+	fmt.Println("The create path is ", path)
+	fmt.Println("The length of the path is ", len(path.ListOfPCoordinates))
+	fmt.Println(GetEndTestTitle("CreatePathBetweenTwoPoints"))
+
+
+}

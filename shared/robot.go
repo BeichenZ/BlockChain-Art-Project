@@ -123,7 +123,9 @@ func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
 	dist := math.MaxFloat64
 	var rdp PointStruct
 	for _, dp := range lodp{
-		if (DistBtwnTwoPoints(r.CurLocation, dp) < dist) {
+		del := DistBtwnTwoPoints(r.CurLocation, dp)
+		if (del < dist) {
+			dist = del
 			rdp = dp;
 		}
 	}
