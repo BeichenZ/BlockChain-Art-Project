@@ -364,10 +364,10 @@ WaitingForEnoughTask:
 
 func (r *RobotStruct) AllocateTaskToNeighbours() {
 	for _, neighbourRoboAddr := range r.NeighboursAddr {
-		// task := Task{
-		// 	SenderID:         r.RobotID,
-		// 	ListOfDirections: make([]Coordinate, 0),
-		// }
+		task := &Task{
+			SenderID:         r.RobotID,
+			ListOfDirections: make([]Coordinate, 0),
+		}
 		fmt.Println(neighbourRoboAddr)
 		neighbourClient, err := rpc.Dial("tcp", neighbourRoboAddr)
 		if err != nil {
@@ -376,7 +376,7 @@ func (r *RobotStruct) AllocateTaskToNeighbours() {
 		fmt.Printf("%+v", neighbourClient)
 		alive := false
 		// Here I send my robot the task
-		err = neighbourClient.Call("RobotRPC.ReceiveTask", "hi", &alive)
+		err = neighbourClient.Call("RobotRPC.ReceiveTask", task, &alive)
 		if err != nil {
 			fmt.Println(err)
 		}

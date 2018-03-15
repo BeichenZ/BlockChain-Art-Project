@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"log"
 	"net"
@@ -14,6 +15,8 @@ import (
 // TODO: Include golang GPIO
 
 func main() {
+	gob.Register(&net.TCPAddr{})
+	gob.Register(&shared.Task{})
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	IPAddr := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
