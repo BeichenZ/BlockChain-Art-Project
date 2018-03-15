@@ -214,12 +214,9 @@ func (r *RobotStruct) Explore() error {
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
 			var newPath Path
-
 			if len(dpts) == 1 {
-
 				//TODO
 				newPath = r.CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
-
 			} else {
 				// send task to neighbours
 			}

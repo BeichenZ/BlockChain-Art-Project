@@ -11,6 +11,6 @@ func (robotRPC *RobotRPC) ReceiveMap(senderMap *Map, reply *int) error {
 }
 
 func (robotRPC *RobotRPC) ReceiveTask(senderTask *Task, reply *int) error {
-	fmt.Println(senderTask)
+	fmt.Println(senderTask.SenderID)
 	return nil
 }

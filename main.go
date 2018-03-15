@@ -39,7 +39,7 @@ func main() {
 		log.Fatal("Unable to create a listner", error)
 	}
 	go rpc.Accept(listener)
-	fmt.Println("Robot listening on port" + string(IPAddr))
+	fmt.Println("Robot listening on port " + string(IPAddr))
 	// for {
 	// 	// wait for user input
 	// 	// if button is pressed, break out of the loop
