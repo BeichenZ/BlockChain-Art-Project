@@ -129,14 +129,15 @@ func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
 			rdp = dp;
 		}
 	}
+
 	return rdp;
 }
 
 
 func (r *RobotStruct) CreatePathBetweenTwoPoints(sp PointStruct, dp PointStruct) Path  {
 	var myPath []PointStruct
-	delX := dp.Point.X - sp.Point.X
-	delY := dp.Point.Y - sp.Point.Y
+	delX := Round(dp.Point.X - sp.Point.X)
+	delY := Round(dp.Point.Y - sp.Point.Y)
 	//iteration := int(math.Abs(delX) + math.Abs(delY))
 
 	//create the path in X direction

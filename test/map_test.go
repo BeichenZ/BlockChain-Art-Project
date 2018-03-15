@@ -149,6 +149,10 @@ func TestTaskCreation(t *testing.T){
 	task, _ :=robotStruct.TaskCreation()
 	fmt.Printf("The created task is %v\n", task)
 
+	path :=robotStruct.CreatePathBetweenTwoPoints(robotStruct.CurLocation, task[0])
+	fmt.Println("The create path is ", path)
+	fmt.Println("The length of the path is ", len(path.ListOfPCoordinates))
+
 	fmt.Println(GetEndTestTitle("Task Creation"))
 }
 
