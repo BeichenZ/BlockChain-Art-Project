@@ -210,10 +210,43 @@ func (r *RobotStruct) RespondToButtons() error {
 
 func (r *RobotStruct) Explore() error {
 	for {
-		time.Sleep(time.Millisecond * time.Duration(1000))
+		if len(r.CurPath.ListOfPCoordinates) == 0 {
+			dpts, err := r.TaskCreation()
+			var newPath Path
+
+			if len(dpts) == 1 {
+
+				//TODO
+				newPath = r.CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
+
+			} else {
+				// send task to neighbours
+			}
+			if err != nil {
+				fmt.Println("error generating task")
+			}
+			r.CurPath = newPath
+			// DISPLAY task with GPIO
+		}
+
+		fmt.Println("\nWaiting for signal to proceed.....")
+
 		select {
+		case <-r.FreeSpaceSig:
+			fmt.Println("FreeSpaceSig received")
+			// r.UpdateMap(true)
+			// r.SetCurrentLocation()
+			// r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
+
+			// Display task with GPIO
+		case <-r.WallSig:
+			r.UpdateMap(false)
+			// Change wall path
+			r.ModifyPathForWall()
+			// Display task with GPIO
 		case <-r.JoiningSig:
 			// TODO do joining thing
+			// r.NeighboursAddr = append(r.NeighboursAddr, ":8081")
 			fmt.Println("join sig received")
 		case <-r.BusySig:
 			// TODO do busy thing
@@ -221,50 +254,9 @@ func (r *RobotStruct) Explore() error {
 			// TODO exchange tasks
 		case <-r.WaitingSig:
 			// TODO do waiting thing
-		default:
-			if len(r.CurPath.ListOfPCoordinates) == 0 {
-				dpts, err := r.TaskCreation()
-				var newPath Path
-
-				if len(dpts) == 1 {
-
-					//TODO
-					newPath = r.CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
-
-				} else {
-					// send task to neighbours
-				}
-				if err != nil {
-					fmt.Println("error generating task")
-				}
-				r.CurPath = newPath
-				// DISPLAY task with GPIO
-			}
-
-			fmt.Println("\nWaiting for signal to proceed.....")
-
-			select {
-			case <-r.FreeSpaceSig:
-				fmt.Println("FreeSpaceSig received")
-				r.UpdateMap(true)
-				r.SetCurrentLocation()
-				r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
-
-				// Display task with GPIO
-			case <-r.WallSig:
-				r.UpdateMap(false)
-				// Change wall path
-				r.ModifyPathForWall()
-				// Display task with GPIO
-			}
-
 		}
 	}
 }
-
-//func (r *RobotStruct) UpdateCurrentStep() {
-//	r.CurrentStep = Coordinate{X:r.CurPath.ListOfPCoordinates[0].Point.X, Y: r.CurPath.ListOfPCoordinates[0].Point.Y}
-//}
 
 func (r *RobotStruct) ModifyPathForWall() {
 

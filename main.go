@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/rpc"
+	"os"
 
 	"./shared"
 )
@@ -12,7 +14,8 @@ import (
 
 func main() {
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
-	resolvedIPAddress, error := net.ResolveTCPAddr("tcp", ":8080")
+	IPAddr := os.Args[1]
+	resolvedIPAddress, error := net.ResolveTCPAddr("tcp", IPAddr)
 	if error != nil {
 		log.Fatal("Unable to resolve IP Address", error)
 	}
@@ -31,7 +34,7 @@ func main() {
 	robotRPC := shared.RobotRPC{}
 	rpc.Register(robotRPC)
 	go rpc.Accept(listener)
-
+	fmt.Println("Robot listening on port" + string(IPAddr))
 	// for {
 	// 	// wait for user input
 	// 	// if button is pressed, break out of the loop
@@ -59,5 +62,6 @@ func InitRobot(rID uint, initMap shared.Map) *shared.RobotStruct {
 		WallSig:      make(chan bool),
 		WalkSig:      make(chan bool),
 	}
+	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 	return &newRobot
 }

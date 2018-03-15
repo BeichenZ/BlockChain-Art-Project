@@ -21,7 +21,6 @@ func PrettyPrint_Map(data Map) {
 	log.Println(string(b))
 }
 
-
 func PrettyPrint_Path(data []PointStruct) {
 	b, err := json.MarshalIndent(data, "", " ")
 	if err != nil {

@@ -7,10 +7,10 @@ type Map struct {
 	FrameOfRef   uint // Robot id
 }
 type PointStruct struct {
-	Point     Coordinate
-	PointKind bool // true - free space, false - wall
+	Point         Coordinate
+	PointKind     bool // true - free space, false - wall
 	TraversedTime int64
-	Traversed bool
+	Traversed     bool
 }
 type Coordinate struct {
 	X float64
@@ -18,10 +18,10 @@ type Coordinate struct {
 }
 
 type Path struct {
-	ListOfPCoordinates []PointStruct;
+	ListOfPCoordinates []PointStruct
 }
 
-func DistBtwnTwoPoints (dp PointStruct, cp PointStruct) float64 {
-	d := math.Sqrt(math.Pow(dp.Point.X - cp.Point.X, 2) + math.Pow(dp.Point.Y - cp.Point.Y, 2) )
-	return d;
+func DistBtwnTwoPoints(dp PointStruct, cp PointStruct) float64 {
+	d := math.Sqrt(math.Pow(dp.Point.X-cp.Point.X, 2) + math.Pow(dp.Point.Y-cp.Point.Y, 2))
+	return d
 }
