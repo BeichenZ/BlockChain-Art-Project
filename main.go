@@ -41,13 +41,14 @@ func main() {
 	for {
 		// asynchronously check for other robots
 		// if a robot is nearby, get IP address and make RPC call
+		go robot.RespondToButtons()
 		robot.Explore()
 		break
 	}
 
 }
 
-func InitRobot(rID uint, initMap shared.Map) shared.Robot {
+func InitRobot(rID uint, initMap shared.Map) *shared.RobotStruct {
 	newRobot := shared.RobotStruct{
 		RobotID:      rID,
 		RMap:         initMap,

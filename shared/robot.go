@@ -1,9 +1,11 @@
 package shared
 
 import (
+	"bufio"
 	"fmt"
 	"math"
 	"net/rpc"
+	"os"
 	"time"
 )
 
@@ -182,12 +184,37 @@ func (r *RobotStruct) FindDestPoints(desNum int, center PointStruct) []PointStru
 	return destPointsToReturn
 }
 
+func (r *RobotStruct) RespondToButtons() error {
+	// This function listen to GPIO
+	for {
+		fmt.Println(" Press j to send JoinSig \n Press b to send BusySig \n Press w to send WaitSig \n Press s to send WalkSig \n Press o to send WallSig")
+		buf := bufio.NewReader(os.Stdin)
+		signal, err := buf.ReadByte()
+		if err != nil {
+			fmt.Println(err)
+		}
+		command := string(signal)
+		if command == "j" {
+			r.JoiningSig <- true
+		} else if command == "b" {
+			r.BusySig <- true
+		} else if command == "w" {
+			r.WaitingSig <- true
+		} else if command == "s" {
+			r.FreeSpaceSig <- true
+		} else if command == "o" {
+			r.WallSig <- true
+		}
+	}
+}
+
 func (r *RobotStruct) Explore() error {
 	for {
 		time.Sleep(time.Millisecond * time.Duration(1000))
 		select {
 		case <-r.JoiningSig:
 			// TODO do joining thing
+			fmt.Println("join sig received")
 		case <-r.BusySig:
 			// TODO do busy thing
 			// TODO merge map here?
@@ -218,7 +245,7 @@ func (r *RobotStruct) Explore() error {
 
 			select {
 			case <-r.FreeSpaceSig:
-
+				fmt.Println("FreeSpaceSig received")
 				r.UpdateMap(true)
 				r.SetCurrentLocation()
 				r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
