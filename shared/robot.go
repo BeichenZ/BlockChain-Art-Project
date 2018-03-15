@@ -315,24 +315,6 @@ func (r *RobotStruct) GetMap() Map {
 	return r.RMap
 }
 
-func InitRobot(rID uint, initMap Map) Robot {
-	robotStruct.RobotID = rID
-	robotStruct.RMap = initMap
-	robotStruct.JoiningSig = make(chan bool)
-	robotStruct.BusySig = make(chan bool)
-	robotStruct.WaitingSig = make(chan bool)
-	robotStruct.FreeSpaceSig = make(chan bool)
-	robotStruct.WallSig = make(chan bool)
-	robotStruct.WalkSig = make(chan bool)
-	//JoiningSig      chan bool
-	//BusySig         chan bool
-	//WaitingSig      chan bool
-	//FreeSpaceSig    chan bool
-	//WallSig         chan bool
-	//WalkSig         chan bool
-	return &robotStruct
-}
-
 func (r *RobotStruct) SetCurrentLocation() {
 	r.CurLocation = r.CurPath.ListOfPCoordinates[0]
 }
@@ -359,11 +341,11 @@ WaitingForEnoughTask:
 	}
 }
 
-// func (r *RobotStruct) AllocateTaskToNeighbours() {
-// 	for _, neighbourRoboAddr := range r.NeighboursAddr {
-// 		neighbourClient, error := rpc.Dial("tcp", neighbourRoboAddr)
-// 		alive := false
-// 		// Here I send my robot the task
-// 		err := neighbourClient.Call("RobotRPC.ReceiveTask", alive, &alive)
-// 	}
-// }
+func (r *RobotStruct) AllocateTaskToNeighbours() {
+	for _, neighbourRoboAddr := range r.NeighboursAddr {
+		neighbourClient, _ := rpc.Dial("tcp", neighbourRoboAddr)
+		alive := false
+		// Here I send my robot the task
+		neighbourClient.Call("RobotRPC.ReceiveTask", alive, &alive)
+	}
+}
