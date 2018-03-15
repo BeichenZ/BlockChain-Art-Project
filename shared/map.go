@@ -1,5 +1,6 @@
 package shared
 
+import "math"
 
 type Map struct {
 	ExploredPath []PointStruct
@@ -18,4 +19,9 @@ type Coordinate struct {
 
 type Path struct {
 	ListOfPCoordinates []PointStruct;
+}
+
+func DistBtwnTwoPoints (dp PointStruct, cp PointStruct) float64 {
+	d := math.Sqrt(math.Pow(dp.Point.X - cp.Point.X, 2) + math.Pow(dp.Point.Y - cp.Point.Y, 2) )
+	return d;
 }

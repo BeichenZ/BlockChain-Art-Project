@@ -2,6 +2,7 @@ package shared
 
 import (
 	"fmt"
+	"math"
 	"net/rpc"
 	"time"
 )
@@ -10,6 +11,7 @@ const XMIN = "xmin"
 const XMAX = "xmax"
 const YMIN = "ymix"
 const YMAX = "ymax"
+const EXRADIUS = 6
 
 type RobotStruct struct {
 	RobotID           uint // hardcoded
@@ -50,28 +52,134 @@ func (r *RobotStruct) SendFreeSpaceSig() {
 }
 
 //error is not nil when the task queue is empty
-func (r *RobotStruct) TaskCreation() (Path, error) {
-	newTask := Path{}
-	xmin := r.findMapExtrema(XMIN)
-	xmax := r.findMapExtrema(XMAX)
-	ymin := r.findMapExtrema(YMIN)
-	ymax := r.findMapExtrema(YMAX)
+// FN: Return list of destination points for each node in the network (one point for each node)
+func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
+	//newTask := Path{}
+	xmin := r.FindMapExtrema(XMIN)
+	xmax := r.FindMapExtrema(XMAX)
+	ymin := r.FindMapExtrema(YMIN)
+	ymax := r.FindMapExtrema(YMAX)
 
-	if r.RobotNeighbourNum == 0 {
+	center := PointStruct{Point: Coordinate{float64((xmax - xmin) / 2), float64((ymax - ymin) / 2)}}
 
+	DestNum := r.RobotNeighbourNum + 1
+
+	DestPoints := r.FindDestPoints(DestNum, center)
+
+	DestPointForMe := r.FindClosestDest(DestPoints)
+	// move DestpointForMe to beginning of list
+	//assuming  the destPoint in DestPoints is unique
+
+	tempEle := DestPoints[0]
+	for idx, value := range DestPoints {
+		if value == DestPointForMe {
+			DestPoints[0] = value
+			DestPoints[idx] = tempEle
+			break
+		}
 	}
 
-	//hard coded the newTask for testing purpose
-	for i := 0; i < 5; i++ {
-		pointToAdd := PointStruct{Coordinate{float64(i), float64(i + 1)}, true, 0, false}
-		newTask.ListOfPCoordinates = append(newTask.ListOfPCoordinates, pointToAdd)
-	}
+	return DestPoints, nil
 
-	return newTask, nil
 }
 
-func (r *RobotStruct) findMapExtrema(e string) float64 {
+func (r *RobotStruct) FindMapExtrema(e string) float64 {
 
+	if e == XMAX {
+		var xMax float64 = math.MinInt64
+		for _, point := range r.RMap.ExploredPath {
+			if xMax < point.Point.X {
+				xMax = point.Point.X
+			}
+		}
+		return xMax
+	} else if e == XMIN {
+		var xMin float64 = math.MaxFloat64
+		for _, point := range r.RMap.ExploredPath {
+			if xMin > point.Point.X {
+				xMin = point.Point.X
+			}
+		}
+		return xMin
+	} else if e == YMAX {
+		var yMax float64 = math.MinInt64
+		for _, point := range r.RMap.ExploredPath {
+			if yMax < point.Point.Y {
+				yMax = point.Point.Y
+			}
+		}
+		return yMax
+	} else {
+		var yMin float64 = math.MaxFloat64
+		for _, point := range r.RMap.ExploredPath {
+			if yMin > point.Point.Y {
+				yMin = point.Point.Y
+			}
+		}
+		return yMin
+	}
+}
+
+func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
+	dist := math.MaxFloat64
+	var rdp PointStruct
+	for _, dp := range lodp {
+		del := DistBtwnTwoPoints(r.CurLocation, dp)
+		if del < dist {
+			dist = del
+			rdp = dp
+		}
+	}
+
+	return rdp
+}
+
+func (r *RobotStruct) CreatePathBetweenTwoPoints(sp PointStruct, dp PointStruct) Path {
+	var myPath []PointStruct
+	delX := Round(dp.Point.X - sp.Point.X)
+	delY := Round(dp.Point.Y - sp.Point.Y)
+	//iteration := int(math.Abs(delX) + math.Abs(delY))
+
+	//create the path in X direction
+	for i := 0; i < int(math.Abs(delX)); i++ {
+		if delX > 0 {
+			myPath = append(myPath, PointStruct{Point: Coordinate{1, 0}})
+		} else if delX < 0 {
+			myPath = append(myPath, PointStruct{Point: Coordinate{-1, 0}})
+		} else {
+			//do nonthing since the delX is 0
+		}
+	}
+
+	//create path in Y direction
+	for i := 0; i < int(math.Abs(delY)); i++ {
+		if delY > 0 {
+			myPath = append(myPath, PointStruct{Point: Coordinate{0, 1}})
+		} else if delY < 0 {
+			myPath = append(myPath, PointStruct{Point: Coordinate{0, -1}})
+		} else {
+			//do nonthing since the delY is 0
+		}
+	}
+
+	return Path{myPath}
+}
+
+//return the list of dest points
+func (r *RobotStruct) FindDestPoints(desNum int, center PointStruct) []PointStruct {
+
+	destPointsToReturn := []PointStruct{}
+
+	for i := 0; i < desNum; i++ {
+		theta := float64(i) * 2 * math.Pi / float64(desNum)
+		delPoint := PointStruct{Point: Coordinate{float64(EXRADIUS * math.Cos(theta)), float64(EXRADIUS * math.Sin(theta))}}
+		destPoint := PointStruct{}
+		destPoint.Point.X = center.Point.X + delPoint.Point.X
+		destPoint.Point.Y = center.Point.Y + delPoint.Point.Y
+		destPointsToReturn = append(destPointsToReturn, destPoint)
+	}
+
+	return destPointsToReturn
 }
 
 func (r *RobotStruct) Explore() error {
@@ -87,13 +195,22 @@ func (r *RobotStruct) Explore() error {
 		case <-r.WaitingSig:
 			// TODO do waiting thing
 		default:
-
 			if len(r.CurPath.ListOfPCoordinates) == 0 {
-				newTask, err := r.TaskCreation()
+				dpts, err := r.TaskCreation()
+				var newPath Path
+
+				if len(dpts) == 1 {
+
+					//TODO
+					newPath = r.CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
+
+				} else {
+					// send task to neighbours
+				}
 				if err != nil {
 					fmt.Println("error generating task")
 				}
-				r.CurPath = newTask
+				r.CurPath = newPath
 				// DISPLAY task with GPIO
 			}
 
@@ -105,14 +222,12 @@ func (r *RobotStruct) Explore() error {
 				r.UpdateMap(true)
 				r.SetCurrentLocation()
 				r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
-				//r.UpdateCurrentStep()
 
 				// Display task with GPIO
 			case <-r.WallSig:
 				r.UpdateMap(false)
 				// Change wall path
 				r.ModifyPathForWall()
-				//r.UpdateCurrentStep()
 				// Display task with GPIO
 			}
 
@@ -123,6 +238,7 @@ func (r *RobotStruct) Explore() error {
 //func (r *RobotStruct) UpdateCurrentStep() {
 //	r.CurrentStep = Coordinate{X:r.CurPath.ListOfPCoordinates[0].Point.X, Y: r.CurPath.ListOfPCoordinates[0].Point.Y}
 //}
+
 func (r *RobotStruct) ModifyPathForWall() {
 
 	wallCoor := r.CurPath.ListOfPCoordinates[0]
@@ -141,7 +257,7 @@ func (r *RobotStruct) TookOneStep() {
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
 }
 
-//pointkind: true => freespace, false  => wall
+//update pointkind: true => freespace, false  => wall
 func (r *RobotStruct) UpdateMap(pointKind bool) {
 
 	newLocation := PointStruct{
@@ -243,11 +359,11 @@ WaitingForEnoughTask:
 	}
 }
 
-func (r *RobotStruct) AllocateTaskToNeighbours() {
-	for _, neighbourRoboAddr := range r.NeighboursAddr {
-		neighbourClient, error := rpc.Dial("tcp", neighbourRoboAddr)
-		alive := false
-		// Here I send my robot the task
-		err := neighbourClient.Call("RobotRPC.ReceiveTask", alive, &alive)
-	}
-}
+// func (r *RobotStruct) AllocateTaskToNeighbours() {
+// 	for _, neighbourRoboAddr := range r.NeighboursAddr {
+// 		neighbourClient, error := rpc.Dial("tcp", neighbourRoboAddr)
+// 		alive := false
+// 		// Here I send my robot the task
+// 		err := neighbourClient.Call("RobotRPC.ReceiveTask", alive, &alive)
+// 	}
+// }
