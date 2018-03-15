@@ -66,18 +66,18 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 
 	DestPoints := r.FindDestPoints(DestNum, center)
 
-	//DestPointForMe := r.FindClosestDest(DestPoints)
-	//// move DestpointForMe to beginning of list
-	////assuming  the destPoint in DestPoints is unique
-	//
-	//tempEle := DestPoints[0]
-	//for idx, value := range DestPoints{
-	//	if value == DestPointForMe{
-	//		DestPoints[0] = value
-	//		DestPoints[idx] = tempEle
-	//		break
-	//	}
-	//}
+	DestPointForMe := r.FindClosestDest(DestPoints)
+	// move DestpointForMe to beginning of list
+	//assuming  the destPoint in DestPoints is unique
+
+	tempEle := DestPoints[0]
+	for idx, value := range DestPoints{
+		if value == DestPointForMe{
+			DestPoints[0] = value
+			DestPoints[idx] = tempEle
+			break
+		}
+	}
 
 	return DestPoints, nil
 }
