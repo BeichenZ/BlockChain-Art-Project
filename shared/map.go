@@ -4,7 +4,7 @@ import "math"
 
 type Map struct {
 	ExploredPath []PointStruct
-	FrameOfRef   uint // Robot id
+	FrameOfRef   int // Robot id
 }
 type PointStruct struct {
 	Point         Coordinate
