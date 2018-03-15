@@ -52,8 +52,8 @@ func (r *RobotStruct) SendFreeSpaceSig(){
 
 
 //error is not nil when the task queue is empty
-//? Array of destination points?
-func (r *RobotStruct) TaskCreation() (Path, error) {
+// FN: Return list of destination points for each node in the network (one point for each node)
+func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 	//newTask := Path{}
 	xmin := r.FindMapExtrema(XMIN)
 	xmax := r.FindMapExtrema(XMAX)
@@ -67,8 +67,8 @@ func (r *RobotStruct) TaskCreation() (Path, error) {
 	DestPoints := r.FindDestPoints(DestNum, center)
 
 	DestPointForMe := r.FindClosestDest(DestPoints)
-	// move DestpointForMe to beginning of list TODO
-	//asuming  the destPoint in DestPoints is unuque
+	// move DestpointForMe to beginning of list
+	//assuming  the destPoint in DestPoints is unique
 
 	tempEle := DestPoints[0]
 	for idx, value := range DestPoints{
@@ -79,29 +79,7 @@ func (r *RobotStruct) TaskCreation() (Path, error) {
 		}
 	}
 
-	////assumpting destination points are unique TEST
-	//for idx, val := range DestPoints{
-	//	if val == DestPointForMe{
-	//
-	//		if len(DestPoints) == 1{
-	//			DestPoints = []PointStruct{}
-	//			break
-	//		}
-	//
-	//		temp1 := DestPoints[:idx]
-	//		temp2 := DestPoints[idx + 1:]
-	//		DestPoints = append(temp1, temp2...)
-	//		break
-	//	}
-	//}
-
-	//hard coded the newTask for testing purpose
-	//for i:= 0; i<5; i++{
-	//	pointToAdd := PointStruct{Coordinate{float64(i) , float64(i + 1)}, true, 0, false}
-	//	newTask.ListOfPCoordinates = append(newTask.ListOfPCoordinates, pointToAdd)
-	//}
-
-	return Path{DestPoints}, nil
+	return DestPoints, nil
 }
 
 func (r *RobotStruct) FindMapExtrema(e string) float64{
@@ -152,25 +130,51 @@ func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
 	return rdp;
 }
 
-func (r *RobotStruct) CreatePathToDest(dp PointStruct) Path  {
-	var myPath Path
-	return myPath
+
+func (r *RobotStruct) CreatePathBetweenTwoPoints(sp PointStruct, dp PointStruct) Path  {
+	var myPath []PointStruct
+	delX := dp.Point.X - sp.Point.X
+	delY := dp.Point.Y - sp.Point.Y
+	//iteration := int(math.Abs(delX) + math.Abs(delY))
+
+	//create the path in X direction
+	for i:= 0; i< int(math.Abs(delX)) ; i++{
+		if delX > 0{
+			myPath = append(myPath, PointStruct{Point: Coordinate{1, 0}})
+		}else if delX < 0 {
+			myPath = append(myPath, PointStruct{Point: Coordinate{-1, 0}})
+		}else{
+			//do nonthing since the delX is 0
+		}
+	}
+
+	//create path in Y direction
+	for i:= 0; i< int(math.Abs(delY)) ; i++{
+		if delY > 0{
+			myPath = append(myPath, PointStruct{Point: Coordinate{0, 1}})
+		}else if delY < 0 {
+			myPath = append(myPath, PointStruct{Point: Coordinate{0, -1}})
+		}else{
+			//do nonthing since the delY is 0
+		}
+	}
+
+	return Path{myPath}
 }
 
 //return the list of dest points
 func (r *RobotStruct) FindDestPoints(desNum int, center PointStruct) []PointStruct{
 
 	destPointsToReturn := []PointStruct{}
-
 	circumference := 2*math.Pi*EXRADIUS;
 	arcLength := circumference / float64(desNum);
-	theta := arcLength / EXRADIUS;
-	delPoint := PointStruct{Point: Coordinate{float64(EXRADIUS*math.Cos(theta)) , float64(EXRADIUS*math.Sin(theta))}}
 
 	for i := 0; i< desNum ; i++{
+		theta := float64(i)*arcLength / EXRADIUS;
+		delPoint := PointStruct{Point: Coordinate{float64(EXRADIUS*math.Cos(theta)) , float64(EXRADIUS*math.Sin(theta))}}
 		destPoint := PointStruct{}
-		destPoint.Point.X = center.Point.X + float64(i+1)*delPoint.Point.X
-		destPoint.Point.Y = center.Point.Y + float64(i+1)*delPoint.Point.Y
+		destPoint.Point.X = center.Point.X + delPoint.Point.X
+		destPoint.Point.Y = center.Point.Y + delPoint.Point.Y
 		destPointsToReturn = append(destPointsToReturn, destPoint)
 	}
 
@@ -194,10 +198,10 @@ func (r *RobotStruct) Explore() error {
 				dpts, err := r.TaskCreation()
 				var newPath Path
 
-				if (len(dpts.ListOfPCoordinates) == 1) {
+				if (len(dpts) == 1) {
 
 					//TODO
-					newPath = r.CreatePathToDest(dpts.ListOfPCoordinates[0])
+					newPath = r.CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
 
 				} else {
 					// send task to neighbours
@@ -233,6 +237,7 @@ func (r *RobotStruct) Explore() error {
 //func (r *RobotStruct) UpdateCurrentStep() {
 //	r.CurrentStep = Coordinate{X:r.CurPath.ListOfPCoordinates[0].Point.X, Y: r.CurPath.ListOfPCoordinates[0].Point.Y}
 //}
+
 func (r *RobotStruct) ModifyPathForWall() {
 
 	wallCoor := r.CurPath.ListOfPCoordinates[0]

@@ -14,10 +14,11 @@ var EAST = shared.PointStruct{shared.Coordinate{1.0, 0.0}, false, 0, false}
 var NORTH = shared.PointStruct{shared.Coordinate{0.0, 1.0}, false, 0, false}
 var SOUTH = shared.PointStruct{shared.Coordinate{0.0, -1.0}, false, 0, false}
 
+// xMin=yMin=0, xMax=yMax=9
 func RandomMapGenerator() shared.Map{
 	var sampleMap = shared.Map{}
 	for j := 0; j< NUMOFPATHTOGENERATE; j++{
-		myPoint := shared.Coordinate{float64(j%4), float64(j)}
+		myPoint := shared.Coordinate{float64(j), float64(j)}
 		sampleMap.ExploredPath = append(sampleMap.ExploredPath, shared.PointStruct{myPoint, false, 0, false})
 	}
 
@@ -142,7 +143,7 @@ func TestTaskCreation(t *testing.T){
 
 	robotStruct := shared.RobotStruct{}
 	robotStruct.RMap = RandomMapGenerator()
-	robotStruct.RobotNeighbourNum = 2
+	robotStruct.RobotNeighbourNum = 7
 	robotStruct.CurLocation = shared.PointStruct{Point:shared.Coordinate{float64(3.0), float64(4.0)}}
 
 	task, _ :=robotStruct.TaskCreation()
