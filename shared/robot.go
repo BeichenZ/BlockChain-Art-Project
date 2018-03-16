@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"math"
+	"math/rand"
 	"net/rpc"
 	"os"
 	"time"
-
 	"github.com/DistributedClocks/GoVector/govec"
 )
 
@@ -22,11 +22,10 @@ type RobotStruct struct {
 	RobotID           int // hardcoded
 	RobotIP           string
 	RobotListenConn   *rpc.Client
-	RobotNeighbourNum int
+	RobotNeighbours	  []Neighbour
 	RMap              Map
 	CurPath           Path
 	CurLocation       PointStruct
-	NeighboursAddr    []string
 	ReceivedTask      []string // change this later
 	//CurrentStep        	Coordinate
 	JoiningSig   chan bool
@@ -68,7 +67,8 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 
 	center := PointStruct{Point: Coordinate{float64((xmax - xmin) / 2), float64((ymax - ymin) / 2)}}
 
-	DestNum := r.RobotNeighbourNum + 1
+	//DestNum := r.RobotNeighbourNum + 1
+	DestNum := len(r.RobotNeighbours) + 1
 
 	DestPoints := r.FindDestPoints(DestNum, center)
 
@@ -247,13 +247,20 @@ func (r *RobotStruct) Explore() error {
 			// Display task with GPIO
 		case <-r.JoiningSig:
 			// TODO do joining thing
-			r.NeighboursAddr = append(r.NeighboursAddr, ":8080")
-			r.AllocateTaskToNeighbours()
+			newNeighbour := Neighbour{
+				Addr: "8080",
+				NID: 1,
+			}
+			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
+			tasks, _ := r.TaskCreation()
+			r.AllocateTaskToNeighbours(tasks)
 			fmt.Println("join sig received")
 		case <-r.BusySig:
 			// TODO do busy thing
 			// TODO merge map here?
 			// TODO exchange tasks
+			tasks, _ := r.TaskCreation()
+			r.AllocateTaskToNeighbours(tasks)
 
 			fmt.Println("busy sig received")
 		case <-r.WaitingSig:
@@ -345,7 +352,7 @@ func (r *RobotStruct) SetCurrentLocation() {
 func (r *RobotStruct) WaitForEnoughTaskFromNeighbours() {
 WaitingForEnoughTask:
 	for {
-		if len(r.ReceivedTask) == len(r.NeighboursAddr) {
+		if len(r.ReceivedTask) == len(r.RobotNeighbours) {
 			fmt.Println("waiting for my neighbours to send me tasks")
 			// choose task
 			// r.CurPath = something
@@ -355,17 +362,25 @@ WaitingForEnoughTask:
 	}
 }
 
-func (r *RobotStruct) AllocateTaskToNeighbours() {
-	for _, neighbourRoboAddr := range r.NeighboursAddr {
+func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
+	ldpn := ldp[1:]
+	rand.Seed(time.Now().UnixNano())
+	for _, robotNeighbour := range r.RobotNeighbours {
+		dpn := ldpn[rand.Intn(len(ldpn))]
+		removeElFromlist(dpn, &ldpn)
+		fmt.Println(robotNeighbour)
 		// fmt.Println(neighbourRoboAddr)
-		messagepayload := []byte("Sending to my number with ID:" + neighbourRoboAddr)
+		messagepayload := []byte("Sending to my number with ID:" + robotNeighbour.Addr)
 		finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
 		task := &TaskPayload{
 			SenderID:         r.RobotID,
-			ListOfDirections: make([]Coordinate, 0),
+			DestPoint: 		  dpn,
 			SendlogMessage:   finalsend,
 		}
-		neighbourClient, err := rpc.Dial("tcp", neighbourRoboAddr)
+		fmt.Println("AllocateTaskToNeighbours() ")
+		fmt.Println(task)
+		// TESTING UNCOMMENT
+		neighbourClient, err := rpc.Dial("tcp", robotNeighbour.Addr)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -376,13 +391,14 @@ func (r *RobotStruct) AllocateTaskToNeighbours() {
 		if err != nil {
 			fmt.Println(err)
 		}
+		// TESTING UNCOMMENT
 	}
 }
 
 func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
 	newRobot := RobotStruct{
 		RobotID:           rID,
-		RobotNeighbourNum: 0,
+		RobotNeighbours:   []Neighbour{},
 		RMap:              initMap,
 		JoiningSig:        make(chan bool),
 		BusySig:           make(chan bool),
