@@ -29,7 +29,7 @@ func main() {
 	// 	log.Fatal("Unable to resolve IP Address", error)
 	// }
 
-	robot := InitRobot(RobotID, shared.Map{
+	robot := shared.InitRobot(RobotID, shared.Map{
 		ExploredPath: make([]shared.PointStruct, 0),
 		FrameOfRef:   1,
 	}, Logger)
@@ -57,21 +57,4 @@ func main() {
 		break
 	}
 
-}
-
-func InitRobot(rID int, initMap shared.Map, logger *govec.GoLog) *shared.RobotStruct {
-	newRobot := shared.RobotStruct{
-		RobotID:           rID,
-		RobotNeighbourNum: 0,
-		RMap:              initMap,
-		JoiningSig:        make(chan bool),
-		BusySig:           make(chan bool),
-		WaitingSig:        make(chan bool),
-		FreeSpaceSig:      make(chan bool),
-		WallSig:           make(chan bool),
-		WalkSig:           make(chan bool),
-		Logger:            logger,
-	}
-	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
-	return &newRobot
 }

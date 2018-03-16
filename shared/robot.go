@@ -378,3 +378,20 @@ func (r *RobotStruct) AllocateTaskToNeighbours() {
 		}
 	}
 }
+
+func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
+	newRobot := RobotStruct{
+		RobotID:           rID,
+		RobotNeighbourNum: 0,
+		RMap:              initMap,
+		JoiningSig:        make(chan bool),
+		BusySig:           make(chan bool),
+		WaitingSig:        make(chan bool),
+		FreeSpaceSig:      make(chan bool),
+		WallSig:           make(chan bool),
+		WalkSig:           make(chan bool),
+		Logger:            logger,
+	}
+	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
+	return &newRobot
+}

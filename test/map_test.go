@@ -49,10 +49,10 @@ func TestMapMerge_withNonEmptyMap(t *testing.T) {
 				false,
 			},
 		},
-		FrameOfRef: uint(2),
+		FrameOfRef: 2,
 	}
 
-	var robot = shared.InitRobot(0, newMap)
+	var robot = shared.InitRobot(0, newMap, nil)
 
 	for i:= 0; i< NEIGHBOURS ; i++{
 		robId := i
@@ -61,7 +61,7 @@ func TestMapMerge_withNonEmptyMap(t *testing.T) {
 			myPoint := shared.Coordinate{float64(i), float64(j)}
 			myMap.ExploredPath = append(myMap.ExploredPath, shared.PointStruct{myPoint, false, 0, false})
 		}
-		myMap.FrameOfRef = uint(robId)
+		myMap.FrameOfRef = robId
 		sampleMap = append(sampleMap, *myMap)
 	}
 
@@ -79,7 +79,7 @@ func TestMapMerge_withEmptyMap(t *testing.T) {
 
 	var sampleMap = []shared.Map{}
 
-	var robot = shared.InitRobot(0, shared.Map{})
+	var robot = shared.InitRobot(0, shared.Map{}, nil)
 
 	for i:= 0; i< NEIGHBOURS ; i++{
 		robId := i
@@ -88,7 +88,7 @@ func TestMapMerge_withEmptyMap(t *testing.T) {
 			myPoint := shared.Coordinate{float64(i), float64(j)}
 			myMap.ExploredPath = append(myMap.ExploredPath, shared.PointStruct{myPoint, false, 0, false})
 		}
-		myMap.FrameOfRef = uint(robId)
+		myMap.FrameOfRef = robId
 		sampleMap = append(sampleMap, *myMap)
 	}
 
