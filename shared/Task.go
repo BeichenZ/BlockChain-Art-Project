@@ -1,6 +1,7 @@
 package shared
 
-type Task struct {
+type TaskPayload struct {
 	SenderID         int
 	ListOfDirections []Coordinate
+	SendlogMessage   []byte
 }

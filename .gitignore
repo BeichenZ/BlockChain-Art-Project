@@ -115,5 +115,9 @@ modules.xml
 .idea/misc.xml
 *.ipr
 
+# Ignore GoVector logs
+LogFile*
 
+# Ignore boardcast_playground.go
+boardcast_playground.go
 # End of https://www.gitignore.io/api/go,jetbrains+all,jetbrains+iml

@@ -7,6 +7,8 @@ import (
 	"net/rpc"
 	"os"
 	"time"
+
+	"github.com/DistributedClocks/GoVector/govec"
 )
 
 const XMIN = "xmin"
@@ -16,7 +18,7 @@ const YMAX = "ymax"
 const EXRADIUS = 6
 
 type RobotStruct struct {
-	CurrTask          Task
+	CurrTask          TaskPayload
 	RobotID           int // hardcoded
 	RobotIP           string
 	RobotListenConn   *rpc.Client
@@ -33,6 +35,7 @@ type RobotStruct struct {
 	FreeSpaceSig chan bool
 	WallSig      chan bool
 	WalkSig      chan bool
+	Logger       *govec.GoLog
 }
 
 type Robot interface {
@@ -251,6 +254,8 @@ func (r *RobotStruct) Explore() error {
 			// TODO do busy thing
 			// TODO merge map here?
 			// TODO exchange tasks
+
+			fmt.Println("busy sig received")
 		case <-r.WaitingSig:
 			// TODO do waiting thing
 		}
@@ -337,15 +342,6 @@ func (r *RobotStruct) SetCurrentLocation() {
 	r.CurLocation = r.CurPath.ListOfPCoordinates[0]
 }
 
-func CheckExist(coordinate PointStruct, cooArr []PointStruct) (bool, int) {
-	for i, point := range cooArr {
-		if point.Point.X == coordinate.Point.X && point.Point.Y == coordinate.Point.Y {
-			return true, i
-		}
-	}
-	return false, -1
-}
-
 func (r *RobotStruct) WaitForEnoughTaskFromNeighbours() {
 WaitingForEnoughTask:
 	for {
@@ -361,11 +357,14 @@ WaitingForEnoughTask:
 
 func (r *RobotStruct) AllocateTaskToNeighbours() {
 	for _, neighbourRoboAddr := range r.NeighboursAddr {
-		task := &Task{
+		// fmt.Println(neighbourRoboAddr)
+		messagepayload := []byte("Sending to my number with ID:" + neighbourRoboAddr)
+		finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
+		task := &TaskPayload{
 			SenderID:         r.RobotID,
 			ListOfDirections: make([]Coordinate, 0),
+			SendlogMessage:   finalsend,
 		}
-		fmt.Println(neighbourRoboAddr)
 		neighbourClient, err := rpc.Dial("tcp", neighbourRoboAddr)
 		if err != nil {
 			fmt.Println(err)

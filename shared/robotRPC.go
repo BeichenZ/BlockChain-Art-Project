@@ -10,7 +10,8 @@ func (robotRPC *RobotRPC) ReceiveMap(senderMap *Map, reply *int) error {
 	return nil
 }
 
-func (robotRPC *RobotRPC) ReceiveTask(senderTask *Task, reply *int) error {
-	fmt.Println(senderTask.SenderID)
+func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *int) error {
+	fmt.Println(senderTask.SendlogMessage)
+	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTask.SendlogMessage, TaskPayload{})
 	return nil
 }
