@@ -8,7 +8,8 @@ import (
 	"net/rpc"
 	"os"
 	"time"
-	"github.com/DistributedClocks/GoVector/govec"
+
+	"../GoVector/govec"
 )
 
 const XMIN = "xmin"
@@ -18,15 +19,15 @@ const YMAX = "ymax"
 const EXRADIUS = 6
 
 type RobotStruct struct {
-	CurrTask          TaskPayload
-	RobotID           int // hardcoded
-	RobotIP           string
-	RobotListenConn   *rpc.Client
-	RobotNeighbours	  []Neighbour
-	RMap              Map
-	CurPath           Path
-	CurLocation       PointStruct
-	ReceivedTask      []string // change this later
+	CurrTask        TaskPayload
+	RobotID         int // hardcoded
+	RobotIP         string
+	RobotListenConn *rpc.Client
+	RobotNeighbours []Neighbour
+	RMap            Map
+	CurPath         Path
+	CurLocation     PointStruct
+	ReceivedTasks   []TaskPayload // change this later
 	//CurrentStep        	Coordinate
 	JoiningSig   chan bool
 	BusySig      chan bool
@@ -249,7 +250,7 @@ func (r *RobotStruct) Explore() error {
 			// TODO do joining thing
 			newNeighbour := Neighbour{
 				Addr: "8080",
-				NID: 1,
+				NID:  1,
 			}
 			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
 			tasks, _ := r.TaskCreation()
@@ -352,7 +353,7 @@ func (r *RobotStruct) SetCurrentLocation() {
 func (r *RobotStruct) WaitForEnoughTaskFromNeighbours() {
 WaitingForEnoughTask:
 	for {
-		if len(r.ReceivedTask) == len(r.RobotNeighbours) {
+		if len(r.ReceivedTasks) == len(r.RobotNeighbours) {
 			fmt.Println("waiting for my neighbours to send me tasks")
 			// choose task
 			// r.CurPath = something
@@ -361,6 +362,16 @@ WaitingForEnoughTask:
 		}
 	}
 }
+
+func (r *RobotStruct) PickTaskWithLowestEnergy() {
+
+}
+
+// func (r *RobotStruct) PickTask() {
+//   for _, task := range r.ReceivedTasks {
+//     if
+//   }
+// }
 
 func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 	ldpn := ldp[1:]
@@ -373,9 +384,9 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 		messagepayload := []byte("Sending to my number with ID:" + robotNeighbour.Addr)
 		finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
 		task := &TaskPayload{
-			SenderID:         r.RobotID,
-			DestPoint: 		  dpn,
-			SendlogMessage:   finalsend,
+			SenderID:       r.RobotID,
+			DestPoint:      dpn,
+			SendlogMessage: finalsend,
 		}
 		fmt.Println("AllocateTaskToNeighbours() ")
 		fmt.Println(task)
@@ -397,16 +408,16 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 
 func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
 	newRobot := RobotStruct{
-		RobotID:           rID,
-		RobotNeighbours:   []Neighbour{},
-		RMap:              initMap,
-		JoiningSig:        make(chan bool),
-		BusySig:           make(chan bool),
-		WaitingSig:        make(chan bool),
-		FreeSpaceSig:      make(chan bool),
-		WallSig:           make(chan bool),
-		WalkSig:           make(chan bool),
-		Logger:            logger,
+		RobotID:         rID,
+		RobotNeighbours: []Neighbour{},
+		RMap:            initMap,
+		JoiningSig:      make(chan bool),
+		BusySig:         make(chan bool),
+		WaitingSig:      make(chan bool),
+		FreeSpaceSig:    make(chan bool),
+		WallSig:         make(chan bool),
+		WalkSig:         make(chan bool),
+		Logger:          logger,
 	}
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 	return &newRobot
