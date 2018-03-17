@@ -22,7 +22,7 @@ func main() {
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	IPAddr := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
-	Logger := govec.InitGoVector("IPAddr", "LogFile"+IPAddr, true)
+	Logger := govec.InitGoVector("Robot"+IPAddr, "LogFile"+IPAddr, true)
 	resolvedIPAddr := IPAddr
 	// resolvedIPAddress, error := net.ResolveTCPAddr("tcp", IPAddr)
 	// if error != nil {

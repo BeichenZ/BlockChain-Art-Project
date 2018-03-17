@@ -249,7 +249,7 @@ func (r *RobotStruct) Explore() error {
 		case <-r.JoiningSig:
 			// TODO do joining thing
 			newNeighbour := Neighbour{
-				Addr: "8080",
+				Addr: ":8080",
 				NID:  1,
 			}
 			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
