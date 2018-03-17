@@ -381,8 +381,8 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 		removeElFromlist(dpn, &ldpn)
 		fmt.Println(robotNeighbour)
 		// fmt.Println(neighbourRoboAddr)
-		messagepayload := []byte("Sending to my number with ID:" + robotNeighbour.Addr)
-		finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
+		messagepayload := 1
+		finalsend := r.Logger.PrepareSend("Sending Message to Robot"+robotNeighbour.Addr, messagepayload)
 		task := &TaskPayload{
 			SenderID:       r.RobotID,
 			DestPoint:      dpn,
