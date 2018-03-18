@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/binary"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -19,6 +21,13 @@ func main() {
 	gob.Register(&net.TCPAddr{})
 	gob.Register(&shared.TaskPayload{})
 
+	// myIPAddr := GetLocalIP().String()
+	broad, _ := lastAddr(GetLocalIP())
+	fmt.Println(broad)
+	// ones, _ := net.ParseIP(myIPAddr).DefaultMask().Size()
+	// sub := ipsubnet.SubnetCalculator(myIPAddr, ones)
+	// boardCastIP := sub.GetBroadcastAddress()
+	// fmt.Println(boardCastIP)
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	IPAddr := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
@@ -57,4 +66,27 @@ func main() {
 		break
 	}
 
+}
+
+func GetLocalIP() *net.IPNet {
+	addrs, _ := net.InterfaceAddrs()
+
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet
+			}
+		}
+	}
+	return nil
+}
+
+func lastAddr(n *net.IPNet) (net.IP, error) { // works when the n is a prefix, otherwise...
+	if n.IP.To4() == nil {
+		return net.IP{}, errors.New("does not support IPv6 addresses.")
+	}
+	ip := make(net.IP, len(n.IP.To4()))
+	binary.BigEndian.PutUint32(ip, binary.BigEndian.Uint32(n.IP.To4())|^binary.BigEndian.Uint32(net.IP(n.Mask).To4()))
+	return ip, nil
 }
