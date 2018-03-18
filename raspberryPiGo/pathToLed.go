@@ -1,7 +1,7 @@
 package raspberryPiGo
 
 import (
-	shared "../shared"
+	//shared "../shared"
 	"github.com/stianeikeland/go-rpio"
 	"fmt"
 	"os"
@@ -36,37 +36,45 @@ func main () {
 	pinEast.Output()
 	pinWest.Output()
 
-	path := [...]shared.PointStruct{shared.WEST, shared.WEST, shared.NORTH}
-
-	for _,dir := range path{
-		switch dir {
-			case shared.NORTH: {
-				pinNorth.High()
-				time.Sleep(2*time.Second)
-				pinNorth.Low()
-				break;
-			}
-			case shared.SOUTH: {
-				pinSouth.High()
-				time.Sleep(2*time.Second)
-				pinSouth.Low()
-				break;
-			}
-			case shared.EAST: {
-				pinEast.High()
-				time.Sleep(2*time.Second)
-				pinEast.Low()
-				break;
-			}
-			case shared.WEST: {
-				pinWest.High()
-				time.Sleep(2*time.Second)
-				pinWest.Low()
-				break;
-			}
-
-		}
+	// TESTING //
+	// Toggle pin 20 times
+	for x := 0; x < 20; x++ {
+		pinNorth.Toggle()
+		time.Sleep(time.Second / 5)
 	}
+	// TESTING //
+
+	//path := [...]shared.PointStruct{shared.WEST, shared.WEST, shared.NORTH}
+	//
+	//for _,dir := range path{
+	//	switch dir {
+	//		case shared.NORTH: {
+	//			pinNorth.High()
+	//			time.Sleep(2*time.Second)
+	//			pinNorth.Low()
+	//			break;
+	//		}
+	//		case shared.SOUTH: {
+	//			pinSouth.High()
+	//			time.Sleep(2*time.Second)
+	//			pinSouth.Low()
+	//			break;
+	//		}
+	//		case shared.EAST: {
+	//			pinEast.High()
+	//			time.Sleep(2*time.Second)
+	//			pinEast.Low()
+	//			break;
+	//		}
+	//		case shared.WEST: {
+	//			pinWest.High()
+	//			time.Sleep(2*time.Second)
+	//			pinWest.Low()
+	//			break;
+	//		}
+	//
+	//	}
+	//}
 
 }
 
