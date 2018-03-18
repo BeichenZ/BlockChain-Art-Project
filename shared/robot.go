@@ -24,8 +24,9 @@ type RobotStruct struct {
 	RobotListenConn   *rpc.Client
 	RobotNeighbours	  []Neighbour
 	RMap              Map
+	RHMap			  map[Coordinate]PointStruct
 	CurPath           Path
-	CurLocation       PointStruct // TODO need this? check
+	CurLocation       PointStruct // TODO why isn't type coordinate instead?
 	ReceivedTask      []string // change this later
 	JoiningSig   chan bool
 	BusySig      chan bool
@@ -170,15 +171,14 @@ func (r *RobotStruct) Explore() error {
 	for {
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
-			var newPath Path
-			if len(dpts) == 1 {
-				//TODO
-				newPath = CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
-			} else {
-				// send task to neighbours
-			}
 			if err != nil {
 				fmt.Println("error generating task")
+			}
+			var newPath Path
+			if len(dpts) == 1 {
+				newPath = CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
+			} else {
+				return CodeError("Explore() > 1 destination point returned when it should have no neighbours")
 			}
 			r.CurPath = newPath
 			// DISPLAY task with GPIO
@@ -189,39 +189,51 @@ func (r *RobotStruct) Explore() error {
 		select {
 		case <-r.FreeSpaceSig:
 			fmt.Println("FreeSpaceSig received")
-			r.UpdateMap(true)
-			r.SetCurrentLocation()
-			r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
+			r.UpdateMap(FreeSpace)
+			r.UpdateCurLocation()
+			r.UpdatePath()
+			// r.SetCurrentLocation()
+			// r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
 
 			// Display task with GPIO
 		case <-r.WallSig:
-			r.UpdateMap(false)
-			// Change wall path
+			r.UpdateMap(Wall)
 			r.ModifyPathForWall()
 			// Display task with GPIO
 		case <- r.RightWallSig:
-			// TODO
+			r.UpdateMap(RightWall)
 		case <- r.LeftWallSig:
-			// TODO
+			r.UpdateMap(LeftWall)
 		case <-r.JoiningSig:
-			// TODO do joining thing
+			fmt.Println("join sig received")
+			// TODO follow procedure to ensure all neighbours are valid to be in the network
 			newNeighbour := Neighbour{
 				Addr: "8080",
 				NID: 1,
 			}
 			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
-			tasks, _ := r.TaskCreation()
-			r.AllocateTaskToNeighbours(tasks)
-			fmt.Println("join sig received")
-		case <-r.BusySig:
-			// TODO do busy thing
-			// TODO merge map here?
-			// TODO exchange tasks
-			tasks, _ := r.TaskCreation()
-			r.AllocateTaskToNeighbours(tasks)
+		case <-r.BusySig: // TODO whole thing
 			fmt.Println("busy sig received")
-		case <-r.WaitingSig:
-			// TODO do waiting thing
+			// Exchange my map with neighbours
+			// Wait till maps from all neighbours are recevied
+			// Merge my map with neighbours
+			// Create tasks for current robot network
+			tasks, _ := r.TaskCreation()
+			// Allocate tasks to current robot network
+			r.AllocateTaskToNeighbours(tasks)
+			// Wait for tasks from each neighbour
+			// Respond to each task given by my fellow robots
+			// Agree with everyone in the network of who assigned the task
+			//		- YES --> set newTaskthreshold thing, create new path based on new task
+			//		- NO --> handle case ?
+			// set busysig off
+			// procede with new task
+		case <-r.WaitingSig: // TODO
+			// keep pinging the neighbour that is within it's communication radius
+				// if neighbour in busy state
+					// YES -> keep pinging
+					// NO -> - turn WaitingSig off
+					//		 - turn JoingingSig on
 		}
 	}
 }
@@ -243,63 +255,87 @@ func (r *RobotStruct) ModifyPathForWall() {
 func (r *RobotStruct) TookOneStep() {
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
 }
+// FN: Removes the just traversed coordinate (first element in the Path list)
+func (r *RobotStruct) UpdatePath() {
+	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
+}
 
 //update explored point in map:
 // pointkind: 1 - freespace
 // 			  2 - wall at current coordinate
 // 			  3 - right bumper wall
 // 			  4 - left bumper wall
-func (r *RobotStruct) UpdateMap(b Button) {
+func (r *RobotStruct) UpdateMap(b Button) error {
 
-	var exploredPoint PointStruct
+	var justExploredPoint PointStruct
 
 	switch b {
 		case FreeSpace: {
-			exploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X
-			exploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
-			exploredPoint.PointKind = true
-			exploredPoint.Traversed = true
-			exploredPoint.TraversedTime = time.Now().Unix()
+			justExploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X
+			justExploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+			justExploredPoint.PointKind = true
+			justExploredPoint.Traversed = true
+			justExploredPoint.TraversedTime = time.Now().Unix()
 
-		break
+			break
 	}
 		case Wall:{
-		break
+			justExploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X
+			justExploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+			justExploredPoint.PointKind = false
+			justExploredPoint.Traversed = true
+			justExploredPoint.TraversedTime = time.Now().Unix()
+
+			break
 }
 		case RightWall:{
-		break
+			justExploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X + 1
+			justExploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+			justExploredPoint.PointKind = false
+			justExploredPoint.Traversed = true
+			justExploredPoint.TraversedTime = time.Now().Unix()
+
+			break
 	}
 		case LeftWall:{
-		break
+			justExploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X - 1
+			justExploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+			justExploredPoint.PointKind = true
+			justExploredPoint.Traversed = true
+			justExploredPoint.TraversedTime = time.Now().Unix()
+
+			break
 }
 	default:
-		fmt.Println("UpdateMap () Found incorrect type of wall")
+		fmt.Println("UpdateMap () Found incorrect type of wall -- CODE INCORRECT")
+		return CodeError("UpdateMap () Found incorrect type of wall")
 
 }
 
-	newLocation := PointStruct{
-		Point: Coordinate{
-			X: r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X,
-			Y: r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y,
-		},
-		PointKind:     pointKind,
-		TraversedTime: time.Now().Unix(),
-		Traversed:     true,
-	}
-
-	exist, index := CheckExist(newLocation, r.RMap.ExploredPath)
+	exist, index := CheckExist(justExploredPoint, r.RMap.ExploredPath)
 
 	// Check if the current location has been traversed already
 	if exist {
 		oldcoor := &(r.RMap.ExploredPath[index])
-		oldcoor.Point.X = newLocation.Point.X
-		oldcoor.Point.Y = newLocation.Point.Y
-		oldcoor.TraversedTime = newLocation.TraversedTime
-		oldcoor.Traversed = newLocation.Traversed
-		oldcoor.PointKind = newLocation.PointKind
+		oldcoor.Point.X = justExploredPoint.Point.X
+		oldcoor.Point.Y = justExploredPoint.Point.Y
+		oldcoor.TraversedTime = justExploredPoint.TraversedTime
+		oldcoor.Traversed = justExploredPoint.Traversed
+		oldcoor.PointKind = justExploredPoint.PointKind
 	} else {
-		r.RMap.ExploredPath = append(r.RMap.ExploredPath, newLocation)
+		r.RMap.ExploredPath = append(r.RMap.ExploredPath, justExploredPoint)
 	}
+	// ****** ----------- MAP AS HASHMAP -------------------- **** //
+	// LINES 300 - 312
+	oldcoor, exists := r.RHMap[justExploredPoint.Point]
+	if exists {
+		oldcoor.TraversedTime = justExploredPoint.TraversedTime
+		oldcoor.Traversed = justExploredPoint.Traversed
+		oldcoor.PointKind = justExploredPoint.PointKind
+	}
+	// ****** ----------- MAP AS HASHMAP -------------------- **** //
+
+	return nil
 }
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
@@ -335,6 +371,9 @@ func (r *RobotStruct) GetMap() Map {
 
 func (r *RobotStruct) SetCurrentLocation() {
 	r.CurLocation = r.CurPath.ListOfPCoordinates[0]
+}
+func (r *RobotStruct) UpdateCurLocation() {
+
 }
 
 func (r *RobotStruct) WaitForEnoughTaskFromNeighbours() {

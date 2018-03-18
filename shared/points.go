@@ -24,6 +24,10 @@ const(
 	RightWall Button = 3
 	LeftWall Button = 4
 )
+var WEST = PointStruct{Coordinate{-1.0, 0.0}, false, 0, false}
+var EAST = PointStruct{Coordinate{1.0, 0.0}, false, 0, false}
+var NORTH = PointStruct{Coordinate{0.0, 1.0}, false, 0, false}
+var SOUTH = PointStruct{Coordinate{0.0, -1.0}, false, 0, false}
 
 // ----------------------------------------- FUNCTIONS ---------------------------------------------------------- //
 // FN: Finds magnitiude of the distance btwn two points

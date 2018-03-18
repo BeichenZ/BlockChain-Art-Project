@@ -186,3 +186,7 @@ func TestPathCreation(t *testing.T){
 
 // TODO: TEST
 // FindDestPoints() - All the destination points are unqie
+// UpdateMap() - error free case gets the right signal
+// UpdateMap() - error case
+// UpdateMap() - point is in the hash map already
+// UpdateMap() - point isn't in the hashmap
