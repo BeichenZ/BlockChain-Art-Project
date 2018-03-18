@@ -25,20 +25,21 @@ type RobotStruct struct {
 	RobotNeighbours	  []Neighbour
 	RMap              Map
 	CurPath           Path
-	CurLocation       PointStruct
+	CurLocation       PointStruct // TODO need this? check
 	ReceivedTask      []string // change this later
-	//CurrentStep        	Coordinate
 	JoiningSig   chan bool
 	BusySig      chan bool
 	WaitingSig   chan bool
 	FreeSpaceSig chan bool
 	WallSig      chan bool
+	RightWallSig chan bool
+	LeftWallSig  chan bool
 	WalkSig      chan bool
 	Logger       *govec.GoLog
 }
 
 type Robot interface {
-	SendMyMap(rID uint, rMap Map)
+	SendMyMap()
 	MergeMaps(neighbourMaps []Map) error
 	Explore() error //make a step base on the robat's current path
 	GetMap() Map
@@ -47,7 +48,8 @@ type Robot interface {
 
 var robotStruct RobotStruct
 
-func (r *RobotStruct) SendMyMap(rId uint, rMap Map) {
+// FN: this robot sends map and ID to its neighbours
+func (r *RobotStruct) SendMyMap() {
 	return
 }
 
@@ -58,8 +60,10 @@ func (r *RobotStruct) SendFreeSpaceSig() {
 
 //error is not nil when the task queue is empty
 // FN: Return list of destination points for each node in the network (one point for each node)
+//     This robots destination point is placed at the beginning
+//		TODO: comment : whats the error for?
 func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
-	//newTask := Path{}
+
 	xmin := r.FindMapExtrema(XMIN)
 	xmax := r.FindMapExtrema(XMAX)
 	ymin := r.FindMapExtrema(YMIN)
@@ -67,14 +71,12 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 
 	center := PointStruct{Point: Coordinate{float64((xmax - xmin) / 2), float64((ymax - ymin) / 2)}}
 
-	//DestNum := r.RobotNeighbourNum + 1
 	DestNum := len(r.RobotNeighbours) + 1
 
-	DestPoints := r.FindDestPoints(DestNum, center)
+	DestPoints := FindDestPoints(DestNum, center)
 
-	DestPointForMe := r.FindClosestDest(DestPoints)
 	// move DestpointForMe to beginning of list
-	//assuming  the destPoint in DestPoints is unique
+	DestPointForMe := r.FindClosestDest(DestPoints)
 
 	tempEle := DestPoints[0]
 	for idx, value := range DestPoints {
@@ -88,7 +90,7 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 	return DestPoints, nil
 
 }
-
+// TODO: comment: yo why isnt this a switch statement?
 func (r *RobotStruct) FindMapExtrema(e string) float64 {
 
 	if e == XMAX {
@@ -125,7 +127,7 @@ func (r *RobotStruct) FindMapExtrema(e string) float64 {
 		return yMin
 	}
 }
-
+// FN: Find destination point that will require the least amound of energy to go to
 func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
 	dist := math.MaxFloat64
 	var rdp PointStruct
@@ -138,54 +140,6 @@ func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
 	}
 
 	return rdp
-}
-
-func (r *RobotStruct) CreatePathBetweenTwoPoints(sp PointStruct, dp PointStruct) Path {
-	var myPath []PointStruct
-	delX := Round(dp.Point.X - sp.Point.X)
-	delY := Round(dp.Point.Y - sp.Point.Y)
-	//iteration := int(math.Abs(delX) + math.Abs(delY))
-
-	//create the path in X direction
-	for i := 0; i < int(math.Abs(delX)); i++ {
-		if delX > 0 {
-			myPath = append(myPath, PointStruct{Point: Coordinate{1, 0}})
-		} else if delX < 0 {
-			myPath = append(myPath, PointStruct{Point: Coordinate{-1, 0}})
-		} else {
-			//do nonthing since the delX is 0
-		}
-	}
-
-	//create path in Y direction
-	for i := 0; i < int(math.Abs(delY)); i++ {
-		if delY > 0 {
-			myPath = append(myPath, PointStruct{Point: Coordinate{0, 1}})
-		} else if delY < 0 {
-			myPath = append(myPath, PointStruct{Point: Coordinate{0, -1}})
-		} else {
-			//do nonthing since the delY is 0
-		}
-	}
-
-	return Path{myPath}
-}
-
-//return the list of dest points
-func (r *RobotStruct) FindDestPoints(desNum int, center PointStruct) []PointStruct {
-
-	destPointsToReturn := []PointStruct{}
-
-	for i := 0; i < desNum; i++ {
-		theta := float64(i) * 2 * math.Pi / float64(desNum)
-		delPoint := PointStruct{Point: Coordinate{float64(EXRADIUS * math.Cos(theta)), float64(EXRADIUS * math.Sin(theta))}}
-		destPoint := PointStruct{}
-		destPoint.Point.X = center.Point.X + delPoint.Point.X
-		destPoint.Point.Y = center.Point.Y + delPoint.Point.Y
-		destPointsToReturn = append(destPointsToReturn, destPoint)
-	}
-
-	return destPointsToReturn
 }
 
 func (r *RobotStruct) RespondToButtons() error {
@@ -211,7 +165,7 @@ func (r *RobotStruct) RespondToButtons() error {
 		}
 	}
 }
-
+// TODOOOOO
 func (r *RobotStruct) Explore() error {
 	for {
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
@@ -219,7 +173,7 @@ func (r *RobotStruct) Explore() error {
 			var newPath Path
 			if len(dpts) == 1 {
 				//TODO
-				newPath = r.CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
+				newPath = CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
 			} else {
 				// send task to neighbours
 			}
@@ -245,6 +199,10 @@ func (r *RobotStruct) Explore() error {
 			// Change wall path
 			r.ModifyPathForWall()
 			// Display task with GPIO
+		case <- r.RightWallSig:
+			// TODO
+		case <- r.LeftWallSig:
+			// TODO
 		case <-r.JoiningSig:
 			// TODO do joining thing
 			newNeighbour := Neighbour{
@@ -261,7 +219,6 @@ func (r *RobotStruct) Explore() error {
 			// TODO exchange tasks
 			tasks, _ := r.TaskCreation()
 			r.AllocateTaskToNeighbours(tasks)
-
 			fmt.Println("busy sig received")
 		case <-r.WaitingSig:
 			// TODO do waiting thing
@@ -287,8 +244,38 @@ func (r *RobotStruct) TookOneStep() {
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
 }
 
-//update pointkind: true => freespace, false  => wall
-func (r *RobotStruct) UpdateMap(pointKind bool) {
+//update explored point in map:
+// pointkind: 1 - freespace
+// 			  2 - wall at current coordinate
+// 			  3 - right bumper wall
+// 			  4 - left bumper wall
+func (r *RobotStruct) UpdateMap(b Button) {
+
+	var exploredPoint PointStruct
+
+	switch b {
+		case FreeSpace: {
+			exploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X
+			exploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+			exploredPoint.PointKind = true
+			exploredPoint.Traversed = true
+			exploredPoint.TraversedTime = time.Now().Unix()
+
+		break
+	}
+		case Wall:{
+		break
+}
+		case RightWall:{
+		break
+	}
+		case LeftWall:{
+		break
+}
+	default:
+		fmt.Println("UpdateMap () Found incorrect type of wall")
+
+}
 
 	newLocation := PointStruct{
 		Point: Coordinate{
@@ -302,6 +289,7 @@ func (r *RobotStruct) UpdateMap(pointKind bool) {
 
 	exist, index := CheckExist(newLocation, r.RMap.ExploredPath)
 
+	// Check if the current location has been traversed already
 	if exist {
 		oldcoor := &(r.RMap.ExploredPath[index])
 		oldcoor.Point.X = newLocation.Point.X
@@ -405,6 +393,8 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
 		WaitingSig:        make(chan bool),
 		FreeSpaceSig:      make(chan bool),
 		WallSig:           make(chan bool),
+		RightWallSig:      make(chan bool),
+		LeftWallSig:	   make(chan bool),
 		WalkSig:           make(chan bool),
 		Logger:            logger,
 	}
