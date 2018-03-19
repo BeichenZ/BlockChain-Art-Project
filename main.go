@@ -10,6 +10,7 @@ import (
 	"net/rpc"
 	"os"
 	"strconv"
+	"time"
 
 	"./shared"
 	"github.com/DistributedClocks/GoVector/govec"
@@ -34,7 +35,33 @@ func main() {
 		ips = append(ips, ip.String())
 	}
 
-	fmt.Println(ips[1 : len(ips)-1])
+	// fmt.Println(ips[1 : len(ips)-1])
+	ips = ips[:5]
+	// fmt.Println(ips)
+	// for _, ip := range ips {
+	// 	out, _ := exec.Command("ping", "-c 2", ip).Output()
+	// 	fmt.Println(string(out))
+	// 	if strings.Contains(string(out), "timeout") {
+	// 		fmt.Println("TANGO DOWN")
+	// 	} else {
+	// 		fmt.Println("IT'S ALIVEEE")
+	// 	}
+	// }
+
+	timeout := time.Duration(200 * time.Millisecond)
+	for _, ip := range ips {
+		_, err := net.DialTimeout("tcp", ip+":8000", timeout)
+		if err != nil {
+			log.Println("Site unreachable, error: ", err)
+		}
+	// }
+
+	// _, err := net.DialTimeout("tcp", "169.254.193.244:8080", timeout)
+	// if err != nil {
+	// 	log.Println("Site unreachable, error: ", err)
+	// } else {
+	// 	log.Println("asdf")
+	// }
 	broad, _ := lastAddr(GetLocalIP())
 	// pinger, err := ping.NewPinger(broad.String())
 	// if err != nil {
