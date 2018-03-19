@@ -22,7 +22,28 @@ func main() {
 	gob.Register(&shared.TaskPayload{})
 
 	// myIPAddr := GetLocalIP().String()
+	// size, _ := net.ParseIP(GetLocalIP().String()).DefaultMask().Size()
+	fmt.Println(GetLocalIP().String())
+	fmt.Println("--------------------")
+	ipv4Addr, ipv4Net, _ := net.ParseCIDR(GetLocalIP().String())
+	fmt.Println(ipv4Addr)
+	fmt.Println(ipv4Net)
+	fmt.Println("----------------------")
+	var ips []string
+	for ip := ipv4Addr.Mask(ipv4Net.Mask); ipv4Net.Contains(ip); inc(ip) {
+		ips = append(ips, ip.String())
+	}
+
+	fmt.Println(ips[1 : len(ips)-1])
 	broad, _ := lastAddr(GetLocalIP())
+	// pinger, err := ping.NewPinger(broad.String())
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// pinger.Count = 3
+	// pinger.Run()                 // blocks until finished
+	// stats := pinger.Statistics() // get send/receive/rtt stats
+	// fmt.Println(stats)
 	fmt.Println(broad)
 	// ones, _ := net.ParseIP(myIPAddr).DefaultMask().Size()
 	// sub := ipsubnet.SubnetCalculator(myIPAddr, ones)
@@ -89,4 +110,12 @@ func lastAddr(n *net.IPNet) (net.IP, error) { // works when the n is a prefix, o
 	ip := make(net.IP, len(n.IP.To4()))
 	binary.BigEndian.PutUint32(ip, binary.BigEndian.Uint32(n.IP.To4())|^binary.BigEndian.Uint32(net.IP(n.Mask).To4()))
 	return ip, nil
+}
+func inc(ip net.IP) {
+	for j := len(ip) - 1; j >= 0; j-- {
+		ip[j]++
+		if ip[j] > 0 {
+			break
+		}
+	}
 }
