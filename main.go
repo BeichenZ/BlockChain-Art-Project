@@ -37,16 +37,6 @@ func main() {
 
 	// fmt.Println(ips[1 : len(ips)-1])
 	ips = ips[:5]
-	// fmt.Println(ips)
-	// for _, ip := range ips {
-	// 	out, _ := exec.Command("ping", "-c 2", ip).Output()
-	// 	fmt.Println(string(out))
-	// 	if strings.Contains(string(out), "timeout") {
-	// 		fmt.Println("TANGO DOWN")
-	// 	} else {
-	// 		fmt.Println("IT'S ALIVEEE")
-	// 	}
-	// }
 
 	timeout := time.Duration(200 * time.Millisecond)
 	for _, ip := range ips {
