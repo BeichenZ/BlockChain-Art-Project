@@ -36,14 +36,6 @@ func main () {
 	pinEast.Output()
 	pinWest.Output()
 
-	//// TESTING //
-	//// Toggle pin 20 times
-	//for x := 0; x < 20; x++ {
-	//	pinNorth.Toggle()
-	//	time.Sleep(time.Second / 5)
-	//}
-	//// TESTING //
-
 	path := [...]shared.PointStruct{shared.SOUTH, shared.NORTH, shared.WEST, shared.EAST, shared.SOUTH, shared.NORTH, shared.WEST, shared.EAST}
 
 	for _,dir := range path{
