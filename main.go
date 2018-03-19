@@ -35,16 +35,16 @@ func main() {
 		ips = append(ips, ip.String())
 	}
 
-	// fmt.Println(ips[1 : len(ips)-1])
-	ips = ips[:5]
+	fmt.Println(ips[1 : len(ips)-1])
+	ips = ips[1 : len(ips)-1]
 
-	timeout := time.Duration(200 * time.Millisecond)
+	timeout := time.Duration(10 * time.Millisecond)
 	for _, ip := range ips {
-		_, err := net.DialTimeout("tcp", ip+":8000", timeout)
+		_, err := net.DialTimeout("tcp", ip+":8080", timeout)
 		if err != nil {
 			log.Println("Site unreachable, error: ", err)
 		}
-	// }
+	}
 
 	// _, err := net.DialTimeout("tcp", "169.254.193.244:8080", timeout)
 	// if err != nil {
