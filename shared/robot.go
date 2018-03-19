@@ -24,7 +24,6 @@ type RobotStruct struct {
 	RobotListenConn   *rpc.Client
 	RobotNeighbours	  []Neighbour
 	RMap              Map
-	RHMap			  map[Coordinate]PointStruct
 	CurPath           Path
 	CurLocation       PointStruct // TODO why isn't type coordinate instead?
 	ReceivedTask      []string // change this later
@@ -312,28 +311,12 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 
 }
 
-	exist, index := CheckExist(justExploredPoint, r.RMap.ExploredPath)
-
-	// Check if the current location has been traversed already
-	if exist {
-		oldcoor := &(r.RMap.ExploredPath[index])
-		oldcoor.Point.X = justExploredPoint.Point.X
-		oldcoor.Point.Y = justExploredPoint.Point.Y
-		oldcoor.TraversedTime = justExploredPoint.TraversedTime
-		oldcoor.Traversed = justExploredPoint.Traversed
-		oldcoor.PointKind = justExploredPoint.PointKind
-	} else {
-		r.RMap.ExploredPath = append(r.RMap.ExploredPath, justExploredPoint)
-	}
-	// ****** ----------- MAP AS HASHMAP -------------------- **** //
-	// LINES 300 - 312
-	oldcoor, exists := r.RHMap[justExploredPoint.Point]
+	oldcoor, exists := r.RMap.ExploredPath[justExploredPoint.Point]
 	if exists {
 		oldcoor.TraversedTime = justExploredPoint.TraversedTime
 		oldcoor.Traversed = justExploredPoint.Traversed
 		oldcoor.PointKind = justExploredPoint.PointKind
 	}
-	// ****** ----------- MAP AS HASHMAP -------------------- **** //
 
 	return nil
 }
