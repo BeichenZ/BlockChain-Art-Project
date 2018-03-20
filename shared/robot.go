@@ -25,7 +25,8 @@ type RobotStruct struct {
 	RobotNeighbours	  []Neighbour
 	RMap              Map
 	CurPath           Path
-	CurLocation       PointStruct // TODO why isn't type coordinate instead?
+	// CurPath        []Coordinate // TODO: yo micheal here uncomment, n delete the whole struct
+	CurLocation       Coordinate // TODO why isn't type coordinate instead?
 	ReceivedTask      []string // change this later
 	JoiningSig   chan bool
 	BusySig      chan bool
@@ -132,7 +133,7 @@ func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
 	dist := math.MaxFloat64
 	var rdp PointStruct
 	for _, dp := range lodp {
-		del := DistBtwnTwoPoints(r.CurLocation, dp)
+		del := DistBtwnTwoPoints(dp, r.CurLocation)
 		if del < dist {
 			dist = del
 			rdp = dp

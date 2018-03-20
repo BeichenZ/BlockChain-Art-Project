@@ -84,7 +84,11 @@ func FindDestPoints(desNumForRobots int, center Coordinate) []PointStruct {
 
 	return destPointsToReturn
 }
-// TODO
-func CompareCoordinateTimeStamp(t1 int, t2 int ) bool {
-	return false;
+// FN: checks if the first timestamp is greater than the second
+// 		returns an error if timestamp is equal
+//		Cause : raspberry pi clock error, code
+// TODO: how to handle this error
+func CompareCoordinateTimeStamp(t1 int, t2 int ) (bool, error) {
+	if t1 == t2 {return false, SameTimeStampError("CompareCoordinateTimeStamp() ")}
+	return t1 > t2, nil
 }

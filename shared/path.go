@@ -1,7 +1,7 @@
 package shared
 
 import "math"
-// TODO - comment: we should get rid of this struct (seems redundant with our new def)
+// TODO - comment: HERE ::: delete this struct
 type Path struct {
 	ListOfPCoordinates []PointStruct
 }
