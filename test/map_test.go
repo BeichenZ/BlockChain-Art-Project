@@ -214,3 +214,4 @@ func TestFindDestPoints(t *testing.T) {
 // UpdateMap() - error case
 // UpdateMap() - point is in the hash map already
 // UpdateMap() - point isn't in the hashmap
+// UpdateCurentLocation()

@@ -21,6 +21,7 @@ type RobotStruct struct {
 	CurrTask          TaskPayload
 	RobotID           int // hardcoded
 	RobotIP           string
+	RobotEnergy		  int
 	RobotListenConn   *rpc.Client
 	RobotNeighbours	  []Neighbour
 	RMap              Map
@@ -220,9 +221,10 @@ func (r *RobotStruct) Explore() error {
 			// Create tasks for current robot network
 			tasks, _ := r.TaskCreation()
 			// Allocate tasks to current robot network
-			r.AllocateTaskToNeighbours(tasks)
+			r.TaskAllocationToNeighbours(tasks)
 			// Wait for tasks from each neighbour
 			// Respond to each task given by my fellow robots
+			//       r.decideTaskTodo()
 			// Agree with everyone in the network of who assigned the task
 			//		- YES --> set newTaskthreshold thing, create new path based on new task
 			//		- NO --> handle case ?
@@ -380,12 +382,14 @@ func (r *RobotStruct) MergeMaps(neighbourMaps []Map) error {
 func (r *RobotStruct) GetMap() Map {
 	return r.RMap
 }
-
+// TODO comment: we dont need this
 func (r *RobotStruct) SetCurrentLocation() {
 	r.CurLocation = r.CurPath.ListOfPCoordinates[0].Point
 }
+// TODO comment: update this when path type is updated
 func (r *RobotStruct) UpdateCurLocation() {
-
+	r.CurLocation.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X
+	r.CurLocation.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
 }
 
 func (r *RobotStruct) WaitForEnoughTaskFromNeighbours() {
@@ -401,7 +405,7 @@ WaitingForEnoughTask:
 	}
 }
 
-func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
+func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 	ldpn := ldp[1:]
 	rand.Seed(time.Now().UnixNano())
 	for _, robotNeighbour := range r.RobotNeighbours {
@@ -416,7 +420,7 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 			DestPoint: 		  dpn,
 			SendlogMessage:   finalsend,
 		}
-		fmt.Println("AllocateTaskToNeighbours() ")
+		fmt.Println("TaskAllocateToNeighbours() ")
 		fmt.Println(task)
 		// TESTING UNCOMMENT
 		neighbourClient, err := rpc.Dial("tcp", robotNeighbour.Addr)
@@ -432,6 +436,11 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 		}
 		// TESTING UNCOMMENT
 	}
+}
+// TODO
+// Decide the appropriate task that the neighbours assigned it and send response to neighbours
+func (r *RobotStruct) decideTaskTodo(){
+	// call ReceiveTaskDecsionResponse() here
 }
 
 func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
