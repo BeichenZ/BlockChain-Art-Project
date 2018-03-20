@@ -31,8 +31,8 @@ var SOUTH = PointStruct{Coordinate{0.0, -1.0}, false, 0, false}
 
 // ----------------------------------------- FUNCTIONS ---------------------------------------------------------- //
 // FN: Finds magnitiude of the distance btwn two points
-func DistBtwnTwoPoints(dp PointStruct, cp Coordinate) float64 {
-	d := math.Sqrt(math.Pow(dp.Point.X-cp.X, 2) + math.Pow(dp.Point.Y-cp.Y, 2))
+func DistBtwnTwoPoints(dp Coordinate, cp Coordinate) float64 {
+	d := math.Sqrt(math.Pow(dp.X-cp.X, 2) + math.Pow(dp.Y-cp.Y, 2))
 	return d
 }
 
