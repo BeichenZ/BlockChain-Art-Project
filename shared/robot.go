@@ -323,27 +323,55 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
 func (r *RobotStruct) MergeMaps(neighbourMaps []Map) error {
-	newMap := r.RMap
+	refToOriginalMap := r.RMap
 
-	for _, robotMap := range neighbourMaps {
-		for _, coordinate := range robotMap.ExploredPath {
-			if len(newMap.ExploredPath) == 0 {
-				r.RMap.ExploredPath = append(r.RMap.ExploredPath, coordinate)
-			} else {
+	for _, neighbourRobotMap := range neighbourMaps {
 
-				for _, newCor := range newMap.ExploredPath {
-					if (newCor.Point.X == coordinate.Point.X) && (newCor.Point.Y == coordinate.Point.Y) {
-						if coordinate.TraversedTime > newCor.TraversedTime {
-							newCor.Point.X = coordinate.Point.X
-							newCor.Point.Y = coordinate.Point.Y
-						}
-					} else {
-						r.RMap.ExploredPath = append(r.RMap.ExploredPath, coordinate)
-						r.RMap.FrameOfRef = r.RobotID
-					}
+		if len(refToOriginalMap.ExploredPath) == 0 {
+			r.RMap.ExploredPath = neighbourRobotMap.ExploredPath
+		} else {
+			neighbourExploredPath := neighbourRobotMap.ExploredPath
+
+			for neighbourCoordinate, neighbourPointInfo := range neighbourExploredPath {
+				if currentPointInfo, ok := r.RMap.ExploredPath[neighbourCoordinate]; ok &&
+					currentPointInfo.TraversedTime < neighbourPointInfo.TraversedTime  {
+
+					r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointInfo
+					continue
 				}
+				r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointInfo
 			}
+
 		}
+
+
+
+		//for neighbourCoordinate, neighbourPointStruct := range neighbourRobotMap.ExploredPath {
+		//	if len(refToOriginalMap.ExploredPath) == 0 {
+		//		r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointStruct
+		//	} else {
+		//		for origCor, origPointStruct  := range refToOriginalMap.ExploredPath {
+		//			if (origCor.X == neighbourCoordinate.X) && (origCor.Y == neighbourCoordinate.Y) {
+		//
+		//				var updatePointStruct PointStruct
+		//				var updatedCoordinate Coordinate
+		//
+		//				if neighbourPointStruct.TraversedTime > origPointStruct.TraversedTime {
+		//					updatePointStruct = neighbourPointStruct
+		//					updatedCoordinate = neighbourCoordinate
+		//				} else {
+		//					updatePointStruct = origPointStruct
+		//					updatedCoordinate = origCor
+		//				}
+		//
+		//				r.RMap.ExploredPath[updatedCoordinate] = updatePointStruct
+		//			} else {
+		//				r.RMap.ExploredPath[newCor] = newPointStruct
+		//				r.RMap.FrameOfRef = r.RobotID
+		//			}
+		//		}
+		//	}
+		//}
 	}
 	return nil
 }

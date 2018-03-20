@@ -17,9 +17,10 @@ var SOUTH = shared.PointStruct{shared.Coordinate{0.0, -1.0}, false, 0, false}
 // xMin=yMin=0, xMax=yMax=9
 func RandomMapGenerator() shared.Map{
 	var sampleMap = shared.Map{}
+	sampleMap.ExploredPath = make(map[shared.Coordinate] shared.PointStruct)
 	for j := 0; j< NUMOFPATHTOGENERATE; j++{
 		myPoint := shared.Coordinate{float64(j), float64(j)}
-		sampleMap.ExploredPath = append(sampleMap.ExploredPath, shared.PointStruct{myPoint, false, 0, false})
+		sampleMap.ExploredPath[myPoint] = shared.PointStruct{myPoint, false, 0, false}
 	}
 
 	return sampleMap
@@ -38,17 +39,19 @@ func TestMapMerge_withNonEmptyMap(t *testing.T) {
 
 	fmt.Printf(GetStartTestTitle("MapMerge_withNonEmptyMap"))
 
-
 	var sampleMap = []shared.Map{}
+
+	exploredPath := make(map[shared.Coordinate]shared.PointStruct)
+	coordinate := shared.Coordinate{float64(1), float64(2)}
+	exploredPath[coordinate] = shared.PointStruct{
+		shared.Coordinate{float64(1), float64(2)},
+		false,
+		0,
+		false,
+	}
+
 	newMap := shared.Map{
-		ExploredPath: []shared.PointStruct{
-			shared.PointStruct{
-				shared.Coordinate{float64(1), float64(2)},
-				false,
-				0,
-				false,
-			},
-		},
+		ExploredPath:exploredPath,
 		FrameOfRef: 2,
 	}
 
@@ -57,9 +60,10 @@ func TestMapMerge_withNonEmptyMap(t *testing.T) {
 	for i:= 0; i< NEIGHBOURS ; i++{
 		robId := i
 		myMap := new(shared.Map)
+		myMap.ExploredPath = make(map[shared.Coordinate] shared.PointStruct)
 		for j := 10; j< 10 + NEIGHBOURPATH; j++{
 			myPoint := shared.Coordinate{float64(i), float64(j)}
-			myMap.ExploredPath = append(myMap.ExploredPath, shared.PointStruct{myPoint, false, 0, false})
+			myMap.ExploredPath[myPoint] = shared.PointStruct{myPoint, false, 0, false}
 		}
 		myMap.FrameOfRef = robId
 		sampleMap = append(sampleMap, *myMap)
@@ -84,9 +88,10 @@ func TestMapMerge_withEmptyMap(t *testing.T) {
 	for i:= 0; i< NEIGHBOURS ; i++{
 		robId := i
 		myMap := new(shared.Map)
-		for j := 10; j< 10 + NEIGHBOURPATH; j++{
+		myMap.ExploredPath = make(map[shared.Coordinate]shared.PointStruct)
+		for j := 10; j< 10 + NEIGHBOURPATH; j++ {
 			myPoint := shared.Coordinate{float64(i), float64(j)}
-			myMap.ExploredPath = append(myMap.ExploredPath, shared.PointStruct{myPoint, false, 0, false})
+			myMap.ExploredPath[myPoint] = shared.PointStruct{myPoint, false, 0, false}
 		}
 		myMap.FrameOfRef = robId
 		sampleMap = append(sampleMap, *myMap)
