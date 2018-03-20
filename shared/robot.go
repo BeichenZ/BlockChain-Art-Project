@@ -69,7 +69,7 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 	ymin := r.FindMapExtrema(YMIN)
 	ymax := r.FindMapExtrema(YMAX)
 
-	center := PointStruct{Point: Coordinate{float64((xmax - xmin) / 2), float64((ymax - ymin) / 2)}}
+	center := Coordinate{float64((xmax - xmin) / 2), float64((ymax - ymin) / 2)}
 
 	DestNum := len(r.RobotNeighbours) + 1
 

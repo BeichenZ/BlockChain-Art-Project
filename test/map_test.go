@@ -4,6 +4,7 @@ import (
 	"testing"
 	"../shared"
 	"fmt"
+	"math"
 )
 const NEIGHBOURS = 1
 const NEIGHBOURPATH = 2
@@ -190,7 +191,25 @@ func TestPathCreation(t *testing.T){
 //}
 
 // TODO: TEST
-// FindDestPoints() - All the destination points are unqie
+
+func TestFindDestPoints(t *testing.T) {
+
+	center := shared.Coordinate{0,0}
+	listOfPoints := shared.FindDestPoints(5, center)
+
+
+	for _, point := range listOfPoints {
+
+		sqrtR := math.Sqrt(point.Point.X*point.Point.X + point.Point.Y*point.Point.Y)
+
+		if sqrtR != shared.EXRADIUS {
+			t.FailNow()
+		}
+	}
+}
+
+
+// FindDestPoints() - All the destination points are unique
 // UpdateMap() - error free case gets the right signal
 // UpdateMap() - error case
 // UpdateMap() - point is in the hash map already

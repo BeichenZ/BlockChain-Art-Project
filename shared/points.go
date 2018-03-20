@@ -66,16 +66,19 @@ func removeElFromlist(p PointStruct, listp *[]PointStruct) {
 	}
 }
 //FN: Return list of destNum destination points EXRADIUS away from the given center
-func FindDestPoints(desNum int, center PointStruct) []PointStruct {
+
+// desNumForRobots: Neighbours including yourself
+// center
+func FindDestPoints(desNumForRobots int, center Coordinate) []PointStruct {
 
 	destPointsToReturn := []PointStruct{}
 
-	for i := 0; i < desNum; i++ {
-		theta := float64(i) * 2 * math.Pi / float64(desNum)
-		delPoint := PointStruct{Point: Coordinate{float64(EXRADIUS * math.Cos(theta)), float64(EXRADIUS * math.Sin(theta))}}
+	for i := 0; i < desNumForRobots; i++ {
+		theta := float64(i) * 2 * math.Pi / float64(desNumForRobots)
+		delPoint := Coordinate{float64(EXRADIUS * math.Cos(theta)), float64(EXRADIUS * math.Sin(theta))}
 		destPoint := PointStruct{}
-		destPoint.Point.X = center.Point.X + delPoint.Point.X
-		destPoint.Point.Y = center.Point.Y + delPoint.Point.Y
+		destPoint.Point.X = center.X + delPoint.X
+		destPoint.Point.Y = center.Y + delPoint.Y
 		destPointsToReturn = append(destPointsToReturn, destPoint)
 	}
 
