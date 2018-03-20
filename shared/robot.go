@@ -176,7 +176,7 @@ func (r *RobotStruct) Explore() error {
 			}
 			var newPath Path
 			if len(dpts) == 1 {
-				newPath = CreatePathBetweenTwoPoints(r.CurLocation, dpts[0])
+				newPath = CreatePathBetweenTwoPoints(r.CurLocation, dpts[0].Point)
 			} else {
 				return CodeError("Explore() > 1 destination point returned when it should have no neighbours")
 			}
@@ -271,8 +271,8 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 
 	switch b {
 		case FreeSpace: {
-			justExploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X
-			justExploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+			justExploredPoint.Point.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X
+			justExploredPoint.Point.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
 			justExploredPoint.PointKind = true
 			justExploredPoint.Traversed = true
 			justExploredPoint.TraversedTime = time.Now().Unix()
@@ -280,8 +280,8 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 			break
 	}
 		case Wall:{
-			justExploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X
-			justExploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+			justExploredPoint.Point.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X
+			justExploredPoint.Point.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
 			justExploredPoint.PointKind = false
 			justExploredPoint.Traversed = true
 			justExploredPoint.TraversedTime = time.Now().Unix()
@@ -289,8 +289,8 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 			break
 }
 		case RightWall:{
-			justExploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X + 1
-			justExploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+			justExploredPoint.Point.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X + 1
+			justExploredPoint.Point.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
 			justExploredPoint.PointKind = false
 			justExploredPoint.Traversed = true
 			justExploredPoint.TraversedTime = time.Now().Unix()
@@ -298,8 +298,8 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 			break
 	}
 		case LeftWall:{
-			justExploredPoint.Point.X = r.CurLocation.Point.X + r.CurPath.ListOfPCoordinates[0].Point.X - 1
-			justExploredPoint.Point.Y = r.CurLocation.Point.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+			justExploredPoint.Point.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X - 1
+			justExploredPoint.Point.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
 			justExploredPoint.PointKind = true
 			justExploredPoint.Traversed = true
 			justExploredPoint.TraversedTime = time.Now().Unix()
@@ -382,7 +382,7 @@ func (r *RobotStruct) GetMap() Map {
 }
 
 func (r *RobotStruct) SetCurrentLocation() {
-	r.CurLocation = r.CurPath.ListOfPCoordinates[0]
+	r.CurLocation = r.CurPath.ListOfPCoordinates[0].Point
 }
 func (r *RobotStruct) UpdateCurLocation() {
 

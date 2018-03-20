@@ -151,12 +151,12 @@ func TestTaskCreation(t *testing.T){
 	robotStruct.RMap = RandomMapGenerator()
 	rn := shared.Neighbour{}
 	robotStruct.RobotNeighbours = append(robotStruct.RobotNeighbours, rn, rn , rn)
-	robotStruct.CurLocation = shared.PointStruct{Point:shared.Coordinate{float64(3.0), float64(4.0)}}
+	robotStruct.CurLocation = shared.Coordinate{float64(3.0), float64(4.0)}
 
 	task, _ :=robotStruct.TaskCreation()
 	fmt.Printf("The created task is %v\n", task)
 
-	path := shared.CreatePathBetweenTwoPoints(robotStruct.CurLocation, task[0])
+	path := shared.CreatePathBetweenTwoPoints(robotStruct.CurLocation, task[0].Point)
 	fmt.Println("The create path is ", path)
 	fmt.Println("The length of the path is ", len(path.ListOfPCoordinates))
 
@@ -166,8 +166,8 @@ func TestTaskCreation(t *testing.T){
 func TestPathCreation(t *testing.T){
 	fmt.Println(GetStartTestTitle("CreatePathBetweenTwoPoints"))
 
-	p1 :=shared.PointStruct{Point:shared.Coordinate{0.0, 0.0}}
-	p2 :=shared.PointStruct{Point:shared.Coordinate{8.0, 8.0}}
+	p1 := shared.Coordinate{0.0, 0.0}
+	p2 := shared.Coordinate{8.0, 8.0}
 	// robotStruct := shared.RobotStruct{}
 	path :=shared.CreatePathBetweenTwoPoints(p1, p2)
 
@@ -200,9 +200,9 @@ func TestFindDestPoints(t *testing.T) {
 
 	for _, point := range listOfPoints {
 
-		sqrtR := math.Sqrt(point.Point.X*point.Point.X + point.Point.Y*point.Point.Y)
-
-		if sqrtR != shared.EXRADIUS {
+		calculatedR := math.Sqrt(point.Point.X*point.Point.X + point.Point.Y*point.Point.Y)
+		if math.Abs(calculatedR - shared.EXRADIUS) > 0.01 {
+			fmt.Println(math.Abs(calculatedR - shared.EXRADIUS))
 			t.FailNow()
 		}
 	}

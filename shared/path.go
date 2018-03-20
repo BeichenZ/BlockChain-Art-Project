@@ -7,10 +7,10 @@ type Path struct {
 }
 
 // ----------------------------------------- FUNCTIONS ---------------------------------------------------------- //
-func CreatePathBetweenTwoPoints(sp PointStruct, dp PointStruct) Path {
+func CreatePathBetweenTwoPoints(sp Coordinate, dp Coordinate) Path {
 	var myPath []PointStruct
-	delX := Round(dp.Point.X - sp.Point.X)
-	delY := Round(dp.Point.Y - sp.Point.Y)
+	delX := Round(dp.X - sp.X)
+	delY := Round(dp.Y - sp.Y)
 	//iteration := int(math.Abs(delX) + math.Abs(delY))
 
 	//create the path in X direction
