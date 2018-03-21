@@ -67,8 +67,11 @@ func main() {
 	fmt.Println(ips[1 : len(ips)-1])
 	ips = ips[1 : len(ips)-2]
 
-	timeout := time.Duration(10 * time.Millisecond)
+	timeout := time.Duration(100 * time.Millisecond)
 	for _, ip := range ips {
+		if ip == ipv4Addr.String() {
+			continue
+		}
 		_, err := net.DialTimeout("tcp", ip+":5000", timeout)
 		if err == nil {
 			log.Println("Able to locate neighbour")
