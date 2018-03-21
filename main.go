@@ -72,18 +72,17 @@ func main() {
 		if ip == ipv4Addr.String() {
 			continue
 		}
-		_, err := net.DialTimeout("tcp", ip+":5000", timeout)
+		neighbourIPAddr := ""
+		client, err := rpc.Dial("tcp", ip+":5000")
+		if err != nil {
+			fmt.Println(err)
+		}
+		err := client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
 		if err == nil {
 			log.Println("Able to locate neighbour")
 			// Start registeration protocol
 			robot.PossibleNeighbours = append(robot.PossibleNeighbours, ip+":5000")
 			fmt.Println(robot.PossibleNeighbours)
-			neighbourIPAddr := ""
-			client, err := rpc.Dial("tcp", ip+":5000")
-			if err != nil {
-				fmt.Println(err)
-			}
-			client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
 		}
 	}
 
