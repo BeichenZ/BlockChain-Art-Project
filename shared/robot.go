@@ -400,8 +400,10 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 
 func (r *RobotStruct) CallNeighbours() {
 	for {
-		for i, _ := range r.PossibleNeighbours.List() {
-			fmt.Println(i)
+		for _, possibleNeighbour := range r.PossibleNeighbours.List() {
+			client, err := rpc.Dial("tcp", possibleNeighbour.(string))
+			fmt.Println(client)
+			fmt.Println(err)
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
