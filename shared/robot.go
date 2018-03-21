@@ -31,7 +31,7 @@ type RobotStruct struct {
 	CurLocation        PointStruct
 	ReceivedTask       []string // change this later
 	//CurrentStep        	Coordinate
-	JoiningSig   chan bool
+	JoiningSig   chan string
 	BusySig      chan bool
 	WaitingSig   chan bool
 	FreeSpaceSig chan bool
@@ -202,7 +202,7 @@ func (r *RobotStruct) RespondToButtons() error {
 		}
 		command := string(signal)
 		if command == "j" {
-			r.JoiningSig <- true
+			r.JoiningSig <- "random"
 		} else if command == "b" {
 			r.BusySig <- true
 		} else if command == "w" {
@@ -248,10 +248,10 @@ func (r *RobotStruct) Explore() error {
 			// Change wall path
 			r.ModifyPathForWall()
 			// Display task with GPIO
-		case <-r.JoiningSig:
+		case neighbourAddr := <-r.JoiningSig:
 			// TODO do joining thing
 			newNeighbour := Neighbour{
-				Addr: "8080",
+				Addr: neighbourAddr,
 				NID:  1,
 			}
 			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
@@ -415,7 +415,7 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
 		RobotID:            rID,
 		RobotNeighbours:    []Neighbour{},
 		RMap:               initMap,
-		JoiningSig:         make(chan bool),
+		JoiningSig:         make(chan string),
 		BusySig:            make(chan bool),
 		WaitingSig:         make(chan bool),
 		FreeSpaceSig:       make(chan bool),
