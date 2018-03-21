@@ -414,8 +414,16 @@ WaitingForEnoughTask:
 	}
 }
 
-func (r *RobotStruct) PickTaskWithLowestEnergy() {
-
+func (r *RobotStruct) PickTaskWithLowestEnergy() TaskPayload {
+	localMin := 65535
+	var taskToDo TaskPayload
+	for _, task := range r.ReceivedTasks {
+		if task.Energy < localMin {
+			localMin = task.Energy
+			taskToDo = task
+		}
+	}
+	return taskToDo
 }
 
 func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
