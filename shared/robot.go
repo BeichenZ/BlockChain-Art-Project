@@ -398,6 +398,15 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 	}
 }
 
+func (r *RobotStruct) CallNeighbours() {
+	for {
+		for i, _ := range r.PossibleNeighbours.List() {
+			fmt.Println(i)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
 func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
 	newRobot := RobotStruct{
 		PossibleNeighbours: set.New(),
