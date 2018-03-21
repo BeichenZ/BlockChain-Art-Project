@@ -30,7 +30,7 @@ func main() {
 	// }
 
 	robot := shared.InitRobot(RobotID, shared.Map{
-		ExploredPath: make([]shared.PointStruct, 0),
+		ExploredPath: make(map[shared.Coordinate]shared.PointStruct),
 		FrameOfRef:   1,
 	}, Logger)
 

@@ -16,3 +16,8 @@ func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *int) error
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTask.SendlogMessage, &incommingMessage)
 	return nil
 }
+
+// TODO
+func (robotRPC *RobotRPC) ReceiveTaskDecsionResponse(senderTaskDecision *TaskDescisionPayload, reply *int) error {
+	return nil
+}
