@@ -19,15 +19,16 @@ const YMAX = "ymax"
 const EXRADIUS = 6
 
 type RobotStruct struct {
-	CurrTask        TaskPayload
-	RobotID         int // hardcoded
-	RobotIP         string
-	RobotListenConn *rpc.Client
-	RobotNeighbours []Neighbour
-	RMap            Map
-	CurPath         Path
-	CurLocation     PointStruct
-	ReceivedTask    []string // change this later
+	CurrTask           TaskPayload
+	PossibleNeighbours []string
+	RobotID            int // hardcoded
+	RobotIP            string
+	RobotListenConn    *rpc.Client
+	RobotNeighbours    []Neighbour
+	RMap               Map
+	CurPath            Path
+	CurLocation        PointStruct
+	ReceivedTask       []string // change this later
 	//CurrentStep        	Coordinate
 	JoiningSig   chan bool
 	BusySig      chan bool

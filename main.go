@@ -76,6 +76,8 @@ func main() {
 		if err == nil {
 			log.Println("Able to locate neighbour")
 			// Start registeration protocol
+			robot.PossibleNeighbours = append(robot.PossibleNeighbours, ip+":5000")
+			fmt.Println(robot.PossibleNeighbours)
 			neighbourIPAddr := ""
 			client, err := rpc.Dial("tcp", ip+":5000")
 			if err != nil {
