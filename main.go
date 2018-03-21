@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/binary"
 	"encoding/gob"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -22,8 +20,6 @@ func main() {
 	gob.Register(&net.TCPAddr{})
 	gob.Register(&shared.TaskPayload{})
 
-	// myIPAddr := GetLocalIP().String()
-	// size, _ := net.ParseIP(GetLocalIP().String()).DefaultMask().Size()
 	fmt.Println(GetLocalIP().String())
 	fmt.Println("--------------------")
 	ipv4Addr, ipv4Net, _ := net.ParseCIDR(GetLocalIP().String())
@@ -46,26 +42,6 @@ func main() {
 		}
 	}
 
-	// _, err := net.DialTimeout("tcp", "169.254.193.244:8080", timeout)
-	// if err != nil {
-	// 	log.Println("Site unreachable, error: ", err)
-	// } else {
-	// 	log.Println("asdf")
-	// }
-	broad, _ := lastAddr(GetLocalIP())
-	// pinger, err := ping.NewPinger(broad.String())
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// pinger.Count = 3
-	// pinger.Run()                 // blocks until finished
-	// stats := pinger.Statistics() // get send/receive/rtt stats
-	// fmt.Println(stats)
-	fmt.Println(broad)
-	// ones, _ := net.ParseIP(myIPAddr).DefaultMask().Size()
-	// sub := ipsubnet.SubnetCalculator(myIPAddr, ones)
-	// boardCastIP := sub.GetBroadcastAddress()
-	// fmt.Println(boardCastIP)
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	IPAddr := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
@@ -120,14 +96,6 @@ func GetLocalIP() *net.IPNet {
 	return nil
 }
 
-func lastAddr(n *net.IPNet) (net.IP, error) { // works when the n is a prefix, otherwise...
-	if n.IP.To4() == nil {
-		return net.IP{}, errors.New("does not support IPv6 addresses.")
-	}
-	ip := make(net.IP, len(n.IP.To4()))
-	binary.BigEndian.PutUint32(ip, binary.BigEndian.Uint32(n.IP.To4())|^binary.BigEndian.Uint32(net.IP(n.Mask).To4()))
-	return ip, nil
-}
 func inc(ip net.IP) {
 	for j := len(ip) - 1; j >= 0; j-- {
 		ip[j]++
