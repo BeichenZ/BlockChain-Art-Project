@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DistributedClocks/GoVector/govec"
+	"github.com/fatih/set"
 )
 
 const XMIN = "xmin"
@@ -20,7 +21,7 @@ const EXRADIUS = 6
 
 type RobotStruct struct {
 	CurrTask           TaskPayload
-	PossibleNeighbours []string
+	PossibleNeighbours *set.Set
 	RobotID            int // hardcoded
 	RobotIP            string
 	RobotListenConn    *rpc.Client
@@ -399,16 +400,17 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 
 func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
 	newRobot := RobotStruct{
-		RobotID:         rID,
-		RobotNeighbours: []Neighbour{},
-		RMap:            initMap,
-		JoiningSig:      make(chan bool),
-		BusySig:         make(chan bool),
-		WaitingSig:      make(chan bool),
-		FreeSpaceSig:    make(chan bool),
-		WallSig:         make(chan bool),
-		WalkSig:         make(chan bool),
-		Logger:          logger,
+		PossibleNeighbours: set.New(),
+		RobotID:            rID,
+		RobotNeighbours:    []Neighbour{},
+		RMap:               initMap,
+		JoiningSig:         make(chan bool),
+		BusySig:            make(chan bool),
+		WaitingSig:         make(chan bool),
+		FreeSpaceSig:       make(chan bool),
+		WallSig:            make(chan bool),
+		WalkSig:            make(chan bool),
+		Logger:             logger,
 	}
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 	return &newRobot

@@ -19,7 +19,8 @@ func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *int) error
 func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) error {
 	// myNewNeighbour := Neighbour{Addr: *message}
 	// robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, myNewNeighbour)
-	robotRPC.PiRobot.PossibleNeighbours = append(robotRPC.PiRobot.PossibleNeighbours, *message)
+	robotRPC.PiRobot.PossibleNeighbours.Add(*message)
+	// robotRPC.PiRobot.PossibleNeighbours = append(robotRPC.PiRobot.PossibleNeighbours, *message)
 	*reply = robotRPC.PiRobot.RobotIP
 	fmt.Println(*message)
 	return nil
