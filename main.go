@@ -84,8 +84,6 @@ func main() {
 				fmt.Println(err)
 			}
 			client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
-		} else {
-			log.Println("Site unreachable, error: ", err)
 		}
 	}
 
