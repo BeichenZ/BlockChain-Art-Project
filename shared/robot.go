@@ -174,17 +174,25 @@ func (r *RobotStruct) RespondToButtons() error {
 // TODOOOOO
 func (r *RobotStruct) Explore() error {
 	for {
+		fmt.Println("Explore() at the top")
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
 			if err != nil {
 				fmt.Println("error generating task")
 			}
 			var newPath Path
+			// TESTING
+			newPath = CreatePathBetweenTwoPoints(r.CurLocation, dpts[0].Point)
+			// TESTING
+
+			/**** SHOULDN'T BE COMMENTED OUT JUST FOR TESTING
 			if len(dpts) == 1 {
 				newPath = CreatePathBetweenTwoPoints(r.CurLocation, dpts[0].Point)
 			} else {
+				fmt.Println("Explore() > 1 destination point returned when it should have no neighbours")
 				return CodeError("Explore() > 1 destination point returned when it should have no neighbours")
 			}
+			*/
 			r.CurPath = newPath
 			// DISPLAY task with GPIO
 		}
@@ -217,6 +225,8 @@ func (r *RobotStruct) Explore() error {
 				NID:  1,
 			}
 			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
+			//r.RobotID =9;
+			fmt.Println("Explore() added neighbour")
 		case <-r.BusySig: // TODO whole thing
 			fmt.Println("busy sig received")
 			// Exchange my map with neighbours
