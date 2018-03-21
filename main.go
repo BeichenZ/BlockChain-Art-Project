@@ -20,28 +20,6 @@ func main() {
 	gob.Register(&net.TCPAddr{})
 	gob.Register(&shared.TaskPayload{})
 
-	fmt.Println(GetLocalIP().String())
-	fmt.Println("--------------------")
-	ipv4Addr, ipv4Net, _ := net.ParseCIDR(GetLocalIP().String())
-	fmt.Println(ipv4Addr)
-	fmt.Println(ipv4Net)
-	fmt.Println("----------------------")
-	var ips []string
-	for ip := ipv4Addr.Mask(ipv4Net.Mask); ipv4Net.Contains(ip); inc(ip) {
-		ips = append(ips, ip.String())
-	}
-
-	fmt.Println(ips[1 : len(ips)-1])
-	ips = ips[1 : len(ips)-1]
-
-	timeout := time.Duration(10 * time.Millisecond)
-	for _, ip := range ips {
-		_, err := net.DialTimeout("tcp", ip+":8080", timeout)
-		if err != nil {
-			log.Println("Site unreachable, error: ", err)
-		}
-	}
-
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	IPAddr := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
@@ -57,15 +35,45 @@ func main() {
 		FrameOfRef:   1,
 	}, Logger)
 
+	// Open up user defined port RPC connection
 	robotRPC := &shared.RobotRPC{PiRobot: robot}
 	rpc.Register(robotRPC)
 	listener, error := net.Listen("tcp", resolvedIPAddr)
+	if error != nil {
+		log.Fatal("Unable to create a listner", error)
+	}
 
+	// Open up port 5000 for broadcasting
+	registerListener, error := net.Listen("tcp", ":5000")
 	if error != nil {
 		log.Fatal("Unable to create a listner", error)
 	}
 	go rpc.Accept(listener)
+	go rpc.Accept(registerListener)
 	fmt.Println("Robot listening on port " + string(IPAddr))
+
+	fmt.Println("Robot IP Address:", GetLocalIP().String())
+	ipv4Addr, ipv4Net, _ := net.ParseCIDR(GetLocalIP().String())
+	fmt.Println("--------------------")
+	fmt.Println(ipv4Addr)
+	fmt.Println(ipv4Net)
+	fmt.Println("----------------------")
+	var ips []string
+	for ip := ipv4Addr.Mask(ipv4Net.Mask); ipv4Net.Contains(ip); inc(ip) {
+		ips = append(ips, ip.String())
+	}
+
+	fmt.Println(ips[1 : len(ips)-1])
+	ips = ips[1 : len(ips)-1]
+
+	timeout := time.Duration(10 * time.Millisecond)
+	for _, ip := range ips {
+		_, err := net.DialTimeout("tcp", ip+":5000", timeout)
+		if err != nil {
+			log.Println("Site unreachable, error: ", err)
+		}
+	}
+
 	// for {
 	// 	// wait for user input
 	// 	// if button is pressed, break out of the loop
