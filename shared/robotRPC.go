@@ -15,3 +15,11 @@ func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *int) error
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTask.SendlogMessage, TaskPayload{})
 	return nil
 }
+
+func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) error {
+	myNewNeighbour := Neighbour{Addr: *message}
+	robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, myNewNeighbour)
+	*reply = robotRPC.PiRobot.RobotIP
+	fmt.Println(*message)
+	return nil
+}

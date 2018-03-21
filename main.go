@@ -21,11 +21,11 @@ func main() {
 	gob.Register(&shared.TaskPayload{})
 
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
-	IPAddr := os.Args[1]
+	Port := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
-	Logger := govec.InitGoVector("IPAddr", "LogFile"+IPAddr)
-	resolvedIPAddr := IPAddr
-	// resolvedIPAddress, error := net.ResolveTCPAddr("tcp", IPAddr)
+	Logger := govec.InitGoVector("Port", "LogFile"+Port)
+	resolvedIPAddr := Port
+	// resolvedIPAddress, error := net.ResolveTCPAddr("tcp", Port)
 	// if error != nil {
 	// 	log.Fatal("Unable to resolve IP Address", error)
 	// }
@@ -50,13 +50,14 @@ func main() {
 	}
 	go rpc.Accept(listener)
 	go rpc.Accept(registerListener)
-	fmt.Println("Robot listening on port " + string(IPAddr))
+	fmt.Println("Robot listening on port " + string(Port))
 
 	fmt.Println("Robot IP Address:", GetLocalIP().String())
 	ipv4Addr, ipv4Net, _ := net.ParseCIDR(GetLocalIP().String())
 	fmt.Println("--------------------")
 	fmt.Println(ipv4Addr)
 	fmt.Println(ipv4Net)
+	fmt.Println(ipv4Addr.String() + Port)
 	fmt.Println("----------------------")
 	var ips []string
 	for ip := ipv4Addr.Mask(ipv4Net.Mask); ipv4Net.Contains(ip); inc(ip) {
@@ -64,12 +65,21 @@ func main() {
 	}
 
 	fmt.Println(ips[1 : len(ips)-1])
-	ips = ips[1 : len(ips)-1]
+	ips = ips[1 : len(ips)-2]
 
 	timeout := time.Duration(10 * time.Millisecond)
 	for _, ip := range ips {
 		_, err := net.DialTimeout("tcp", ip+":5000", timeout)
-		if err != nil {
+		if err == nil {
+			log.Println("Able to locate neighbour")
+			// Start registeration protocol
+			neighbourIPAddr := ""
+			client, err := rpc.Dial("tcp", ip+":5000")
+			if err != nil {
+				fmt.Println(err)
+			}
+			client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
+		} else {
 			log.Println("Site unreachable, error: ", err)
 		}
 	}
