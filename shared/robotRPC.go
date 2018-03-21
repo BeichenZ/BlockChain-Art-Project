@@ -6,6 +6,11 @@ type RobotRPC struct {
 	PiRobot *RobotStruct
 }
 
+type FarNeighbourPayload struct {
+	NeighbourID         string
+	NeighbourCoordinate Coordinate
+}
+
 func (robotRPC *RobotRPC) ReceiveMap(senderMap *Map, reply *int) error {
 	return nil
 }
@@ -23,5 +28,11 @@ func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) erro
 	// robotRPC.PiRobot.PossibleNeighbours = append(robotRPC.PiRobot.PossibleNeighbours, *message)
 	*reply = robotRPC.PiRobot.RobotIP
 	fmt.Println(*message)
+	return nil
+}
+
+// This funciton is periodically called to detemine the distance between two neighbours
+func (robotRPC *RobotRPC) ReceiveFarNeighbourPayload(p *FarNeighbourPayload, reply *string) error {
+	// Calculate distance here
 	return nil
 }
