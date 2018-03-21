@@ -68,25 +68,7 @@ func main() {
 	ips = ips[1 : len(ips)-2]
 
 	timeout := time.Duration(100 * time.Millisecond)
-	for _, ip := range ips {
-		if ip == ipv4Addr.String() {
-			continue
-		}
-		_, err := net.DialTimeout("tcp", ip+":5000", timeout)
-		if err == nil {
-			log.Println("Able to locate neighbour")
-			// Start registeration protocol
-			robot.PossibleNeighbours = append(robot.PossibleNeighbours, ip+":5000")
-			fmt.Println(robot.PossibleNeighbours)
-			neighbourIPAddr := ""
-			client, err := rpc.Dial("tcp", ip+":5000")
-			if err != nil {
-				fmt.Println(err)
-			}
-			client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
-		}
-	}
-
+	go scanForNeighbours(ips, ipv4Addr, timeout, robot, Port)
 	// for {
 	// 	// wait for user input
 	// 	// if button is pressed, break out of the loop
@@ -103,6 +85,29 @@ func main() {
 
 }
 
+func scanForNeighbours(ips []string, ipv4Addr net.IP, timeout time.Duration, robot *shared.RobotStruct, Port string) {
+	for {
+		fmt.Println("things here")
+		for _, ip := range ips {
+			if ip == ipv4Addr.String() {
+				continue
+			}
+			_, err := net.DialTimeout("tcp", ip+":5000", timeout)
+			if err == nil {
+				log.Println("Able to locate neighbour")
+				// Start registeration protocol
+				robot.PossibleNeighbours = append(robot.PossibleNeighbours, ip+":5000")
+				fmt.Println(robot.PossibleNeighbours)
+				neighbourIPAddr := ""
+				client, err := rpc.Dial("tcp", ip+":5000")
+				if err != nil {
+					fmt.Println(err)
+				}
+				client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
+			}
+		}
+	}
+}
 func GetLocalIP() *net.IPNet {
 	addrs, _ := net.InterfaceAddrs()
 
