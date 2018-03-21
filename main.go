@@ -8,6 +8,7 @@ import (
 	"net/rpc"
 	"os"
 	"strconv"
+	"time"
 
 	"./shared"
 	"github.com/DistributedClocks/GoVector/govec"
@@ -66,22 +67,23 @@ func main() {
 	fmt.Println(ips[1 : len(ips)-1])
 	ips = ips[1 : len(ips)-2]
 
-	// timeout := time.Duration(100 * time.Millisecond)
+	timeout := time.Duration(100 * time.Millisecond)
 	for _, ip := range ips {
 		if ip == ipv4Addr.String() {
 			continue
 		}
-		neighbourIPAddr := ""
-		client, err := rpc.Dial("tcp", ip+":5000")
-		if err != nil {
-			fmt.Println(err)
-		}
-		error := client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
-		if error == nil {
+		_, err := net.DialTimeout("tcp", ip+":5000", timeout)
+		if err == nil {
 			log.Println("Able to locate neighbour")
 			// Start registeration protocol
 			robot.PossibleNeighbours = append(robot.PossibleNeighbours, ip+":5000")
 			fmt.Println(robot.PossibleNeighbours)
+			neighbourIPAddr := ""
+			client, err := rpc.Dial("tcp", ip+":5000")
+			if err != nil {
+				fmt.Println(err)
+			}
+			client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
 		}
 	}
 
