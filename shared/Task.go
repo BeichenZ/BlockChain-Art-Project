@@ -4,7 +4,6 @@ type TaskPayload struct {
 	SenderID       int
 	DestPoint      PointStruct
 	SendlogMessage []byte
-	Energy         int
 }
 type TaskDescisionPayload struct {
 	SenderID  int

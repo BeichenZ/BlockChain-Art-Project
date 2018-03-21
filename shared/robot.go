@@ -414,12 +414,12 @@ WaitingForEnoughTask:
 	}
 }
 
-func (r *RobotStruct) PickTaskWithLowestEnergy() TaskPayload {
-	localMin := 65535
+func (r *RobotStruct) PickTaskWithLowestID() TaskPayload {
+	localMin := -1
 	var taskToDo TaskPayload
 	for _, task := range r.ReceivedTasks {
-		if task.Energy < localMin {
-			localMin = task.Energy
+		if task.SenderID < localMin {
+			localMin = task.SenderID
 			taskToDo = task
 		}
 	}
