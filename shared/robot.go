@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/rpc"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/DistributedClocks/GoVector/govec"
@@ -31,7 +32,7 @@ type RobotStruct struct {
 	CurLocation        PointStruct
 	ReceivedTask       []string // change this later
 	//CurrentStep        	Coordinate
-	JoiningSig   chan string
+	JoiningSig   chan int
 	BusySig      chan bool
 	WaitingSig   chan bool
 	FreeSpaceSig chan bool
@@ -202,7 +203,7 @@ func (r *RobotStruct) RespondToButtons() error {
 		}
 		command := string(signal)
 		if command == "j" {
-			r.JoiningSig <- "random"
+			r.JoiningSig <- 1
 		} else if command == "b" {
 			r.BusySig <- true
 		} else if command == "w" {
@@ -373,7 +374,7 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 		removeElFromlist(dpn, &ldpn)
 		fmt.Println(robotNeighbour)
 		// fmt.Println(neighbourRoboAddr)
-		messagepayload := []byte("Sending to my number with ID:" + robotNeighbour.Addr)
+		messagepayload := []byte("Sending to my number with ID:" + strconv.Itoa(robotNeighbour.Addr))
 		finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
 		task := &TaskPayload{
 			SenderID:       r.RobotID,
@@ -383,7 +384,7 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 		fmt.Println("AllocateTaskToNeighbours() ")
 		fmt.Println(task)
 		// TESTING UNCOMMENT
-		neighbourClient, err := rpc.Dial("tcp", ":"+robotNeighbour.Addr)
+		neighbourClient, err := rpc.Dial("tcp", ":"+strconv.Itoa(robotNeighbour.Addr))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -423,7 +424,7 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
 		RobotID:            rID,
 		RobotNeighbours:    []Neighbour{},
 		RMap:               initMap,
-		JoiningSig:         make(chan string),
+		JoiningSig:         make(chan int),
 		BusySig:            make(chan bool),
 		WaitingSig:         make(chan bool),
 		FreeSpaceSig:       make(chan bool),
