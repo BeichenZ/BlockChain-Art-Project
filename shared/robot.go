@@ -404,9 +404,12 @@ func (r *RobotStruct) CallNeighbours() {
 		for _, possibleNeighbour := range r.PossibleNeighbours.List() {
 			client, err := rpc.Dial("tcp", possibleNeighbour.(string))
 			// fmt.Println(client)
+			messagepayload := []byte("Receiving coorindates info from neighbour: " + strconv.Itoa(r.RobotID))
+			finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
 			farNeighbourPayload := FarNeighbourPayload{
 				NeighbourID:         r.RobotID,
 				NeighbourCoordinate: r.CurLocation,
+				SendlogMessage:      finalsend,
 			}
 			if err != nil {
 				fmt.Println(err)
