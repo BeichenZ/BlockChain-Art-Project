@@ -374,8 +374,9 @@ func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
 		removeElFromlist(dpn, &ldpn)
 		fmt.Println(robotNeighbour)
 		// fmt.Println(neighbourRoboAddr)
-		messagepayload := []byte("Sending to my number with ID:" + strconv.Itoa(robotNeighbour.Addr))
-		finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
+		messagepayload := 1
+		// messagepayload := []byte("Sending to my number with ID:" + strconv.Itoa(robotNeighbour.Addr))
+		finalsend := r.Logger.PrepareSend("Sending Message - "+"Sending to my number with ID:"+strconv.Itoa(robotNeighbour.Addr), messagepayload)
 		task := &TaskPayload{
 			SenderID:       r.RobotID,
 			DestPoint:      dpn,
@@ -404,8 +405,11 @@ func (r *RobotStruct) CallNeighbours() {
 		for _, possibleNeighbour := range r.PossibleNeighbours.List() {
 			client, err := rpc.Dial("tcp", possibleNeighbour.(string))
 			// fmt.Println(client)
-			messagepayload := []byte("Receiving coorindates info from neighbour: " + strconv.Itoa(r.RobotID))
-			finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
+			// messagepayload := []byte("Receiving coorindates info from neighbour: " + strconv.Itoa(r.RobotID))
+			// finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
+			messagepayload := 1
+			// messagepayload := []byte("Sending to my number with ID:" + strconv.Itoa(robotNeighbour.Addr))
+			finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+strconv.Itoa(possibleNeighbour.(Neighbour).Addr), messagepayload)
 			farNeighbourPayload := FarNeighbourPayload{
 				NeighbourID:         r.RobotID,
 				NeighbourCoordinate: r.CurLocation,

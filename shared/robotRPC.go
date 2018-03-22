@@ -35,8 +35,9 @@ func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) erro
 // This funciton is periodically called to detemine the distance between two neighbours
 func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, reply *string) error {
 	// Calculate distance here
+	var incommingMessage int
 	fmt.Println("receive info from neighbour: ", p.NeighbourID)
-	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, FarNeighbourPayload{})
+	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
 	// distance := 0
 	// if distance < 1 {
 	// 	robotRPC.PiRobot.JoiningSig <- p.NeighbourID

@@ -23,7 +23,8 @@ func main() {
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	Port := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
-	Logger := govec.InitGoVector("Port", "LogFile"+Port)
+	// Logger := govec.InitGoVector("Port", "LogFile"+Port)
+	Logger := govec.InitGoVector("Robot"+Port, "LogFile"+Port)
 	resolvedIPAddr := Port
 	// resolvedIPAddress, error := net.ResolveTCPAddr("tcp", Port)
 	// if error != nil {
