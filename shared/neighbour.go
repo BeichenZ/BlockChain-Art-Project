@@ -1,7 +1,7 @@
 package shared
 
 type Neighbour struct {
-	Addr int
+	Addr string
 	NID  int
 	NMap Map
 }
