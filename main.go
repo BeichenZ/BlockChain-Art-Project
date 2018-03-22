@@ -24,7 +24,15 @@ func main() {
 	Port := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
 	// Logger := govec.InitGoVector("Port", "LogFile"+Port)
-	Logger := govec.InitGoVector("Robot"+Port, "LogFile"+Port)
+	fmt.Println("Robot IP Address:", GetLocalIP().String())
+	ipv4Addr, ipv4Net, _ := net.ParseCIDR(GetLocalIP().String())
+	fmt.Println("--------------------")
+	fmt.Println(ipv4Addr)
+	fmt.Println(ipv4Net)
+	fmt.Println(ipv4Addr.String() + Port)
+	fmt.Println("----------------------")
+
+	Logger := govec.InitGoVector("Robot"+ipv4Addr.String()+Port, "LogFile"+ipv4Addr.String()+Port)
 	resolvedIPAddr := Port
 	// resolvedIPAddress, error := net.ResolveTCPAddr("tcp", Port)
 	// if error != nil {
@@ -53,13 +61,6 @@ func main() {
 	go rpc.Accept(registerListener)
 	fmt.Println("Robot listening on port " + string(Port))
 
-	fmt.Println("Robot IP Address:", GetLocalIP().String())
-	ipv4Addr, ipv4Net, _ := net.ParseCIDR(GetLocalIP().String())
-	fmt.Println("--------------------")
-	fmt.Println(ipv4Addr)
-	fmt.Println(ipv4Net)
-	fmt.Println(ipv4Addr.String() + Port)
-	fmt.Println("----------------------")
 	var ips []string
 	for ip := ipv4Addr.Mask(ipv4Net.Mask); ipv4Net.Contains(ip); inc(ip) {
 		ips = append(ips, ip.String())

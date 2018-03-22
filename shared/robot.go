@@ -409,7 +409,7 @@ func (r *RobotStruct) CallNeighbours() {
 			// finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
 			messagepayload := 1
 			// messagepayload := []byte("Sending to my number with ID:" + strconv.Itoa(robotNeighbour.Addr))
-			finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+strconv.Itoa(possibleNeighbour.(Neighbour).Addr), messagepayload)
+			finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), messagepayload)
 			farNeighbourPayload := FarNeighbourPayload{
 				NeighbourID:         r.RobotID,
 				NeighbourCoordinate: r.CurLocation,
