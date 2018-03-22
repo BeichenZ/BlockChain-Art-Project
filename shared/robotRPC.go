@@ -8,6 +8,7 @@ type RobotRPC struct {
 
 type FarNeighbourPayload struct {
 	NeighbourID         int
+	NeighbourIPAddr     string
 	NeighbourCoordinate Coordinate
 	SendlogMessage      []byte
 }

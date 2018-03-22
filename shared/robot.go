@@ -486,6 +486,7 @@ func (r *RobotStruct) CallNeighbours() {
 			finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), messagepayload)
 			farNeighbourPayload := FarNeighbourPayload{
 				NeighbourID:         r.RobotID,
+				NeighbourIPAddr:     r.RobotIP,
 				NeighbourCoordinate: r.CurLocation,
 				SendlogMessage:      finalsend,
 			}
@@ -506,11 +507,12 @@ func (r *RobotStruct) decideTaskTodo() {
 
 }
 
-func InitRobot(rID int, initMap Map, logger *govec.GoLog) *RobotStruct {
+func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string) *RobotStruct {
 	newRobot := RobotStruct{
 
 		PossibleNeighbours: set.New(),
 		RobotID:            rID,
+		RobotIP:            robotIPAddr,
 		RobotNeighbours:    []Neighbour{},
 		RMap:               initMap,
 		JoiningSig:         make(chan string),

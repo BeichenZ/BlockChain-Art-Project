@@ -42,7 +42,7 @@ func main() {
 	robot := shared.InitRobot(RobotID, shared.Map{
 		ExploredPath: make(map[shared.Coordinate]shared.PointStruct),
 		FrameOfRef:   1,
-	}, Logger)
+	}, Logger, ipv4Addr.String()+Port)
 
 	// Open up user defined port RPC connection
 	robotRPC := &shared.RobotRPC{PiRobot: robot}
