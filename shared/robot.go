@@ -402,8 +402,16 @@ func (r *RobotStruct) CallNeighbours() {
 	for {
 		for _, possibleNeighbour := range r.PossibleNeighbours.List() {
 			client, err := rpc.Dial("tcp", possibleNeighbour.(string))
-			fmt.Println(client)
-			fmt.Println(err)
+			// fmt.Println(client)
+			farNeighbourPayload := FarNeighbourPayload{
+				NeighbourID:         r.RobotID,
+				NeighbourCoordinate: r.CurLocation,
+			}
+			if err != nil {
+				fmt.Println(err)
+			}
+			alive := true
+			client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &alive)
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
