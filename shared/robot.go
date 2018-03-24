@@ -160,7 +160,7 @@ func (r *RobotStruct) RespondToButtons() error {
 		}
 		command := string(signal)
 		if command == "j" {
-			r.JoiningSig <- "thing"
+			r.JoiningSig <- Neighbour{}
 		} else if command == "b" {
 			r.BusySig <- true
 		} else if command == "w" {
