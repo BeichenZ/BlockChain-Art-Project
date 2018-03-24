@@ -10,6 +10,7 @@ type FarNeighbourPayload struct {
 	NeighbourID         int
 	NeighbourIPAddr     string
 	NeighbourCoordinate Coordinate
+	NeighbourMap        Map
 	SendlogMessage      []byte
 }
 
@@ -45,9 +46,16 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 	var incommingMessage int
 	fmt.Println("receive info from neighbour: ", p.NeighbourID)
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
-	// distance := 0
-	// if distance < 1 {
-	// 	robotRPC.PiRobot.JoiningSig <- p.NeighbourID
-	// }
+	// TODO change this
+	newNeighbour := Neighbour{
+		NID:                 p.NeighbourID,
+		Addr:                p.NeighbourIPAddr,
+		NeighbourCoordinate: p.NeighbourCoordinate,
+		NMap:                p.NeighbourMap,
+	}
+	distance := 0
+	if distance < 1 {
+		robotRPC.PiRobot.JoiningSig <- newNeighbour
+	}
 	return nil
 }

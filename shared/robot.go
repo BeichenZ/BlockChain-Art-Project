@@ -32,7 +32,7 @@ type RobotStruct struct {
 	// CurPath        []Coordinate // TODO: yo micheal here uncomment, n delete the whole struct
 	CurLocation   Coordinate    // TODO why isn't type coordinate instead?
 	ReceivedTasks []TaskPayload // change this later
-	JoiningSig    chan string
+	JoiningSig    chan Neighbour
 	BusySig       chan bool
 	WaitingSig    chan bool
 	FreeSpaceSig  chan bool
@@ -160,7 +160,7 @@ func (r *RobotStruct) RespondToButtons() error {
 		}
 		command := string(signal)
 		if command == "j" {
-			r.JoiningSig <- "thing"
+			r.JoiningSig <- Neighbour{}
 		} else if command == "b" {
 			r.BusySig <- true
 		} else if command == "w" {
@@ -219,13 +219,14 @@ func (r *RobotStruct) Explore() error {
 			r.UpdateMap(RightWall)
 		case <-r.LeftWallSig:
 			r.UpdateMap(LeftWall)
-		case neighbourAddr := <-r.JoiningSig:
+		case newNeighbour := <-r.JoiningSig:
 			fmt.Println("join sig received")
+			fmt.Println("neighbour IP is: ", newNeighbour.Addr)
 			// TODO follow procedure to ensure all neighbours are valid to be in the network
-			newNeighbour := Neighbour{
-				Addr: neighbourAddr,
-				NID:  1,
-			}
+			// newNeighbour := Neighbour{
+			// 	Addr: neighbourAddr,
+			// 	NID:  1,
+			// }
 			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
 			//r.RobotID =9;
 			fmt.Println("Explore() added neighbour")
@@ -478,6 +479,10 @@ func (r *RobotStruct) CallNeighbours() {
 	for {
 		for _, possibleNeighbour := range r.PossibleNeighbours.List() {
 			client, err := rpc.Dial("tcp", possibleNeighbour.(string))
+			if err != nil {
+				r.PossibleNeighbours.Remove(possibleNeighbour)
+				continue
+			}
 			// fmt.Println(client)
 			// messagepayload := []byte("Receiving coorindates info from neighbour: " + strconv.Itoa(r.RobotID))
 			// finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
@@ -488,6 +493,7 @@ func (r *RobotStruct) CallNeighbours() {
 				NeighbourID:         r.RobotID,
 				NeighbourIPAddr:     r.RobotIP,
 				NeighbourCoordinate: r.CurLocation,
+				NeighbourMap:        r.RMap,
 				SendlogMessage:      finalsend,
 			}
 			if err != nil {
@@ -515,7 +521,7 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string) *R
 		RobotIP:            robotIPAddr,
 		RobotNeighbours:    []Neighbour{},
 		RMap:               initMap,
-		JoiningSig:         make(chan string),
+		JoiningSig:         make(chan Neighbour),
 		BusySig:            make(chan bool),
 		WaitingSig:         make(chan bool),
 		FreeSpaceSig:       make(chan bool),
