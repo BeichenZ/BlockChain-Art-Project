@@ -99,7 +99,7 @@ func scanForNeighbours(ips []string, ipv4Addr net.IP, timeout time.Duration, rob
 			if err == nil {
 				log.Println("Able to locate neighbour")
 				// Start registeration protocol
-				robot.PossibleNeighbours.Add(ip + ":5000")
+				robot.PossibleNeighbours.Add(ip + ":8080")
 				// robot.PossibleNeighbours = append(robot.PossibleNeighbours, ip+":5000")
 				fmt.Println(robot.PossibleNeighbours)
 				neighbourIPAddr := ""
