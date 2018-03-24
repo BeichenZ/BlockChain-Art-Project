@@ -70,7 +70,7 @@ func main() {
 	ips = ips[1 : len(ips)-2]
 
 	timeout := time.Duration(100 * time.Millisecond)
-	go scanForNeighbours(ips, ipv4Addr, timeout, robot, Port)
+	go scanForNeighbours(ips[:5], ipv4Addr, timeout, robot, Port)
 	go robot.CallNeighbours()
 	// for {
 	// 	// wait for user input

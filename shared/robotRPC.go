@@ -45,9 +45,10 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 	var incommingMessage int
 	fmt.Println("receive info from neighbour: ", p.NeighbourID)
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
-	// distance := 0
-	// if distance < 1 {
-	// 	robotRPC.PiRobot.JoiningSig <- p.NeighbourID
-	// }
+	// TODO change this
+	distance := 0
+	if distance < 1 {
+		robotRPC.PiRobot.JoiningSig <- p.NeighbourIPAddr
+	}
 	return nil
 }
