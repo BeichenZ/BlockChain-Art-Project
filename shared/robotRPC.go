@@ -14,7 +14,8 @@ type FarNeighbourPayload struct {
 	SendlogMessage      []byte
 }
 
-func (robotRPC *RobotRPC) ReceiveMap(senderMap *Map, reply *int) error {
+func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
+	*receivedMap = robotRPC.PiRobot.RMap
 	return nil
 }
 

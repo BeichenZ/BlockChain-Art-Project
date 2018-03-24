@@ -71,7 +71,7 @@ func TestMapMerge_withNonEmptyMap(t *testing.T) {
 	}
 
 	fmt.Printf("Map before merged ==> %v\n", robot.GetMap())
-	_ = robot.MergeMaps(sampleMap)
+	robot.MergeMaps(sampleMap)
 	fmt.Printf("Map after merged ==> %v\n", robot.GetMap())
 
 	fmt.Printf(GetEndTestTitle("MapMerge_withNonEmptyMap"))
@@ -99,7 +99,7 @@ func TestMapMerge_withEmptyMap(t *testing.T) {
 	}
 
 	fmt.Printf("Map before merged ==> %v\n", robot.GetMap())
-	_ = robot.MergeMaps(sampleMap)
+	robot.MergeMaps(sampleMap)
 	fmt.Printf("Map after merged ==> %v\n", robot.GetMap())
 
 	//shared.PrettyPrint_Map(robot.GetMap())

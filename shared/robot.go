@@ -229,6 +229,29 @@ func (r *RobotStruct) Explore() error {
 			// }
 			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
 			//r.RobotID =9;
+			client, err := rpc.Dial("tcp", newNeighbour.Addr)
+			if err != nil {
+				print("Can't make rpc with the robot. Move on and follow my given tasks.")
+				// TODO remove
+				continue
+			}
+
+			neighbourMap := &Map{}
+
+			err = client.Call("RobotRPC.ReceiveMap", false, neighbourMap)
+
+			if err != nil {
+				print("Can't make rpc with the robot. Move on and follow my given tasks.")
+				// TODO remove the neighbour robot
+				continue
+			}
+
+			print("Received the map from the neighbour")
+			tmpMaps :=  make([]Map, 2)
+
+			tmpMaps = append(tmpMaps, *neighbourMap)
+			r.MergeMaps(tmpMaps)
+			print("Finished Merging")
 			fmt.Println("Explore() added neighbour")
 		case <-r.BusySig: // TODO whole thing
 			fmt.Println("busy sig received")
@@ -347,7 +370,7 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 }
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
-func (r *RobotStruct) MergeMaps(neighbourMaps []Map) error {
+func (r *RobotStruct) MergeMaps(neighbourMaps []Map)  {
 	refToOriginalMap := r.RMap
 
 	for _, neighbourRobotMap := range neighbourMaps {
@@ -368,35 +391,7 @@ func (r *RobotStruct) MergeMaps(neighbourMaps []Map) error {
 			}
 
 		}
-
-		//for neighbourCoordinate, neighbourPointStruct := range neighbourRobotMap.ExploredPath {
-		//	if len(refToOriginalMap.ExploredPath) == 0 {
-		//		r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointStruct
-		//	} else {
-		//		for origCor, origPointStruct  := range refToOriginalMap.ExploredPath {
-		//			if (origCor.X == neighbourCoordinate.X) && (origCor.Y == neighbourCoordinate.Y) {
-		//
-		//				var updatePointStruct PointStruct
-		//				var updatedCoordinate Coordinate
-		//
-		//				if neighbourPointStruct.TraversedTime > origPointStruct.TraversedTime {
-		//					updatePointStruct = neighbourPointStruct
-		//					updatedCoordinate = neighbourCoordinate
-		//				} else {
-		//					updatePointStruct = origPointStruct
-		//					updatedCoordinate = origCor
-		//				}
-		//
-		//				r.RMap.ExploredPath[updatedCoordinate] = updatePointStruct
-		//			} else {
-		//				r.RMap.ExploredPath[newCor] = newPointStruct
-		//				r.RMap.FrameOfRef = r.RobotID
-		//			}
-		//		}
-		//	}
-		//}
 	}
-	return nil
 }
 
 func (r *RobotStruct) GetMap() Map {
