@@ -112,6 +112,7 @@ func scanForNeighbours(ips []string, ipv4Addr net.IP, timeout time.Duration, rob
 		}
 	}
 }
+
 func GetLocalIP() *net.IPNet {
 	addrs, _ := net.InterfaceAddrs()
 
