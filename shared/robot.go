@@ -159,8 +159,16 @@ func (r *RobotStruct) RespondToButtons() error {
 			fmt.Println(err)
 		}
 		command := string(signal)
+
 		if command == "j" {
-			r.JoiningSig <- Neighbour{}
+
+			r.JoiningSig <- Neighbour{
+				Addr: ":8080",
+				NID: 1,
+				NMap: RandomMapGenerator(),
+				NeighbourCoordinate: Coordinate{4.0, 5.0},
+			}
+
 		} else if command == "b" {
 			r.BusySig <- true
 		} else if command == "w" {

@@ -81,7 +81,7 @@ func main() {
 	for {
 		// asynchronously check for other robots
 		// if a robot is nearby, get IP address and make RPC call
-		 robot.RespondToButtons()
+		robot.RespondToButtons()
 		robot.Explore()
 		break
 	}
