@@ -66,7 +66,7 @@ func main() {
 	fmt.Println(logname)
 	if _, err := os.Stat(logname); err == nil {
 		//its exists... read it
-		file, err := os.Stat("./logname")
+		file, err := os.Stat("./" + logname)
 		if err != nil {
 			fmt.Println("error opening the file")
 		}
@@ -86,7 +86,7 @@ func main() {
 		ips = append(ips, ip.String())
 	}
 
-	fmt.Println(ips[1 : len(ips)-1])
+	// fmt.Println(ips[1 : len(ips)-1])
 	ips = ips[1 : len(ips)-2]
 
 	timeout := time.Duration(100 * time.Millisecond)
