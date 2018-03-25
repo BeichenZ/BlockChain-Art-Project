@@ -1,13 +1,15 @@
 package main
 
 import (
-	bgpio "github.com/brian-armstrong/gpio"
+	bgpio "./gpio"
 	"fmt"
 )
 
 func main() {
+	pin := bgpio.NewInput(19)
+	pin.High()
 	watcher := bgpio.NewWatcher()
-	watcher.AddPin(10)
+	watcher.AddPin(19)
 	defer watcher.Close()
 
 	go func() {
