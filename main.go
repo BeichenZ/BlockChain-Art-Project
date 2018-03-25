@@ -61,6 +61,26 @@ func main() {
 	go rpc.Accept(registerListener)
 	fmt.Println("Robot listening on port " + string(Port))
 
+	//Starting File IO . If Log exists, Log Will be deleted and A New one will be created
+	logname := "Robot" + ipv4Addr.String() + Port + "-Log.txt"
+	fmt.Println(logname)
+	if _, err := os.Stat(logname); err == nil {
+		//its exists... read it
+		file, err := os.Stat("./logname")
+		if err != nil {
+			fmt.Println("error opening the file")
+		}
+		size := file.Size()
+		if size == 0 {
+			fmt.Println("nothing in the file")
+		}
+	}
+
+	_, err := os.Create(logname)
+	if err != nil {
+		fmt.Println("error creating robot log")
+	}
+
 	var ips []string
 	for ip := ipv4Addr.Mask(ipv4Net.Mask); ipv4Net.Contains(ip); inc(ip) {
 		ips = append(ips, ip.String())
@@ -70,7 +90,7 @@ func main() {
 	ips = ips[1 : len(ips)-2]
 
 	timeout := time.Duration(100 * time.Millisecond)
-	go scanForNeighbours(ips[:5],ipv4Addr, timeout, robot, Port)
+	go scanForNeighbours(ips[:5], ipv4Addr, timeout, robot, Port)
 	go robot.CallNeighbours()
 	// for {
 	// 	// wait for user input
@@ -81,7 +101,7 @@ func main() {
 	for {
 		// asynchronously check for other robots
 		// if a robot is nearby, get IP address and make RPC call
-		 robot.RespondToButtons()
+		robot.RespondToButtons()
 		robot.Explore()
 		break
 	}
