@@ -41,6 +41,7 @@ type RobotStruct struct {
 	LeftWallSig   chan bool
 	WalkSig       chan bool
 	Logger        *govec.GoLog
+	State              RobotState
 }
 
 type Robot interface {
@@ -57,6 +58,14 @@ var robotStruct RobotStruct
 func (r *RobotStruct) SendMyMap() {
 	return
 }
+
+type RobotState int
+
+const (
+	ROAM RobotState = iota
+	JOIN RobotState = iota
+	BUSY RobotState = iota
+)
 
 func (r *RobotStruct) SendFreeSpaceSig() {
 	fmt.Println("got here")
@@ -498,12 +507,20 @@ func (r *RobotStruct) CallNeighbours() {
 				NeighbourCoordinate: r.CurLocation,
 				NeighbourMap:        r.RMap,
 				SendlogMessage:      finalsend,
+				State: r.State,
 			}
 			if err != nil {
 				fmt.Println(err)
 			}
-			alive := true
-			client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &alive)
+			withInComRadius := false
+
+			if (r.State == ROAM) {
+				client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &withInComRadius)
+				if withInComRadius {
+					r.State = JOIN
+				}
+			}
+
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
@@ -533,6 +550,7 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string) *R
 		LeftWallSig:        make(chan bool),
 		WalkSig:            make(chan bool),
 		Logger:             logger,
+		State:              ROAM,
 	}
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 	return &newRobot

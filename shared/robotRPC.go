@@ -12,6 +12,7 @@ type FarNeighbourPayload struct {
 	NeighbourCoordinate Coordinate
 	NeighbourMap        Map
 	SendlogMessage      []byte
+	State               RobotState
 }
 
 func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
@@ -42,7 +43,7 @@ func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) erro
 }
 
 // This funciton is periodically called to detemine the distance between two neighbours
-func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, reply *string) error {
+func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, withInComRadius *bool) error {
 	// Calculate distance here
 	var incommingMessage int
 	fmt.Println("receive info from neighbour: ", p.NeighbourID)
@@ -55,8 +56,9 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		NMap:                p.NeighbourMap,
 	}
 	distance := 0
-	if distance < 1 {
+	if distance < 1 && p.State == ROAM {
 		robotRPC.PiRobot.JoiningSig <- newNeighbour
+		*withInComRadius = true
 	}
 	return nil
 }
