@@ -240,6 +240,35 @@ func (r *RobotStruct) Explore() error {
 			// Allocate tasks to current robot network
 			r.TaskAllocationToNeighbours(tasks)
 			// Wait for tasks from each neighbour
+			r.WaitForEnoughTaskFromNeighbours()
+			taskToDo := r.PickTaskWithLowestID()
+			for _, neighbour := range r.RobotNeighbours {
+				client, err := rpc.Dial("tcp", neighbour.Addr)
+				if err != nil {
+					fmt.Println("There is a problem respoing to neighbour about its task")
+				}
+				if neighbour.Addr == taskToDo.SenderAddr {
+					alive := false
+					messagepayload := 1
+					finalsend := r.Logger.PrepareSend("Sending Message - "+"Accpeting task from my neighbour:"+neighbour.Addr, messagepayload)
+					taskResponsePayloadYes := TaskDescisionPayload{
+						SenderID:       r.RobotID,
+						Descision:      true,
+						SendlogMessage: finalsend,
+					}
+					client.Call("RobotRPC.ReceivePossibleNeighboursPayload", taskResponsePayloadYes, &alive)
+				} else {
+					alive := false
+					messagepayload := 1
+					finalsend := r.Logger.PrepareSend("Sending Message - "+"Denying task from my neighbour:"+neighbour.Addr, messagepayload)
+					taskResponsePayloadNo := TaskDescisionPayload{
+						SenderID:       r.RobotID,
+						Descision:      false,
+						SendlogMessage: finalsend,
+					}
+					client.Call("RobotRPC.ReceivePossibleNeighboursPayload", taskResponsePayloadNo, &alive)
+				}
+			}
 			// Respond to each task given by my fellow robots
 			//       r.decideTaskTodo()
 			// Agree with everyone in the network of who assigned the task
@@ -439,8 +468,6 @@ func (r *RobotStruct) PickTaskWithLowestID() TaskPayload {
 	return taskToDo
 }
 
-func (r *RobotStruct) AllocateTaskToNeighbours(ldp []PointStruct) {
-}
 func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 
 	ldpn := ldp[1:]
@@ -454,6 +481,7 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 		finalsend := r.Logger.PrepareSend("Sending Message to Robot"+robotNeighbour.Addr, messagepayload)
 		task := &TaskPayload{
 			SenderID:       r.RobotID,
+			SenderAddr:     r.RobotIP,
 			DestPoint:      dpn,
 			SendlogMessage: finalsend,
 		}
@@ -487,7 +515,6 @@ func (r *RobotStruct) CallNeighbours() {
 			// messagepayload := []byte("Receiving coorindates info from neighbour: " + strconv.Itoa(r.RobotID))
 			// finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
 			messagepayload := 1
-			// messagepayload := []byte("Sending to my number with ID:" + strconv.Itoa(robotNeighbour.Addr))
 			finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), messagepayload)
 			farNeighbourPayload := FarNeighbourPayload{
 				NeighbourID:         r.RobotID,
