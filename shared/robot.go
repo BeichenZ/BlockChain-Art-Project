@@ -238,10 +238,17 @@ func (r *RobotStruct) Explore() error {
 			// Create tasks for current robot network
 			tasks, _ := r.TaskCreation()
 			// Allocate tasks to current robot network
-			r.TaskAllocationToNeighbours(tasks)
+			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
+			// r.CurrTask = tasks[0]
+			r.TaskAllocationToNeighbours(tasks[1:])
+
 			// Wait for tasks from each neighbour
 			r.WaitForEnoughTaskFromNeighbours()
 			taskToDo := r.PickTaskWithLowestID()
+			// r.CurrTask = taskToDo
+			if taskToDo.SenderID < r.RobotID {
+				r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
+			}
 			r.RespondToNeighoursAboutTask(taskToDo)
 			// Respond to each task given by my fellow robots
 			//       r.decideTaskTodo()

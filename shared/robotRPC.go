@@ -19,6 +19,7 @@ func (robotRPC *RobotRPC) ReceiveMap(senderMap *Map, reply *int) error {
 }
 
 func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *int) error {
+	robotRPC.PiRobot.ReceivedTasks = append(robotRPC.PiRobot.ReceivedTasks, *senderTask)
 	fmt.Println(senderTask.SendlogMessage)
 	var incommingMessage int
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTask.SendlogMessage, &incommingMessage)
