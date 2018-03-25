@@ -361,6 +361,7 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 			finalsend := r.Logger.PrepareSend("Sending Message - "+"Accpeting task from my neighbour:"+neighbour.Addr, messagepayload)
 			taskResponsePayloadYes := TaskDescisionPayload{
 				SenderID:       r.RobotID,
+				SenderAddr:     r.RobotIP,
 				Descision:      true,
 				SendlogMessage: finalsend,
 			}
@@ -371,6 +372,7 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 			finalsend := r.Logger.PrepareSend("Sending Message - "+"Denying task from my neighbour:"+neighbour.Addr, messagepayload)
 			taskResponsePayloadNo := TaskDescisionPayload{
 				SenderID:       r.RobotID,
+				SenderAddr:     r.RobotIP,
 				Descision:      false,
 				SendlogMessage: finalsend,
 			}

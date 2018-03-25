@@ -27,6 +27,9 @@ func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *int) error
 
 // TODO
 func (robotRPC *RobotRPC) ReceiveTaskDecsionResponse(senderTaskDecision *TaskDescisionPayload, reply *int) error {
+	var incommingMessage int
+	fmt.Println("Receive task response from neighbour: ", senderTaskDecision.SenderAddr)
+	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTaskDecision.SendlogMessage, &incommingMessage)
 	return nil
 }
 

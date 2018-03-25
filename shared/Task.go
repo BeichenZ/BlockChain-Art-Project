@@ -8,6 +8,7 @@ type TaskPayload struct {
 }
 type TaskDescisionPayload struct {
 	SenderID       int
+	SenderAddr     string
 	Descision      bool // true -> robot will do other robots task
 	SendlogMessage []byte
 }
