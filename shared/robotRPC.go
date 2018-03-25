@@ -1,6 +1,9 @@
 package shared
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type RobotRPC struct {
 	PiRobot *RobotStruct
@@ -13,6 +16,11 @@ type FarNeighbourPayload struct {
 	NeighbourMap        Map
 	SendlogMessage      []byte
 	State               RobotState
+}
+
+type ResponseForNeighbourPayload struct {
+	WithInComRadius bool
+	RemainingTime  time.Duration
 }
 
 func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
@@ -45,9 +53,9 @@ func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) erro
 	fmt.Println(*message)
 	return nil
 }
-
+  // R3's perspective
 // This funciton is periodically called to detemine the distance between two neighbours
-func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, withInComRadius *bool) error {
+func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, responsePayload *ResponseForNeighbourPayload) error {
 	// Calculate distance here
 	var incommingMessage int
 	fmt.Println("receive info from neighbour: ", p.NeighbourID)
@@ -61,8 +69,33 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 	}
 	distance := 0
 	if distance < 1 && p.State == ROAM {
+		fmt.Println("Join signal is sent.................................................")
 		robotRPC.PiRobot.JoiningSig <- newNeighbour
-		*withInComRadius = true
+		responsePayload.WithInComRadius = true
+
+
+		if robotRPC.PiRobot.joinInfo.firstTimeJoining {
+
+			robotRPC.PiRobot.joinInfo.firstTimeJoining = false
+
+			fmt.Println("Starting Time....................................")
+			robotRPC.PiRobot.joinInfo.joiningTime = time.Now()
+
+			go func() {
+				for {
+					if time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime) >= 5 {
+						fmt.Println("Timer has ended. Going to the BUSY state..............")
+						robotRPC.PiRobot.BusySig <- true
+						robotRPC.PiRobot.joinInfo.firstTimeJoining = true
+					}
+				}
+			}()
+		} else {
+
+			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
+		}
+
 	}
+
 	return nil
 }

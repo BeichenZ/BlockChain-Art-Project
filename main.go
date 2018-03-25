@@ -110,7 +110,7 @@ func main() {
 
 func scanForNeighbours(ips []string, ipv4Addr net.IP, timeout time.Duration, robot *shared.RobotStruct, Port string) {
 	for {
-		fmt.Println("Looking for neighbours...")
+		//fmt.Println("Looking for neighbours...")
 		for _, ip := range ips {
 			if ip == ipv4Addr.String() {
 				continue
