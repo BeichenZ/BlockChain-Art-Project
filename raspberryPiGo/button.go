@@ -1,26 +1,47 @@
-package main
+//package main
+package RPiGPIO
 
 import (
 	bgpio "./gpio"
 	"fmt"
+	"time"
 )
+const ButtonWaitMiliSecond =  300
 
+//Used to distinguish between different button pressed
+
+type ButtonType int
+const (
+	FrontWallButton ButtonType = iota
+	LeftWallButton
+	RightWallButton
+)
+/*
 func main() {
-	pin := bgpio.NewInput(19)
-	pin.High()
-	watcher := bgpio.NewWatcher()
-	watcher.AddPin(19)
-	defer watcher.Close()
+	//Test Codes for button
+	recChannel := make(chan int)
+	MonitorButtonAtPin(LeftWallButton,19,recChannel)	
+	temp := <- recChannel
+	fmt.Printf("Button is indeed pressed as mode %d\n",temp)
+	
+}
+*/
 
-	go func() {
-		for {
-			pin, value := watcher.Watch()
-			fmt.Printf("read %d from gpio %d\n", value, pin)
-		}
+//Note:Function Assumes Monitored Pin has been pulled down
+func MonitorButtonAtPin(buttonType ButtonType,pinNum uint,outputChan chan int ){
+	buttonPin := bgpio.NewInput(pinNum)
+	go func (){
+		Loop:
+			for{
+                        	//Button is pressed when input is high(skip pull down)
+				if value,err := buttonPin.Read();value==1{
+					fmt.Printf("Button at Pin%d is pressed\n",pinNum)
+					if err != nil {fmt.Println(err)}
+					time.Sleep(ButtonWaitMiliSecond*time.Millisecond)
+					outputChan <- int(buttonType)
+         				        break Loop //Terminate after button is pressed once								  }		
+                		}
+			  }
 	}()
-
-	for {
-		_ = 2;
-	}
 }
 
