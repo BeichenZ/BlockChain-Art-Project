@@ -242,33 +242,7 @@ func (r *RobotStruct) Explore() error {
 			// Wait for tasks from each neighbour
 			r.WaitForEnoughTaskFromNeighbours()
 			taskToDo := r.PickTaskWithLowestID()
-			for _, neighbour := range r.RobotNeighbours {
-				client, err := rpc.Dial("tcp", neighbour.Addr)
-				if err != nil {
-					fmt.Println("There is a problem respoing to neighbour about its task")
-				}
-				if neighbour.Addr == taskToDo.SenderAddr {
-					alive := false
-					messagepayload := 1
-					finalsend := r.Logger.PrepareSend("Sending Message - "+"Accpeting task from my neighbour:"+neighbour.Addr, messagepayload)
-					taskResponsePayloadYes := TaskDescisionPayload{
-						SenderID:       r.RobotID,
-						Descision:      true,
-						SendlogMessage: finalsend,
-					}
-					client.Call("RobotRPC.ReceivePossibleNeighboursPayload", taskResponsePayloadYes, &alive)
-				} else {
-					alive := false
-					messagepayload := 1
-					finalsend := r.Logger.PrepareSend("Sending Message - "+"Denying task from my neighbour:"+neighbour.Addr, messagepayload)
-					taskResponsePayloadNo := TaskDescisionPayload{
-						SenderID:       r.RobotID,
-						Descision:      false,
-						SendlogMessage: finalsend,
-					}
-					client.Call("RobotRPC.ReceivePossibleNeighboursPayload", taskResponsePayloadNo, &alive)
-				}
-			}
+			r.RespondToNeighoursAboutTask(taskToDo)
 			// Respond to each task given by my fellow robots
 			//       r.decideTaskTodo()
 			// Agree with everyone in the network of who assigned the task
@@ -373,6 +347,36 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 	}
 
 	return nil
+}
+
+func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
+	for _, neighbour := range r.RobotNeighbours {
+		client, err := rpc.Dial("tcp", neighbour.Addr)
+		if err != nil {
+			fmt.Println("There is a problem respoing to neighbour about its task")
+		}
+		if neighbour.Addr == taskToDo.SenderAddr {
+			alive := false
+			messagepayload := 1
+			finalsend := r.Logger.PrepareSend("Sending Message - "+"Accpeting task from my neighbour:"+neighbour.Addr, messagepayload)
+			taskResponsePayloadYes := TaskDescisionPayload{
+				SenderID:       r.RobotID,
+				Descision:      true,
+				SendlogMessage: finalsend,
+			}
+			client.Call("RobotRPC.ReceivePossibleNeighboursPayload", taskResponsePayloadYes, &alive)
+		} else {
+			alive := false
+			messagepayload := 1
+			finalsend := r.Logger.PrepareSend("Sending Message - "+"Denying task from my neighbour:"+neighbour.Addr, messagepayload)
+			taskResponsePayloadNo := TaskDescisionPayload{
+				SenderID:       r.RobotID,
+				Descision:      false,
+				SendlogMessage: finalsend,
+			}
+			client.Call("RobotRPC.ReceivePossibleNeighboursPayload", taskResponsePayloadNo, &alive)
+		}
+	}
 }
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
