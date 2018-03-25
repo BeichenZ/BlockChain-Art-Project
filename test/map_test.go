@@ -8,24 +8,13 @@ import (
 )
 const NEIGHBOURS = 1
 const NEIGHBOURPATH = 2
-const NUMOFPATHTOGENERATE = 10
 
 var WEST = shared.PointStruct{shared.Coordinate{-1.0, 0.0}, false, 0, false}
 var EAST = shared.PointStruct{shared.Coordinate{1.0, 0.0}, false, 0, false}
 var NORTH = shared.PointStruct{shared.Coordinate{0.0, 1.0}, false, 0, false}
 var SOUTH = shared.PointStruct{shared.Coordinate{0.0, -1.0}, false, 0, false}
 
-// xMin=yMin=0, xMax=yMax=9
-func RandomMapGenerator() shared.Map{
-	var sampleMap = shared.Map{}
-	sampleMap.ExploredPath = make(map[shared.Coordinate] shared.PointStruct)
-	for j := 0; j< NUMOFPATHTOGENERATE; j++{
-		myPoint := shared.Coordinate{float64(j), float64(j)}
-		sampleMap.ExploredPath[myPoint] = shared.PointStruct{myPoint, false, 0, false}
-	}
 
-	return sampleMap
-}
 
 func GetStartTestTitle(e string) string  {
 	return "<===================  Starting test case ["+ e + "]  ===================>\n"
@@ -56,7 +45,7 @@ func TestMapMerge_withNonEmptyMap(t *testing.T) {
 		FrameOfRef: 2,
 	}
 
-	var robot = shared.InitRobot(0, newMap, nil)
+	var robot = shared.InitRobot(0, newMap, nil, "")
 
 	for i:= 0; i< NEIGHBOURS ; i++{
 		robId := i
@@ -71,7 +60,7 @@ func TestMapMerge_withNonEmptyMap(t *testing.T) {
 	}
 
 	fmt.Printf("Map before merged ==> %v\n", robot.GetMap())
-	_ = robot.MergeMaps(sampleMap)
+	robot.MergeMaps(sampleMap)
 	fmt.Printf("Map after merged ==> %v\n", robot.GetMap())
 
 	fmt.Printf(GetEndTestTitle("MapMerge_withNonEmptyMap"))
@@ -84,7 +73,7 @@ func TestMapMerge_withEmptyMap(t *testing.T) {
 
 	var sampleMap = []shared.Map{}
 
-	var robot = shared.InitRobot(0, shared.Map{}, nil)
+	var robot = shared.InitRobot(0, shared.Map{}, nil, "")
 
 	for i:= 0; i< NEIGHBOURS ; i++{
 		robId := i
@@ -99,7 +88,7 @@ func TestMapMerge_withEmptyMap(t *testing.T) {
 	}
 
 	fmt.Printf("Map before merged ==> %v\n", robot.GetMap())
-	_ = robot.MergeMaps(sampleMap)
+	robot.MergeMaps(sampleMap)
 	fmt.Printf("Map after merged ==> %v\n", robot.GetMap())
 
 	//shared.PrettyPrint_Map(robot.GetMap())
@@ -148,7 +137,7 @@ func TestTaskCreation(t *testing.T){
 	fmt.Printf(GetStartTestTitle("Task Creation"))
 
 	robotStruct := shared.RobotStruct{}
-	robotStruct.RMap = RandomMapGenerator()
+	robotStruct.RMap = shared.RandomMapGenerator()
 	rn := shared.Neighbour{}
 	robotStruct.RobotNeighbours = append(robotStruct.RobotNeighbours, rn, rn , rn)
 	robotStruct.CurLocation = shared.Coordinate{float64(3.0), float64(4.0)}

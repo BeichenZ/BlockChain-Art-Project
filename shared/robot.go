@@ -41,6 +41,7 @@ type RobotStruct struct {
 	LeftWallSig   chan bool
 	WalkSig       chan bool
 	Logger        *govec.GoLog
+	State              RobotState
 }
 
 type Robot interface {
@@ -57,6 +58,14 @@ var robotStruct RobotStruct
 func (r *RobotStruct) SendMyMap() {
 	return
 }
+
+type RobotState int
+
+const (
+	ROAM RobotState = iota
+	JOIN RobotState = iota
+	BUSY RobotState = iota
+)
 
 func (r *RobotStruct) SendFreeSpaceSig() {
 	fmt.Println("got here")
@@ -159,8 +168,16 @@ func (r *RobotStruct) RespondToButtons() error {
 			fmt.Println(err)
 		}
 		command := string(signal)
+
 		if command == "j" {
-			r.JoiningSig <- Neighbour{}
+
+			r.JoiningSig <- Neighbour{
+				Addr: ":8080",
+				NID: 1,
+				NMap: RandomMapGenerator(),
+				NeighbourCoordinate: Coordinate{4.0, 5.0},
+			}
+
 		} else if command == "b" {
 			r.BusySig <- true
 		} else if command == "w" {
@@ -229,6 +246,29 @@ func (r *RobotStruct) Explore() error {
 			// }
 			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
 			//r.RobotID =9;
+			client, err := rpc.Dial("tcp", newNeighbour.Addr)
+			if err != nil {
+				print("Can't make rpc with the robot. Move on and follow my given tasks.")
+				// TODO remove
+				continue
+			}
+
+			neighbourMap := &Map{}
+
+			err = client.Call("RobotRPC.ReceiveMap", false, neighbourMap)
+
+			if err != nil {
+				print("Can't make rpc with the robot. Move on and follow my given tasks.")
+				// TODO remove the neighbour robot
+				continue
+			}
+
+			print("Received the map from the neighbour")
+			tmpMaps :=  make([]Map, 2)
+
+			tmpMaps = append(tmpMaps, *neighbourMap)
+			r.MergeMaps(tmpMaps)
+			print("Finished Merging")
 			fmt.Println("Explore() added neighbour")
 		case <-r.BusySig: // TODO whole thing
 			fmt.Println("busy sig received")
@@ -389,7 +429,7 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 }
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
-func (r *RobotStruct) MergeMaps(neighbourMaps []Map) error {
+func (r *RobotStruct) MergeMaps(neighbourMaps []Map)  {
 	refToOriginalMap := r.RMap
 
 	for _, neighbourRobotMap := range neighbourMaps {
@@ -410,35 +450,7 @@ func (r *RobotStruct) MergeMaps(neighbourMaps []Map) error {
 			}
 
 		}
-
-		//for neighbourCoordinate, neighbourPointStruct := range neighbourRobotMap.ExploredPath {
-		//	if len(refToOriginalMap.ExploredPath) == 0 {
-		//		r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointStruct
-		//	} else {
-		//		for origCor, origPointStruct  := range refToOriginalMap.ExploredPath {
-		//			if (origCor.X == neighbourCoordinate.X) && (origCor.Y == neighbourCoordinate.Y) {
-		//
-		//				var updatePointStruct PointStruct
-		//				var updatedCoordinate Coordinate
-		//
-		//				if neighbourPointStruct.TraversedTime > origPointStruct.TraversedTime {
-		//					updatePointStruct = neighbourPointStruct
-		//					updatedCoordinate = neighbourCoordinate
-		//				} else {
-		//					updatePointStruct = origPointStruct
-		//					updatedCoordinate = origCor
-		//				}
-		//
-		//				r.RMap.ExploredPath[updatedCoordinate] = updatePointStruct
-		//			} else {
-		//				r.RMap.ExploredPath[newCor] = newPointStruct
-		//				r.RMap.FrameOfRef = r.RobotID
-		//			}
-		//		}
-		//	}
-		//}
 	}
-	return nil
 }
 
 func (r *RobotStruct) GetMap() Map {
@@ -535,12 +547,20 @@ func (r *RobotStruct) CallNeighbours() {
 				NeighbourCoordinate: r.CurLocation,
 				NeighbourMap:        r.RMap,
 				SendlogMessage:      finalsend,
+				State: r.State,
 			}
 			if err != nil {
 				fmt.Println(err)
 			}
-			alive := true
-			client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &alive)
+			withInComRadius := false
+
+			if (r.State == ROAM) {
+				client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &withInComRadius)
+				if withInComRadius {
+					r.State = JOIN
+				}
+			}
+
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
@@ -570,6 +590,7 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string) *R
 		LeftWallSig:        make(chan bool),
 		WalkSig:            make(chan bool),
 		Logger:             logger,
+		State:              ROAM,
 	}
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 	return &newRobot
