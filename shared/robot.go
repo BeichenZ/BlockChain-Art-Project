@@ -613,6 +613,9 @@ func (r *RobotStruct) ReadFromLog() {
 	r.RMap = decodedRobotLog.RMap
 	r.CurLocation = decodedRobotLog.CurLocation
 	r.CurrTask = decodedRobotLog.CurrTask
+	fmt.Println(decodedRobotLog.RMap)
+	fmt.Println(decodedRobotLog.CurLocation)
+	fmt.Println(decodedRobotLog.CurrTask)
 	fmt.Println("finshed loading from log")
 }
 
