@@ -39,11 +39,11 @@ func main() {
 	// if error != nil {
 	// 	log.Fatal("Unable to resolve IP Address", error)
 	// }
-
+	logname := "Robot" + ipv4Addr.String() + Port + "-Log.txt"
 	robot := shared.InitRobot(RobotID, shared.Map{
 		ExploredPath: make(map[shared.Coordinate]shared.PointStruct),
 		FrameOfRef:   1,
-	}, Logger, ipv4Addr.String()+Port)
+	}, Logger, ipv4Addr.String()+Port, logname)
 
 	// Open up user defined port RPC connection
 	robotRPC := &shared.RobotRPC{PiRobot: robot}
@@ -62,24 +62,26 @@ func main() {
 	go rpc.Accept(registerListener)
 	fmt.Println("Robot listening on port " + string(Port))
 
-	//Starting File IO . If Log exists, Log Will be deleted and A New one will be created
-	logname := "Robot" + ipv4Addr.String() + Port + "-Log.txt"
-	fmt.Println(logname)
-	if _, err := os.Stat(logname); err == nil {
-		//its exists... read it
-		file, err := os.Stat("./" + logname)
+	// fmt.Println(logname)
+	if _, err := os.Stat("./" + logname); os.IsNotExist(err) {
+		logFile, e := robot.CreateLog()
+		if e != nil {
+			fmt.Println(e)
+		}
+		robotLog := robot.ProduceLogInfo()
+		logInfo := robot.EncodeRobotLogInfo(robotLog)
+		logFile.WriteString(logInfo)
+
+	} else {
+		file, err := os.Stat("./" + robot.Logname)
 		if err != nil {
 			fmt.Println("error opening the file")
 		}
 		size := file.Size()
-		if size == 0 {
-			fmt.Println("nothing in the file")
+		if size != 0 {
+			fmt.Println("info found in the log, reading from the log to revive robot...")
+			robot.ReadFromLog()
 		}
-	}
-
-	_, err := os.Create(logname)
-	if err != nil {
-		fmt.Println("error creating robot log")
 	}
 
 	var ips []string
