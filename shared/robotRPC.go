@@ -3,6 +3,7 @@ package shared
 import (
 	"fmt"
 	"time"
+	"golang.org/x/tools/go/gcimporter15/testdata"
 )
 
 type RobotRPC struct {
@@ -16,11 +17,15 @@ type FarNeighbourPayload struct {
 	NeighbourMap        Map
 	SendlogMessage      []byte
 	State               RobotState
+	ItsNeighbours       []Neighbour
 }
 
 type ResponseForNeighbourPayload struct {
 	WithInComRadius bool
 	RemainingTime  time.Duration
+	NeighbourRobot Neighbour
+	NeighbourState RobotState
+
 }
 
 func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
@@ -50,10 +55,11 @@ func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) erro
 	robotRPC.PiRobot.PossibleNeighbours.Add(*message)
 	// robotRPC.PiRobot.PossibleNeighbours = append(robotRPC.PiRobot.PossibleNeighbours, *message)
 	*reply = robotRPC.PiRobot.RobotIP
-	fmt.Println(*message)
+	//fmt.Println(*message)
+	//fmt.Println("This is from ResgisterNeighbour")
 	return nil
 }
-  // R3's perspective
+  // Server -> R3
 // This funciton is periodically called to detemine the distance between two neighbours
 func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, responsePayload *ResponseForNeighbourPayload) error {
 	// Calculate distance here
@@ -68,10 +74,16 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		NMap:                p.NeighbourMap,
 	}
 	distance := 0
+	
 	if distance < 1 && p.State == ROAM {
 		fmt.Println("Join signal is sent.................................................")
-		robotRPC.PiRobot.JoiningSig <- newNeighbour
+
+		go func () {
+			robotRPC.PiRobot.JoiningSig <- newNeighbour
+		}()
 		responsePayload.WithInComRadius = true
+
+		fmt.Printf("Checking FirstTimeJoining: %x \n", robotRPC.PiRobot.joinInfo.firstTimeJoining)
 
 
 		if robotRPC.PiRobot.joinInfo.firstTimeJoining {
@@ -80,19 +92,31 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 
 			fmt.Println("Starting Time....................................")
 			robotRPC.PiRobot.joinInfo.joiningTime = time.Now()
+			fmt.Println(robotRPC.PiRobot.joinInfo.joiningTime)
 
 			go func() {
 				for {
-					if time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime) >= 5 {
+					if time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime) >= (TIMETOJOIN) {
 						fmt.Println("Timer has ended. Going to the BUSY state..............")
-						robotRPC.PiRobot.BusySig <- true
 						robotRPC.PiRobot.joinInfo.firstTimeJoining = true
+						robotRPC.PiRobot.BusySig <- true
+						break
 					}
 				}
 			}()
 		} else {
 
 			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
+
+			fmt.Println("Remaining Time is ", responsePayload.RemainingTime)
+			responsePayload.NeighbourRobot = Neighbour{
+				NID:                 robotRPC.PiRobot.RobotID,
+				Addr:                robotRPC.PiRobot.RobotIP,
+				NeighbourCoordinate: robotRPC.PiRobot.CurLocation,
+				NMap:                robotRPC.PiRobot.RMap,
+			}
+			responsePayload.NeighbourState = robotRPC.PiRobot.State
+
 		}
 
 	}

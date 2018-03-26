@@ -18,6 +18,7 @@ const XMAX = "xmax"
 const YMIN = "ymix"
 const YMAX = "ymax"
 const EXRADIUS = 6
+const TIMETOJOIN = 10*time.Second
 
 type JoiningInfo struct {
 	joiningTime  time.Time
@@ -542,6 +543,8 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 	}
 }
 
+
+// Client -> R2
 func (r *RobotStruct) CallNeighbours() {
 	for {
 		for _, possibleNeighbour := range r.PossibleNeighbours.List() {
@@ -555,14 +558,18 @@ func (r *RobotStruct) CallNeighbours() {
 			// finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
 			messagepayload := 1
 			finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), messagepayload)
+
+
 			farNeighbourPayload := FarNeighbourPayload{
 				NeighbourID:         r.RobotID,
 				NeighbourIPAddr:     r.RobotIP,
 				NeighbourCoordinate: r.CurLocation,
 				NeighbourMap:        r.RMap,
 				SendlogMessage:      finalsend,
-				State: r.State,
+				State: 				 r.State,
+				ItsNeighbours:       r.RobotNeighbours,
 			}
+
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -571,7 +578,11 @@ func (r *RobotStruct) CallNeighbours() {
 			if (r.State == ROAM) {
 				client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
 				if responsePayload.WithInComRadius {
+					if responsePayload.NeighbourState == JOIN  {
+						r.JoiningSig <- responsePayload.NeighbourRobot
+					}
 					r.State = JOIN
+
 				}
 				if responsePayload.RemainingTime != 0 {
 
@@ -579,8 +590,10 @@ func (r *RobotStruct) CallNeighbours() {
 					r.joinInfo.joiningTime = time.Now()
 					go func() {
 						for {
-							if time.Now().Sub(r.joinInfo.joiningTime) >= responsePayload.RemainingTime  {
+							if time.Now().Sub(r.joinInfo.joiningTime) >= (TIMETOJOIN - responsePayload.RemainingTime)  {
+								fmt.Println("WE ARE FINISHED. FUCK 416")
 								r.BusySig <- true
+								break
 							}
 						}
 					}()
