@@ -3,7 +3,7 @@ package shared
 import (
 	"fmt"
 	"time"
-	"golang.org/x/tools/go/gcimporter15/testdata"
+	"net/rpc"
 )
 
 type RobotRPC struct {
@@ -25,6 +25,7 @@ type ResponseForNeighbourPayload struct {
 	RemainingTime  time.Duration
 	NeighbourRobot Neighbour
 	NeighbourState RobotState
+	NeighboursNeighbourRobots []Neighbour
 
 }
 
@@ -59,7 +60,18 @@ func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) erro
 	//fmt.Println("This is from ResgisterNeighbour")
 	return nil
 }
-  // Server -> R3
+
+func (robotRPC *RobotRPC) NotifyNeighbours(p *Neighbour, ignore *bool) error {
+	fmt.Printf("Adding neighbour %s to this robot %s \n", p.Addr, robotRPC.PiRobot.RobotIP )
+
+	if robotRPC.PiRobot.RobotIP != p.Addr {
+		robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, *p)
+	}
+	return nil
+}
+
+
+  // Server -> R2
 // This funciton is periodically called to detemine the distance between two neighbours
 func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, responsePayload *ResponseForNeighbourPayload) error {
 	// Calculate distance here
@@ -74,13 +86,47 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		NMap:                p.NeighbourMap,
 	}
 	distance := 0
-	
+
 	if distance < 1 && p.State == ROAM {
 		fmt.Println("Join signal is sent.................................................")
 
-		go func () {
-			robotRPC.PiRobot.JoiningSig <- newNeighbour
-		}()
+		robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, newNeighbour)
+		fmt.Println("THE SIZE OF ITSNEIGHBOURS is ", len(p.ItsNeighbours))
+
+		for _, thisRobotNeighbour := range robotRPC.PiRobot.RobotNeighbours {
+
+			client, err := rpc.Dial("tcp", thisRobotNeighbour.Addr)
+
+			if err != nil {
+				fmt.Println("ERROR@!FJKDSJFKPSDFJPDSFJP")
+
+				fmt.Println(err)
+			}
+			fmt.Println("MAKING RPC CALL")
+
+			if robotRPC.PiRobot.RobotIP != newNeighbour.Addr {
+				error := client.Call("RobotRPC.NotifyNeighbours", newNeighbour, true )
+				if error != nil{
+					fmt.Printf(error.Error())
+				}
+			}
+		}
+
+		for _, neighbour := range p.ItsNeighbours {
+
+
+
+			if robotRPC.PiRobot.RobotIP != neighbour.Addr {
+				robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, neighbour)
+			}
+
+		}
+
+
+		fmt.Println("join sig received")
+		fmt.Println("neighbour IP is: ", newNeighbour.Addr)
+		fmt.Println("Waiting for the other robots to join")
+
 		responsePayload.WithInComRadius = true
 
 		fmt.Printf("Checking FirstTimeJoining: %x \n", robotRPC.PiRobot.joinInfo.firstTimeJoining)
@@ -116,7 +162,7 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 				NMap:                robotRPC.PiRobot.RMap,
 			}
 			responsePayload.NeighbourState = robotRPC.PiRobot.State
-
+			responsePayload.NeighboursNeighbourRobots = robotRPC.PiRobot.RobotNeighbours
 		}
 
 	}

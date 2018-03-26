@@ -19,6 +19,7 @@ import (
 func main() {
 	gob.Register(&net.TCPAddr{})
 	gob.Register(&shared.TaskPayload{})
+	gob.Register(&shared.Neighbour{})
 
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	Port := os.Args[1]

@@ -8,7 +8,6 @@ import (
 	"net/rpc"
 	"os"
 	"time"
-
 	"github.com/DistributedClocks/GoVector/govec"
 	"github.com/fatih/set"
 )
@@ -244,15 +243,11 @@ func (r *RobotStruct) Explore() error {
 			r.UpdateMap(RightWall)
 		case <-r.LeftWallSig:
 			r.UpdateMap(LeftWall)
-		case newNeighbour := <-r.JoiningSig:
-			r.RobotNeighbours = append(r.RobotNeighbours, newNeighbour)
-			fmt.Println("join sig received")
-			fmt.Println("neighbour IP is: ", newNeighbour.Addr)
-			fmt.Println("Waiting for the other robots to join")
-			// TODO follow procedure to ensure all neighbours are valid to be in the networ
 		case <-r.BusySig: // TODO whole thing
 			fmt.Println("busy sig received")
-
+			for _, nei := range r.RobotNeighbours {
+				fmt.Println(nei.Addr)
+			}
 			// newNeighbour := Neighbour{
 			// 	Addr: neighbourAddr,
 			// 	NID:  1,
@@ -579,7 +574,20 @@ func (r *RobotStruct) CallNeighbours() {
 				client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
 				if responsePayload.WithInComRadius {
 					if responsePayload.NeighbourState == JOIN  {
-						r.JoiningSig <- responsePayload.NeighbourRobot
+						r.RobotNeighbours = append(r.RobotNeighbours, responsePayload.NeighbourRobot)
+
+						for _, neighbour := range responsePayload.NeighboursNeighbourRobots {
+
+							if r.RobotIP != neighbour.Addr {
+								r.RobotNeighbours = append(r.RobotNeighbours, neighbour)
+							}
+						}
+
+						fmt.Println("join sig received")
+						fmt.Println("neighbour IP is: ", responsePayload.NeighbourRobot.Addr)
+						fmt.Println("Waiting for the other robots to join")
+
+
 					}
 					r.State = JOIN
 
