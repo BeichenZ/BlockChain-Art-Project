@@ -2,7 +2,10 @@ package shared
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/gob"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"math/rand"
 	"net/rpc"
@@ -18,6 +21,12 @@ const XMAX = "xmax"
 const YMIN = "ymix"
 const YMAX = "ymax"
 const EXRADIUS = 6
+
+type RobotLog struct {
+	CurrTask    TaskPayload
+	RMap        Map
+	CurLocation Coordinate
+}
 
 type RobotStruct struct {
 	CurrTask           TaskPayload
@@ -40,6 +49,7 @@ type RobotStruct struct {
 	RightWallSig  chan bool
 	LeftWallSig   chan bool
 	WalkSig       chan bool
+	Logname       string
 	Logger        *govec.GoLog
 }
 
@@ -553,7 +563,7 @@ func (r *RobotStruct) decideTaskTodo() {
 
 }
 
-func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string) *RobotStruct {
+func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string, logname string) *RobotStruct {
 	newRobot := RobotStruct{
 
 		PossibleNeighbours: set.New(),
@@ -569,8 +579,61 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string) *R
 		RightWallSig:       make(chan bool),
 		LeftWallSig:        make(chan bool),
 		WalkSig:            make(chan bool),
+		Logname:            logname,
 		Logger:             logger,
 	}
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 	return &newRobot
+}
+
+func (r *RobotStruct) EncodeRobotLogInfo(robotLog RobotLog) string {
+	buf := new(bytes.Buffer)
+	encoder := gob.NewEncoder(buf)
+	err := encoder.Encode(robotLog)
+	if err != nil {
+		panic(err)
+	}
+	output := string(buf.Bytes())
+	return output
+	// fmt.Println(buf.Bytes())
+}
+
+func (r *RobotStruct) ReadFromLog() {
+	robotLogContent, _ := ioutil.ReadFile("./" + r.Logname)
+	buf := bytes.NewBuffer(robotLogContent)
+
+	var decodedRobotLog RobotLog
+
+	decoder := gob.NewDecoder(buf)
+	err := decoder.Decode(&decodedRobotLog)
+	if err != nil {
+		panic(err)
+	}
+
+	r.RMap = decodedRobotLog.RMap
+	r.CurLocation = decodedRobotLog.CurLocation
+	r.CurrTask = decodedRobotLog.CurrTask
+	fmt.Println("finshed loading from log")
+}
+
+func (r *RobotStruct) CreateLog() (*os.File, error) {
+	file, err := os.Create("./" + r.Logname)
+	if err != nil {
+		fmt.Println("error creating robot log")
+	}
+	return file, err
+}
+
+func (r *RobotStruct) ProduceLogInfo() RobotLog {
+	robotLog := RobotLog{
+		CurrTask:    r.CurrTask,
+		RMap:        r.RMap,
+		CurLocation: r.CurLocation,
+	}
+	return robotLog
+}
+
+func (r *RobotStruct) LocateLog() (*os.File, error) {
+	file, err := os.Open(r.Logname)
+	return file, err
 }
