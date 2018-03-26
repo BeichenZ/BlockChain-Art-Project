@@ -19,6 +19,7 @@ import (
 func main() {
 	gob.Register(&net.TCPAddr{})
 	gob.Register(&shared.TaskPayload{})
+	gob.Register(&shared.Neighbour{})
 
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	Port := os.Args[1]
@@ -98,37 +99,37 @@ func main() {
 	// 	break
 	// }
 
-	for {
+
 		// asynchronously check for other robots
 		// if a robot is nearby, get IP address and make RPC call
-		robot.RespondToButtons()
+		//go robot.RespondToButtons()
 		robot.Explore()
-		break
-	}
+
+
 
 }
 
 func scanForNeighbours(ips []string, ipv4Addr net.IP, timeout time.Duration, robot *shared.RobotStruct, Port string) {
 	for {
-		fmt.Println("Looking for neighbours...")
+		//fmt.Println("Looking for neighbours...")
 		for _, ip := range ips {
 			if ip == ipv4Addr.String() {
 				continue
 			}
 			_, err := net.DialTimeout("tcp", ip+":5000", timeout)
 			if err == nil {
-				log.Println("Able to locate neighbour")
+				//log.Println("Able to locate neighbour")
 				// Start registeration protocol
 				robot.PossibleNeighbours.Add(ip + ":8080")
 				// robot.PossibleNeighbours = append(robot.PossibleNeighbours, ip+":5000")
-				fmt.Println(robot.PossibleNeighbours)
+				//fmt.Println(robot.PossibleNeighbours)
 				neighbourIPAddr := ""
 				client, err := rpc.Dial("tcp", ip+":5000")
 				if err != nil {
 					fmt.Println(err)
 				}
 				client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
-			}
+                                     			}
 		}
 	}
 }
