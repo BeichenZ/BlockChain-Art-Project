@@ -22,6 +22,7 @@ const(
 	Wall Button = 2
 	RightWall Button = 3
 	LeftWall Button = 4
+	EXRADIUS = 2
 )
 var WEST = PointStruct{Coordinate{-1.0, 0.0}, false, 0, false}
 var EAST = PointStruct{Coordinate{1.0, 0.0}, false, 0, false}
