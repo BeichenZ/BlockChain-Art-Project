@@ -1,5 +1,5 @@
-//package main
-package RPiGPIO
+package main
+//package RPiGPIO
 
 import (
 	bgpio "./gpio"
@@ -16,7 +16,7 @@ const (
 	LeftWallButton
 	RightWallButton
 )
-/*
+
 func main() {
 	//Test Codes for button
 	recChannel := make(chan int)
@@ -25,7 +25,7 @@ func main() {
 	fmt.Printf("Button is indeed pressed as mode %d\n",temp)
 	
 }
-*/
+
 
 //Note:Function Assumes Monitored Pin has been pulled down
 func MonitorButtonAtPin(buttonType ButtonType,pinNum uint,outputChan chan int ){

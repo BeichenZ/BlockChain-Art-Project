@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 )
 
 type direction uint
@@ -44,7 +45,9 @@ func exportGPIO(p Pin) {
 		os.Exit(1)
 	}
 	defer export.Close()
-	export.Write([]byte(strconv.Itoa(int(p.Number))))
+	export.Write([]byte(strconv.Itoa(int(p.Number))))	
+	//It take times for Raspbian to create GPIO# folder and subsequent files once a pin is exported
+	time.Sleep(10*time.Millisecond)
 }
 
 func unexportGPIO(p Pin) {
@@ -60,8 +63,18 @@ func unexportGPIO(p Pin) {
 func setDirection(p Pin, d direction, initialValue uint) {
 	dir, err := os.OpenFile(fmt.Sprintf("/sys/class/gpio/gpio%d/direction", p.Number), os.O_WRONLY, 0600)
 	if err != nil {
+                fmt.Println(err)
 		fmt.Printf("failed to open gpio %d direction file for writing\n", p.Number)
+	exportGPIO(p)	
+	dir, err = os.OpenFile(fmt.Sprintf("/sys/class/gpio/gpio%d/direction", p.Number), os.O_WRONLY, 0600)
+	//The pi has weird error where first time connecting to pi will cause connection error
+	if err == nil {
+		fmt.Println("Reconnect to Pin Succeed.Proceed")
+	}else {	
+		fmt.Println(err)
+		fmt.Printf("Unable to Set Up Pin %d,Use another Pin\n",p.Number)
 		os.Exit(1)
+	}
 	}
 	defer dir.Close()
 
