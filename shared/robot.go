@@ -506,10 +506,12 @@ func (r *RobotStruct) PickTaskWithLowestID() TaskPayload {
 }
 
 func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
-
+	fmt.Printf( "The length of LDPN is  %v \n", len(ldp))
+	// TODO: What happens when len(ldp) == 1
 	ldpn := ldp[1:]
 	rand.Seed(time.Now().UnixNano())
 	for _, robotNeighbour := range r.RobotNeighbours {
+		fmt.Printf( "The length of LDPN is  %v \n", len(ldpn))
 		dpn := ldpn[rand.Intn(len(ldpn))]
 		removeElFromlist(dpn, &ldpn)
 		fmt.Println(robotNeighbour)
