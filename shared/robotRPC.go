@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"net/rpc"
+	"encoding/json"
 )
 
 type RobotRPC struct {
@@ -30,13 +31,23 @@ type ResponseForNeighbourPayload struct {
 }
 
 func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
-	*receivedMap = robotRPC.PiRobot.RMap
+	//Productio code
+	//*receivedMap = robotRPC.PiRobot.RMap
+
+	//Testing
+
+	*receivedMap = RandomMapGenerator()
+	fmt.Println("RobotRpc: ReceiveMap() -------------->\n       %s\n ", *receivedMap)
 	return nil
 }
 
 func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *int) error {
 	robotRPC.PiRobot.ReceivedTasks = append(robotRPC.PiRobot.ReceivedTasks, *senderTask)
-	fmt.Println(senderTask.SendlogMessage)
+
+	fmt.Println("RobotRPC: ReceiveTASK--->")
+	data, _ :=json.MarshalIndent(senderTask, "", "")
+	fmt.Println(string(data))
+
 	var incommingMessage int
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTask.SendlogMessage, &incommingMessage)
 	return nil
@@ -93,8 +104,11 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, newNeighbour)
 		fmt.Println("THE SIZE OF ITSNEIGHBOURS is ", len(p.ItsNeighbours))
 
+		fmt.Println(robotRPC.PiRobot.RobotNeighbours)
+		fmt.Println(len(robotRPC.PiRobot.RobotNeighbours))
 		for _, thisRobotNeighbour := range robotRPC.PiRobot.RobotNeighbours {
 
+			//fmt.Printf("MMMMMMMMMMMMMMMMMMMMMMMMM %s\n", thisRobotNeighbour.Addr)
 			client, err := rpc.Dial("tcp", thisRobotNeighbour.Addr)
 
 			if err != nil {
@@ -107,6 +121,7 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 			if robotRPC.PiRobot.RobotIP != newNeighbour.Addr {
 				error := client.Call("RobotRPC.NotifyNeighbours", newNeighbour, true )
 				if error != nil{
+					//fmt.Println("HUGE ERRORRRRRRR")
 					fmt.Printf(error.Error())
 				}
 			}
@@ -114,14 +129,11 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 
 		for _, neighbour := range p.ItsNeighbours {
 
-
-
 			if robotRPC.PiRobot.RobotIP != neighbour.Addr {
 				robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, neighbour)
 			}
 
 		}
-
 
 		fmt.Println("join sig received")
 		fmt.Println("neighbour IP is: ", newNeighbour.Addr)

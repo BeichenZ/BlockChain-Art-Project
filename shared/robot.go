@@ -13,6 +13,7 @@ import (
 	"time"
 	"github.com/DistributedClocks/GoVector/govec"
 	"github.com/fatih/set"
+	"encoding/json"
 )
 
 const XMIN = "xmin"
@@ -100,11 +101,15 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 	ymin := r.FindMapExtrema(YMIN)
 	ymax := r.FindMapExtrema(YMAX)
 
-	center := Coordinate{float64((xmax - xmin) / 2), float64((ymax - ymin) / 2)}
+	center := Coordinate{Round(float64((xmax - xmin) / 2)), Round(float64((ymax - ymin) / 2))}
+	center.X = Round(center.X)
+	center.Y = Round(center.Y)
 
 	DestNum := len(r.RobotNeighbours) + 1
 
 	DestPoints := FindDestPoints(DestNum, center)
+
+	fmt.Printf("Center is %s\n", center)
 
 	// move DestpointForMe to beginning of list
 	DestPointForMe := r.FindClosestDest(DestPoints)
@@ -117,6 +122,8 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 			break
 		}
 	}
+
+	fmt.Printf("TaskCreation(): ==============================Generated destination points are \n%s ==============================\n", DestPoints)
 
 	return DestPoints, nil
 
@@ -132,7 +139,12 @@ func (r *RobotStruct) FindMapExtrema(e string) float64 {
 				xMax = point.Point.X
 			}
 		}
-		return xMax
+
+		if len(r.RMap.ExploredPath) == 0{
+			return 0.0
+		}
+
+		return Round(xMax)
 	} else if e == XMIN {
 		var xMin float64 = math.MaxFloat64
 		for _, point := range r.RMap.ExploredPath {
@@ -140,7 +152,11 @@ func (r *RobotStruct) FindMapExtrema(e string) float64 {
 				xMin = point.Point.X
 			}
 		}
-		return xMin
+
+		if len(r.RMap.ExploredPath) == 0{
+			return 0.0
+		}
+		return Round(xMin)
 	} else if e == YMAX {
 		var yMax float64 = math.MinInt64
 		for _, point := range r.RMap.ExploredPath {
@@ -148,7 +164,11 @@ func (r *RobotStruct) FindMapExtrema(e string) float64 {
 				yMax = point.Point.Y
 			}
 		}
-		return yMax
+
+		if len(r.RMap.ExploredPath) == 0{
+			return 0.0
+		}
+		return Round(yMax)
 	} else {
 		var yMin float64 = math.MaxFloat64
 		for _, point := range r.RMap.ExploredPath {
@@ -156,7 +176,11 @@ func (r *RobotStruct) FindMapExtrema(e string) float64 {
 				yMin = point.Point.Y
 			}
 		}
-		return yMin
+
+		if len(r.RMap.ExploredPath) == 0{
+			return 0.0
+		}
+		return Round(yMin)
 	}
 }
 
@@ -257,9 +281,8 @@ func (r *RobotStruct) Explore() error {
 
 			listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
 
-			fmt.Println("Getting the maps from the neighbour")
+			fmt.Println("Getting the maps from the neighbour.................")
 			for _, nei := range r.RobotNeighbours {
-				fmt.Println(r.RobotIP)
 				neighbourMap := &Map{}
 				client, err := rpc.Dial("tcp", nei.Addr)
 				if err != nil {
@@ -270,6 +293,12 @@ func (r *RobotStruct) Explore() error {
 
 				err = client.Call("RobotRPC.ReceiveMap", false, neighbourMap)
 
+				//Logging
+				rawMap, _ := json.MarshalIndent(*neighbourMap, "", "")
+				fmt.Printf("Receive map from %s \n", nei.Addr)
+				fmt.Println(string(rawMap))
+
+
 				if err != nil {
 					fmt.Println("Error in getting the neighbour's map")
 					fmt.Println(err)
@@ -278,7 +307,10 @@ func (r *RobotStruct) Explore() error {
 				listOfNeighbourMaps = append(listOfNeighbourMaps, *neighbourMap)
 			}
 
-			fmt.Println("Retrieved the map. Start merging")
+			fmt.Println()
+			fmt.Println("Retrieved the map. Start merging..........")
+			fmt.Println()
+
 			r.MergeMaps(listOfNeighbourMaps)
 			fmt.Println("Finished Merging")
 
@@ -508,13 +540,13 @@ func (r *RobotStruct) PickTaskWithLowestID() TaskPayload {
 func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 	fmt.Printf( "The length of LDPN is  %v \n", len(ldp))
 	// TODO: What happens when len(ldp) == 1
-	ldpn := ldp[1:]
+	ldpn := ldp
 	rand.Seed(time.Now().UnixNano())
 	for _, robotNeighbour := range r.RobotNeighbours {
 		fmt.Printf( "The length of LDPN is  %v \n", len(ldpn))
 		dpn := ldpn[rand.Intn(len(ldpn))]
 		removeElFromlist(dpn, &ldpn)
-		fmt.Println(robotNeighbour)
+		fmt.Printf("Current Neighour %s \n", robotNeighbour)
 		// fmt.Println(neighbourRoboAddr)
 		messagepayload := 1
 		finalsend := r.Logger.PrepareSend("Sending Message to Robot"+robotNeighbour.Addr, messagepayload)
@@ -524,14 +556,16 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 			DestPoint:      dpn,
 			SendlogMessage: finalsend,
 		}
-		fmt.Println("TaskAllocateToNeighbours() ")
-		fmt.Println(task)
+		fmt.Printf("TaskAllocateToNeighbours(%s -------> %s) \n", task.SenderAddr, robotNeighbour.Addr)
+		data, _ := json.MarshalIndent(task, "", "")
+		fmt.Println(string(data))
+
 		// TESTING UNCOMMENT
 		neighbourClient, err := rpc.Dial("tcp", robotNeighbour.Addr)
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Printf("%+v", neighbourClient)
+		//fmt.Printf("%+v", neighbourClient)
 		alive := false
 		// Here I send my robot the task
 		err = neighbourClient.Call("RobotRPC.ReceiveTask", task, &alive)

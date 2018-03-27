@@ -32,7 +32,7 @@ var SOUTH = PointStruct{Coordinate{0.0, -1.0}, false, 0, false}
 // ----------------------------------------- FUNCTIONS ---------------------------------------------------------- //
 // FN: Finds magnitiude of the distance btwn two points
 func DistBtwnTwoPoints(dp Coordinate, cp Coordinate) float64 {
-	d := math.Sqrt(math.Pow(dp.X-cp.X, 2) + math.Pow(dp.Y-cp.Y, 2))
+	d := Round(math.Sqrt(math.Pow(dp.X-cp.X, 2) + math.Pow(dp.Y-cp.Y, 2)))
 	return d
 }
 
@@ -75,7 +75,7 @@ func FindDestPoints(desNumForRobots int, center Coordinate) []PointStruct {
 
 	for i := 0; i < desNumForRobots; i++ {
 		theta := float64(i) * 2 * math.Pi / float64(desNumForRobots)
-		delPoint := Coordinate{float64(EXRADIUS * math.Cos(theta)), float64(EXRADIUS * math.Sin(theta))}
+		delPoint := Coordinate{Round(float64(EXRADIUS * Round(math.Cos(theta)))), Round(float64(EXRADIUS * Round(math.Sin(theta))))}
 		destPoint := PointStruct{}
 		destPoint.Point.X = center.X + delPoint.X
 		destPoint.Point.Y = center.Y + delPoint.Y
