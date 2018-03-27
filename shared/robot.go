@@ -207,7 +207,6 @@ func (r *RobotStruct) RespondToButtons() error {
 	}
 }
 
-// TODOOOOO
 func (r *RobotStruct) Explore() error {
 	for {
 		fmt.Println("Explore() at the top")
@@ -255,42 +254,35 @@ func (r *RobotStruct) Explore() error {
 			r.UpdateMap(LeftWall)
 		case <-r.BusySig: // TODO whole thing
 			fmt.Println("busy sig received")
+
+			listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
+
+			fmt.Println("Getting the maps from the neighbour")
 			for _, nei := range r.RobotNeighbours {
-				fmt.Println(nei.Addr)
+				fmt.Println(r.RobotIP)
+				neighbourMap := &Map{}
+				client, err := rpc.Dial("tcp", nei.Addr)
+				if err != nil {
+					fmt.Println("Error in connecting with neighbour")
+					fmt.Println(err)
+					continue
+				}
+
+				err = client.Call("RobotRPC.ReceiveMap", false, neighbourMap)
+
+				if err != nil {
+					fmt.Println("Error in getting the neighbour's map")
+					fmt.Println(err)
+					continue
+				}
+				listOfNeighbourMaps = append(listOfNeighbourMaps, *neighbourMap)
 			}
-			// newNeighbour := Neighbour{
-			// 	Addr: neighbourAddr,
-			// 	NID:  1,
-			// }
-			//r.RobotID =9;
-			//for neighbour in r.{
-			//
-			//}
-			//
-			//client, err := rpc.Dial("tcp", newNeighbour.Addr)
-			//if err != nil {
-			//	print("Can't make rpc with the robot. Move on and follow my given tasks.")
-			//	// TODO remove
-			//	continue
-			//}
-			//
-			//neighbourMap := &Map{}
-			//
-			//err = client.Call("RobotRPC.ReceiveMap", false, neighbourMap)
-			//
-			//if err != nil {
-			//	print("Can't make rpc with the robot. Move on and follow my given tasks.")
-			//	// TODO remove the neighbour robot
-			//	continue
-			//}
-			//
-			//print("Received the map from the neighbour")
-			//tmpMaps :=  make([]Map, 2)
-			//
-			//tmpMaps = append(tmpMaps, *neighbourMap)
-			//r.MergeMaps(tmpMaps)
-			//print("Finished Merging")
-			//fmt.Println("Explore() added neighbour")
+
+			fmt.Println("Retrieved the map. Start merging")
+			r.MergeMaps(listOfNeighbourMaps)
+			fmt.Println("Finished Merging")
+
+
 
 			// Exchange my map with neighbours
 			// Wait till maps from all neighbours are recevied
