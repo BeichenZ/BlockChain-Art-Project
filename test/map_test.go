@@ -45,7 +45,7 @@ func TestMapMerge_withNonEmptyMap(t *testing.T) {
 		FrameOfRef: 2,
 	}
 
-	var robot = shared.InitRobot(0, newMap, nil, "")
+	var robot = shared.InitRobot(0, newMap, nil, "", "jjjh")
 
 	for i:= 0; i< NEIGHBOURS ; i++{
 		robId := i
@@ -73,7 +73,7 @@ func TestMapMerge_withEmptyMap(t *testing.T) {
 
 	var sampleMap = []shared.Map{}
 
-	var robot = shared.InitRobot(0, shared.Map{}, nil, "")
+	var robot = shared.InitRobot(0, shared.Map{}, nil, "", "343")
 
 	for i:= 0; i< NEIGHBOURS ; i++{
 		robId := i
@@ -138,8 +138,7 @@ func TestTaskCreation(t *testing.T){
 
 	robotStruct := shared.RobotStruct{}
 	robotStruct.RMap = shared.RandomMapGenerator()
-	rn := shared.Neighbour{}
-	robotStruct.RobotNeighbours = append(robotStruct.RobotNeighbours, rn, rn , rn)
+	_ = shared.Neighbour{}
 	robotStruct.CurLocation = shared.Coordinate{float64(3.0), float64(4.0)}
 
 	task, _ :=robotStruct.TaskCreation()

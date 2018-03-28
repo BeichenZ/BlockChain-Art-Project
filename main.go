@@ -105,7 +105,7 @@ func main() {
 		// asynchronously check for other robots
 		// if a robot is nearby, get IP address and make RPC call
 		//go robot.RespondToButtons()
-		robot.Explore()
+	robot.Explore()
 
 
 
@@ -130,8 +130,13 @@ func scanForNeighbours(ips []string, ipv4Addr net.IP, timeout time.Duration, rob
 				if err != nil {
 					fmt.Println(err)
 				}
-				client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, neighbourIPAddr)
-                                     			}
+				error :=client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, &neighbourIPAddr)
+				if error != nil{
+					fmt.Println(error.Error())
+				}else{
+					robot.PossibleNeighbours.Add(neighbourIPAddr)
+				}
+			}
 		}
 	}
 }

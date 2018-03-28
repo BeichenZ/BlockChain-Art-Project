@@ -5,4 +5,5 @@ type Neighbour struct {
 	NID                 int
 	NMap                Map
 	NeighbourCoordinate Coordinate
+	IsWithinCR			bool
 }
