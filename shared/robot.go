@@ -627,15 +627,8 @@ func (r *RobotStruct) CallNeighbours() {
 				client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
 
 				//if other robot is in join/roam and within cr, current robot tries joining
-				if responsePayload.WithInComRadius && (responsePayload.NeighbourState == JOIN ||  responsePayload.NeighbourState == ROAM) {
+				if responsePayload.WithInComRadius {
 
-					//store everyNode in the network
-					//r.RobotNeighbours = append(r.RobotNeighbours, responsePayload.NeighboursNeighbourRobots...)
-					for i:= 0; i<len(responsePayload.NeighboursNeighbourRobots); i++{
-						if responsePayload.NeighboursNeighbourRobots[i].NID != r.RobotID{
-							r.RobotNeighbours[responsePayload.NeighboursNeighbourRobots[i].NID] = responsePayload.NeighboursNeighbourRobots[i]
-						}
-					}
 					r.State = JOIN
 
 				}

@@ -124,45 +124,22 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		// put the robot itself into the NeighboursNeighbourRobots
 		responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, rpcRobot)
 
-		for _, val :=range robotRPC.PiRobot.RobotNeighbours{
-			responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, val)
-		}
 		//responsePayload.NeighboursNeighbourRobots = robotRPC.PiRobot.RobotNeighbours
 		responsePayload.NeighbourState = robotRPC.PiRobot.State
 
 		robotRPC.PiRobot.RobotNeighbours[newNeighbour.NID] = newNeighbour
 
-		//first JOIN
-		if robotRPC.PiRobot.State == ROAM{
-
-			//fmt.Println("Starting Time....................................")
-			//robotRPC.PiRobot.joinInfo.joiningTime = time.Now()
-			//fmt.Println(robotRPC.PiRobot.joinInfo.joiningTime)
-
-			//ticker := time.NewTicker(1000 * time.Millisecond)
-			//go func() {
-			//	counter :=0
-			//	for t := range ticker.C {
-			//		fmt.Println("Tick at", t)
-			//
-			//		if counter >= TIMETOJOINSECONDUNIT{
-			//			fmt.Println("Timer has ended. Going to the BUSY state..............")
-			//			robotRPC.PiRobot.BusySig <- true
-			//			ticker.Stop()
-			//		}
-			//	}
-			//}()
-
-		}else if(robotRPC.PiRobot.State == JOIN){
+		if robotRPC.PiRobot.State == JOIN {
 			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
 			fmt.Println("Remaining Time is ", responsePayload.RemainingTime)
-
 		}else{
 			//busy state -> do nothing
+
 		}
 
 	}else{
 		//skip the request client
+		responsePayload.WithInComRadius = false
 	}
 
 	return nil
