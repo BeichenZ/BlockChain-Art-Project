@@ -333,7 +333,8 @@ func (r *RobotStruct) Explore() error {
 
 			// Wait for tasks from each neighbour
 			r.WaitForEnoughTaskFromNeighbours()
-			taskToDo := r.PickTaskWithLowestID()
+			// Choose task based with the lowest ID including its own
+			taskToDo := r.PickTaskWithLowestID(tasks[0])
 			// r.CurrTask = taskToDo
 			if taskToDo.SenderID < r.RobotID {
 				r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
@@ -532,7 +533,7 @@ WaitingForEnoughTask:
 	}
 }
 
-func (r *RobotStruct) PickTaskWithLowestID() TaskPayload {
+func (r *RobotStruct) PickTaskWithLowestID(taskFromMe PointStruct) TaskPayload {
 	localMin := -1
 	var taskToDo TaskPayload
 	for _, task := range r.ReceivedTasks {
@@ -540,6 +541,11 @@ func (r *RobotStruct) PickTaskWithLowestID() TaskPayload {
 			localMin = task.SenderID
 			taskToDo = task
 		}
+	}
+	// Check if the task assigned is larger than the one it assigned itself
+	if (r.RobotID < taskToDo.SenderID){
+		taskToDo.SenderID = r.RobotID
+		taskToDo.DestPoint = taskFromMe
 	}
 	return taskToDo
 }
