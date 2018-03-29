@@ -7,11 +7,11 @@ import (
 const NUMOFPATHTOGENERATE = 10
 
 func Round(n float64) float64 {
-	i := int(n*1000)
-	if (n*1000 - float64(i)) >= 0.5 {
-		return math.Ceil(float64(i))/1000
+	i := int(n*100000)
+	if (n*100000 - float64(i)) >= 0.5 {
+		return math.Ceil(float64(i))/100000
 	} else {
-		return math.Floor(float64(i))/1000
+		return math.Floor(float64(i))/100000
 	}
 }
 

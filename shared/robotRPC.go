@@ -3,7 +3,7 @@ package shared
 import (
 	"fmt"
 	"time"
-	"net/rpc"
+	"encoding/json"
 )
 
 type RobotRPC struct {
@@ -30,13 +30,20 @@ type ResponseForNeighbourPayload struct {
 }
 
 func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
-	*receivedMap = robotRPC.PiRobot.RMap
+	//Productio code
+	//*receivedMap = robotRPC.PiRobot.RMap
+	//Testing
+	*receivedMap = RandomMapGenerator()
 	return nil
 }
 
 func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *int) error {
 	robotRPC.PiRobot.ReceivedTasks = append(robotRPC.PiRobot.ReceivedTasks, *senderTask)
-	fmt.Println(senderTask.SendlogMessage)
+
+	fmt.Println("RobotRPC: ReceiveTASK--->")
+	data, _ :=json.MarshalIndent(senderTask, "", "")
+	fmt.Println(string(data))
+
 	var incommingMessage int
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTask.SendlogMessage, &incommingMessage)
 	return nil
@@ -65,7 +72,8 @@ func (robotRPC *RobotRPC) NotifyNeighbours(p *Neighbour, ignore *bool) error {
 	fmt.Printf("Adding neighbour %s to this robot %s \n", p.Addr, robotRPC.PiRobot.RobotIP )
 
 	if robotRPC.PiRobot.RobotIP != p.Addr {
-		robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, *p)
+		robotRPC.PiRobot.RobotNeighbours[(*p).NID] = *p
+		//robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, *p)
 	}
 	return nil
 }
@@ -84,45 +92,16 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		Addr:                p.NeighbourIPAddr,
 		NeighbourCoordinate: p.NeighbourCoordinate,
 		NMap:                p.NeighbourMap,
+		IsWithinCR:			 false,
 	}
 	distance := 0
 
-	if distance < 1 && p.State == ROAM {
+	//connection is formed only if the current robot is within CR and os either in ROAM or JOIN
+	if distance < 1 && (robotRPC.PiRobot.State == ROAM || robotRPC.PiRobot.State == JOIN){
+
+		newNeighbour.IsWithinCR = true
+
 		fmt.Println("Join signal is sent.................................................")
-
-		robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, newNeighbour)
-		fmt.Println("THE SIZE OF ITSNEIGHBOURS is ", len(p.ItsNeighbours))
-
-		for _, thisRobotNeighbour := range robotRPC.PiRobot.RobotNeighbours {
-
-			client, err := rpc.Dial("tcp", thisRobotNeighbour.Addr)
-
-			if err != nil {
-				fmt.Println("ERROR@!FJKDSJFKPSDFJPDSFJP")
-
-				fmt.Println(err)
-			}
-			fmt.Println("MAKING RPC CALL")
-
-			if robotRPC.PiRobot.RobotIP != newNeighbour.Addr {
-				error := client.Call("RobotRPC.NotifyNeighbours", newNeighbour, true )
-				if error != nil{
-					fmt.Printf(error.Error())
-				}
-			}
-		}
-
-		for _, neighbour := range p.ItsNeighbours {
-
-
-
-			if robotRPC.PiRobot.RobotIP != neighbour.Addr {
-				robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, neighbour)
-			}
-
-		}
-
-
 		fmt.Println("join sig received")
 		fmt.Println("neighbour IP is: ", newNeighbour.Addr)
 		fmt.Println("Waiting for the other robots to join")
@@ -132,39 +111,58 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		fmt.Printf("Checking FirstTimeJoining: %x \n", robotRPC.PiRobot.joinInfo.firstTimeJoining)
 
 
-		if robotRPC.PiRobot.joinInfo.firstTimeJoining {
-
-			robotRPC.PiRobot.joinInfo.firstTimeJoining = false
-
-			fmt.Println("Starting Time....................................")
-			robotRPC.PiRobot.joinInfo.joiningTime = time.Now()
-			fmt.Println(robotRPC.PiRobot.joinInfo.joiningTime)
-
-			go func() {
-				for {
-					if time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime) >= (TIMETOJOIN) {
-						fmt.Println("Timer has ended. Going to the BUSY state..............")
-						robotRPC.PiRobot.joinInfo.firstTimeJoining = true
-						robotRPC.PiRobot.BusySig <- true
-						break
-					}
-				}
-			}()
-		} else {
-
-			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
-
-			fmt.Println("Remaining Time is ", responsePayload.RemainingTime)
-			responsePayload.NeighbourRobot = Neighbour{
-				NID:                 robotRPC.PiRobot.RobotID,
-				Addr:                robotRPC.PiRobot.RobotIP,
-				NeighbourCoordinate: robotRPC.PiRobot.CurLocation,
-				NMap:                robotRPC.PiRobot.RMap,
-			}
-			responsePayload.NeighbourState = robotRPC.PiRobot.State
-			responsePayload.NeighboursNeighbourRobots = robotRPC.PiRobot.RobotNeighbours
+		rpcRobot := Neighbour{
+			NID:                 robotRPC.PiRobot.RobotID,
+			Addr:                robotRPC.PiRobot.RobotIP,
+			NeighbourCoordinate: robotRPC.PiRobot.CurLocation,
+			NMap:                robotRPC.PiRobot.RMap,
+			IsWithinCR:			 true,
 		}
 
+		responsePayload.NeighbourRobot = rpcRobot
+
+		// put the robot itself into the NeighboursNeighbourRobots
+		responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, rpcRobot)
+
+		for _, val :=range robotRPC.PiRobot.RobotNeighbours{
+			responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, val)
+		}
+		//responsePayload.NeighboursNeighbourRobots = robotRPC.PiRobot.RobotNeighbours
+		responsePayload.NeighbourState = robotRPC.PiRobot.State
+
+		robotRPC.PiRobot.RobotNeighbours[newNeighbour.NID] = newNeighbour
+
+		//first JOIN
+		if robotRPC.PiRobot.State == ROAM{
+
+			//fmt.Println("Starting Time....................................")
+			//robotRPC.PiRobot.joinInfo.joiningTime = time.Now()
+			//fmt.Println(robotRPC.PiRobot.joinInfo.joiningTime)
+
+			//ticker := time.NewTicker(1000 * time.Millisecond)
+			//go func() {
+			//	counter :=0
+			//	for t := range ticker.C {
+			//		fmt.Println("Tick at", t)
+			//
+			//		if counter >= TIMETOJOINSECONDUNIT{
+			//			fmt.Println("Timer has ended. Going to the BUSY state..............")
+			//			robotRPC.PiRobot.BusySig <- true
+			//			ticker.Stop()
+			//		}
+			//	}
+			//}()
+
+		}else if(robotRPC.PiRobot.State == JOIN){
+			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
+			fmt.Println("Remaining Time is ", responsePayload.RemainingTime)
+
+		}else{
+			//busy state -> do nothing
+		}
+
+	}else{
+		//skip the request client
 	}
 
 	return nil
