@@ -351,9 +351,13 @@ func (r *RobotStruct) Explore() error {
 			// TODO wait for neighbours response
 			// set busysig off
 			// procede with new task
+			fmt.Println("The CURRENT ROBOT's id is")
+			fmt.Println(r.RobotID)
+
 			fmt.Println("THE CURRENT MAP IS")
-			r.UpdateStateForNewJourney()
 			fmt.Println(r.RMap)
+
+			r.UpdateStateForNewJourney()
 		case <-r.WaitingSig: // TODO
 			// keep pinging the neighbour that is within it's communication radius
 			// if neighbour in busy state
