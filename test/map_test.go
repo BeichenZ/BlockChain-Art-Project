@@ -196,6 +196,26 @@ func TestFindDestPoints(t *testing.T) {
 	}
 }
 
+func createNeighbour(num1 float64, num2 float64) shared.Neighbour{
+	return shared.Neighbour{NeighbourCoordinate:shared.Coordinate{num1, num2}}
+}
+
+func TestJoinState(t *testing.T){
+
+	robot1 := shared.InitRobot(0, shared.Map{}, nil, "", "")
+	robot2 := shared.InitRobot(1, shared.Map{}, nil, "", "")
+
+	robot1.CurLocation = shared.Coordinate{0.0,0.0}
+	robot2.CurLocation = shared.Coordinate{5.0,5.0}
+
+	payload:= shared.FarNeighbourPayload{NeighbourCoordinate: robot2.CurLocation, ItsNeighbours: []shared.Neighbour{}}
+
+	result :=robot1.WithinRadiusOfNetwork(&payload)
+
+	if !result{
+		t.FailNow()
+	}
+}
 
 // FindDestPoints() - All the destination points are unique
 // UpdateMap() - error free case gets the right signal
