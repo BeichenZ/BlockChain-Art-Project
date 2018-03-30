@@ -109,7 +109,7 @@ func (r  *RobotStruct) WithinRadiusOfNetwork(p *FarNeighbourPayload) bool {
 		}
 	}
 
-	return true
+	return true && (r.State == ROAM || r.State == JOIN)
 }
 
 
@@ -117,6 +117,7 @@ func (r  *RobotStruct) WithinRadiusOfNetwork(p *FarNeighbourPayload) bool {
 // This funciton is periodically called to detemine the distance between two neighbours
 func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, responsePayload *ResponseForNeighbourPayload) error {
 	// Calculate distance here
+
 	var incommingMessage int
 	fmt.Println("receive info from neighbour: ", p.NeighbourID)
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
@@ -134,12 +135,18 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, val)
 	}
 
-	distance := 0
+	if !robotRPC.PiRobot.exchangeFlag.flag {
+		responsePayload.WithInComRadius = false
+		return nil
+	}
 
 	//connection is formed only if the current robot is within CR and os either in ROAM or JOIN
-	if distance < 1 && (robotRPC.PiRobot.State == ROAM || robotRPC.PiRobot.State == JOIN){
+	if robotRPC.PiRobot.WithinRadiusOfNetwork(p){
+
+
 
 		newNeighbour.IsWithinCR = true
+
 
 		fmt.Println("Join signal is sent.................................................")
 		fmt.Println("join sig received")

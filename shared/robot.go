@@ -14,6 +14,7 @@ import (
 	"github.com/DistributedClocks/GoVector/govec"
 	"github.com/fatih/set"
 	"encoding/json"
+	"sync"
 )
 
 const XMIN = "xmin"
@@ -62,6 +63,7 @@ type RobotStruct struct {
 	Logger        *govec.GoLog
 	State         RobotState
     joinInfo      JoiningInfo
+    exchangeFlag  CanExchangeInfoWithRobots
 }
 
 type Robot interface {
@@ -71,6 +73,12 @@ type Robot interface {
 	GetMap() Map
 	SendFreeSpaceSig()
 }
+
+type CanExchangeInfoWithRobots struct {
+	sync.RWMutex
+	flag bool
+}
+
 
 var robotStruct RobotStruct
 
@@ -339,15 +347,13 @@ func (r *RobotStruct) Explore() error {
 			if taskToDo.SenderID < r.RobotID {
 				r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
 			}
-			r.RespondToNeighoursAboutTask(taskToDo)
 			// Respond to each task given by my fellow robots
-			//       r.decideTaskTodo()
-			// Agree with everyone in the network of who assigned the task
-			//		- YES --> set newTaskthreshold thing, create new path based on new task
-			//		- NO --> handle case ?
+			r.RespondToNeighoursAboutTask(taskToDo)
+			// TODO wait for neighbours response
 			// set busysig off
 			// procede with new task
 			fmt.Println("THE CURRENT MAP IS")
+			r.UpdateStateForNewJourney()
 			fmt.Println(r.RMap)
 		case <-r.WaitingSig: // TODO
 			// keep pinging the neighbour that is within it's communication radius
@@ -721,6 +727,7 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string, lo
 		Logger:             logger,
 		State:              ROAM,
 		joinInfo:           JoiningInfo{time.Now(), true},
+		exchangeFlag:       CanExchangeInfoWithRobots{ flag:true },
 	}
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 	return &newRobot
@@ -779,4 +786,32 @@ func (r *RobotStruct) ProduceLogInfo() RobotLog {
 func (r *RobotStruct) LocateLog() (*os.File, error) {
 	file, err := os.Open(r.Logname)
 	return file, err
+}
+
+func (r *RobotStruct) UpdateStateForNewJourney() {
+	r.State = ROAM
+	r.RobotNeighbours = make(map[int]Neighbour)
+
+	ticker := time.NewTicker(1000 * time.Millisecond)
+	temp := time.Now()
+
+	r.exchangeFlag.Lock()
+	r.exchangeFlag.flag = false
+	r.exchangeFlag.Unlock()
+	go func(){
+		counter := 0
+		for t := range ticker.C {
+			counter += 1
+			fmt.Println("Tick at", t)
+			fmt.Printf("Counter is %s\n", counter)
+			if time.Now().Sub(temp) >= TIMETOJOIN {
+				fmt.Println("WE ARE FINISHED.FUCK 416 -- CAN EXCHANGE")
+				ticker.Stop()
+				r.exchangeFlag.Lock()
+				r.exchangeFlag.flag = true
+				r.exchangeFlag.Unlock()
+			}
+		}
+	}()
+
 }
