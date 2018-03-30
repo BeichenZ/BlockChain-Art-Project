@@ -33,7 +33,10 @@ func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
 	//Productio code
 	//*receivedMap = robotRPC.PiRobot.RMap
 	//Testing
-	*receivedMap = RandomMapGenerator()
+	temp:= RandomMapGenerator()
+	fmt.Println("RobotRPC:------> Sending random map")
+	fmt.Println(temp)
+	*receivedMap = temp
 	return nil
 }
 
@@ -130,7 +133,6 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		IsWithinCR:			 false,
 	}
 
-
 	for _, val :=range robotRPC.PiRobot.RobotNeighbours{
 		responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, val)
 	}
@@ -145,7 +147,9 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 
 
 
-		newNeighbour.IsWithinCR = true
+		newNeighbour.IsWithinCR  = true
+
+		fmt.Println("ReceivePossibleNeighboursPayload() Within the radius")
 
 
 		fmt.Println("Join signal is sent.................................................")
@@ -179,9 +183,6 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		if robotRPC.PiRobot.State == JOIN {
 			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
 			fmt.Println("Remaining Time is ", responsePayload.RemainingTime)
-		}else{
-			//busy state -> do nothing
-
 		}
 
 	}else{

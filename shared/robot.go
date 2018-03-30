@@ -302,11 +302,10 @@ func (r *RobotStruct) Explore() error {
 				}
 
 				err = client.Call("RobotRPC.ReceiveMap", false, &neighbourMap)
-
-				//Logging
-				rawMap, _ := json.MarshalIndent(neighbourMap, "", "")
 				fmt.Printf("Receive map from %s \n", nei.Addr)
-				fmt.Println(string(rawMap))
+				fmt.Println(neighbourMap)
+				//Logging
+
 
 
 				if err != nil {
@@ -321,41 +320,49 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println("Retrieved the map. Start merging..........")
 			fmt.Println()
 
-			r.MergeMaps(listOfNeighbourMaps)
-			fmt.Println("Finished Merging")
-
-			// Exchange my map with neighbours
-			// Wait till maps from all neighbours are recevied
-			// Merge my map with neighbours
-			// Create tasks for current robot network
-			tasks, _ := r.TaskCreation()
-			// Allocate tasks to current robot network
-			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
-			// r.CurrTask = tasks[0]
-			fmt.Println("tasks length is")
-			fmt.Println(len(tasks))
-
-			fmt.Println("number of neighbour is ")
-			fmt.Println(len(r.RobotNeighbours))
-			r.TaskAllocationToNeighbours(tasks[1:])
-
-			// Wait for tasks from each neighbour
-			r.WaitForEnoughTaskFromNeighbours()
-			// Choose task based with the lowest ID including its own
-			taskToDo := r.PickTaskWithLowestID(tasks[0])
-			// r.CurrTask = taskToDo
-			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
-
-			// Respond to each task given by my fellow robots
-			r.RespondToNeighoursAboutTask(taskToDo)
-			// TODO wait for neighbours response
-			// set busysig off
-			// procede with new task
+			//logging
 			fmt.Println("The CURRENT ROBOT's id is")
 			fmt.Println(r.RobotID)
 
 			fmt.Println("THE CURRENT MAP IS")
 			fmt.Println(r.RMap)
+
+			fmt.Println("The current robot state is")
+			fmt.Println(r.State)
+
+			fmt.Println("I am going to sleep now")
+			time.Sleep(10*time.Minute)
+			//r.MergeMaps(listOfNeighbourMaps)
+			//fmt.Println("Finished Merging")
+			//
+			//// Exchange my map with neighbours
+			//// Wait till maps from all neighbours are recevied
+			//// Merge my map with neighbours
+			//// Create tasks for current robot network
+			//tasks, _ := r.TaskCreation()
+			//// Allocate tasks to current robot network
+			//r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
+			//// r.CurrTask = tasks[0]
+			//fmt.Println("tasks length is")
+			//fmt.Println(len(tasks))
+			//
+			//fmt.Println("number of neighbour is ")
+			//fmt.Println(len(r.RobotNeighbours))
+			//r.TaskAllocationToNeighbours(tasks[1:])
+			//
+			//// Wait for tasks from each neighbour
+			//r.WaitForEnoughTaskFromNeighbours()
+			//// Choose task based with the lowest ID including its own
+			//taskToDo := r.PickTaskWithLowestID(tasks[0])
+			//// r.CurrTask = taskToDo
+			//r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
+			//
+			//// Respond to each task given by my fellow robots
+			//r.RespondToNeighoursAboutTask(taskToDo)
+			// TODO wait for neighbours response
+			// set busysig off
+			// procede with new task
+
 
 			r.UpdateStateForNewJourney()
 		case <-r.WaitingSig: // TODO
@@ -646,7 +653,7 @@ func (r *RobotStruct) CallNeighbours() {
 				if responsePayload.WithInComRadius {
 
 					r.State = JOIN
-
+					fmt.Printf(" ClientRobot:----> Robot %v 's state has been changed from ROAM to JOIN\n", r.RobotIP)
 				}
 
 				r.joinInfo.joiningTime = time.Now()
@@ -655,7 +662,7 @@ func (r *RobotStruct) CallNeighbours() {
 				//start the time, which time depending on the neighbour's response
 				if responsePayload.NeighbourState == JOIN{
 					fmt.Println("The Pi has the remaining time of ", responsePayload.RemainingTime)
-
+					fmt.Println("THIS PI HAS JUST JOIN THE NETWORK. FCUK ENGINEERING PHYSICS")
 					//robot start its time using the remainingTime
 					go func(){
 						counter := 0
