@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 	"encoding/json"
-	"golang.org/x/tools/go/gcimporter15/testdata"
 )
 
 type RobotRPC struct {
@@ -104,7 +103,7 @@ func (r  *RobotStruct) WithinRadiusOfNetwork(p *FarNeighbourPayload) bool {
 
 			dist := DistBtwnTwoPoints(jthNodeCoordinate, ithNodeCoordinate)
 
-			if dist > 1 {
+			if dist > EXRADIUS {
 				return false
 			}
 		}
