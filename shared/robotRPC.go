@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"encoding/json"
+	"golang.org/x/tools/go/gcimporter15/testdata"
 )
 
 type RobotRPC struct {
@@ -78,6 +79,40 @@ func (robotRPC *RobotRPC) NotifyNeighbours(p *Neighbour, ignore *bool) error {
 	return nil
 }
 
+func (r  *RobotStruct) WithinRadiusOfNetwork(p *FarNeighbourPayload) bool {
+
+	calleeNeighborCount := len(r.RobotNeighbours)
+	callerNeighborCount := len(p.ItsNeighbours)
+	totalNodeCount := 2 + calleeNeighborCount + callerNeighborCount
+	globalNodeArr := make([] Coordinate, totalNodeCount)
+	globalNodeArr[0] = r.CurLocation
+	globalNodeArr[1] = p.NeighbourCoordinate
+	for i,callerNei := range p.ItsNeighbours {
+		globalNodeArr[2+i] = callerNei.NeighbourCoordinate
+	}
+
+	j := 2 + callerNeighborCount
+	for _ , calleeNei := range r.RobotNeighbours{
+		globalNodeArr[j] = calleeNei.NeighbourCoordinate
+		j++
+	}
+
+	for  i := 0; i < len(globalNodeArr); i++ {
+		ithNodeCoordinate := globalNodeArr[i]
+		for j := i+1; j < len(globalNodeArr); j++ {
+			jthNodeCoordinate := globalNodeArr[j]
+
+			dist := DistBtwnTwoPoints(jthNodeCoordinate, ithNodeCoordinate)
+
+			if dist > 1 {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 
   // Server -> R2
 // This funciton is periodically called to detemine the distance between two neighbours
@@ -94,6 +129,12 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		NMap:                p.NeighbourMap,
 		IsWithinCR:			 false,
 	}
+
+
+	for _, val :=range robotRPC.PiRobot.RobotNeighbours{
+		responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, val)
+	}
+
 	distance := 0
 
 	//connection is formed only if the current robot is within CR and os either in ROAM or JOIN
