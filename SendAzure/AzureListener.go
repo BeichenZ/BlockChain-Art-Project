@@ -4,9 +4,23 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sync"
 )
+type CoordinateStruct struct {
+	X float64
+	Y float64
+	IsItFreeToRoam bool
+}
 
-func handleRequest(conn net.Conn) {
+type InformationToWebApp struct {
+	sync.RWMutex
+	all map[int][]CoordinateStruct
+}
+
+var allInfo = InformationToWebApp{all: make( map[int][]CoordinateStruct)}
+
+
+func handleRequestFromLocalListener(conn net.Conn) {
    buf := make([]byte, 1024)
    infoLen, err := conn.Read(buf)
 
@@ -14,7 +28,29 @@ func handleRequest(conn net.Conn) {
 	fmt.Println("ERROR")
    }
 
-   fmt.Println(string(buf[:infoLen]))
+
+	newMap := DecodeMap(buf[:infoLen])
+	fmt.Println("Successfully decoded info")
+	fmt.Println(newMap.ExploredPath)
+	fmt.Println(newMap.FrameOfRef)
+
+	tmpListOfCoordinates := make([]CoordinateStruct, len(newMap.ExploredPath))
+
+	for cord, points := range  newMap.ExploredPath{
+		tmpCordStruct := CoordinateStruct{}
+
+		tmpCordStruct.X = cord.X
+		tmpCordStruct.Y = cord.Y
+
+		tmpCordStruct.IsItFreeToRoam = points.PointKind
+
+		tmpListOfCoordinates = append(tmpListOfCoordinates, tmpCordStruct)
+	}
+
+	allInfo.Lock()
+	allInfo.all[newMap.FrameOfRef] = tmpListOfCoordinates
+	allInfo.Unlock()
+
 
 }	
 
@@ -35,6 +71,6 @@ func main() {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		} 
-		go handleRequest(conn)
+		go handleRequestFromLocalListener(conn)
 	}
 }

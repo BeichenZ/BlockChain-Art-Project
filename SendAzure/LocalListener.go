@@ -36,15 +36,10 @@ func handleRequest(conn net.Conn) {
 
 	buf := make([]byte, 1024)
 	// Read the incoming connection into the buffer.
-	lenInfo, err := conn.Read(buf)
+	_, err := conn.Read(buf)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 	}
-
-	newMap := DecodeMap(buf[:lenInfo])
-	fmt.Println("Successfully decoded info")
-	fmt.Println(newMap.ExploredPath)
-	fmt.Println(newMap.FrameOfRef)
 
 	// Turn off Wi-Fi interface
 	output, err := exec.Command("networksetup", "-setairportpower", "en0", "off").CombinedOutput()
@@ -67,7 +62,7 @@ WaitingForInternet:
 		if err != nil {
 			continue
 		} else {
-			conn.Write([]byte("hello, world"))
+			conn.Write(buf)
 			break WaitingForInternet
 		}
 	}
