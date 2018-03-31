@@ -63,7 +63,7 @@ func (robotRPC *RobotRPC) ReceiveTaskDecsionResponse(senderTaskDecision *TaskDes
 func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) error {
 	// myNewNeighbour := Neighbour{Addr: *message}
 	// robotRPC.PiRobot.RobotNeighbours = append(robotRPC.PiRobot.RobotNeighbours, myNewNeighbour)
-	robotRPC.PiRobot.PossibleNeighbours.Add(*message)
+	robotRPC.PiRobot.PossibleNeighbours.Add(*message) // hommie not used
 	// robotRPC.PiRobot.PossibleNeighbours = append(robotRPC.PiRobot.PossibleNeighbours, *message)
 	*reply = robotRPC.PiRobot.RobotIP
 	//fmt.Println(*message)
@@ -89,6 +89,7 @@ func (r  *RobotStruct) WithinRadiusOfNetwork(p *FarNeighbourPayload) bool {
 	globalNodeArr := make([] Coordinate, totalNodeCount)
 	globalNodeArr[0] = r.CurLocation
 	globalNodeArr[1] = p.NeighbourCoordinate
+
 	for i,callerNei := range p.ItsNeighbours {
 		globalNodeArr[2+i] = callerNei.NeighbourCoordinate
 	}
@@ -117,19 +118,17 @@ func (r  *RobotStruct) WithinRadiusOfNetwork(p *FarNeighbourPayload) bool {
 
 
   // Server -> R2
-// This funciton is periodically called to detemine the distance between two neighbours
+// FN: Called by a robot to see if THIS robot is within its and its current neighbours CR
 func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, responsePayload *ResponseForNeighbourPayload) error {
-	// Calculate distance here
-	fmt.Println("ReceivePossibleNeighboursPayload() robot that called this method and state ", p.NeighbourID, " ", p.State)
+	fmt.Println("ReceivePossibleNeighboursPayload() robot Client that called this method and state (should be in roaming) ", p.NeighbourID, " ", p.State)
 	var incommingMessage int
-	//fmt.Println("receive info from neighbour: ", p.NeighbourID)
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
 	// TODO change this
 	newNeighbour := Neighbour{
 		NID:                 p.NeighbourID,
 		Addr:                p.NeighbourIPAddr,
 		NeighbourCoordinate: p.NeighbourCoordinate,
-		NMap:                p.NeighbourMap,
+		//NMap:                p.NeighbourMap,
 		IsWithinCR:			 false,
 	}
 
@@ -148,17 +147,16 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 	//connection is formed only if the current robot is within CR and os either in ROAM or JOIN
 	if robotRPC.PiRobot.WithinRadiusOfNetwork(p){
 
-
-
 		newNeighbour.IsWithinCR  = true
 
 		fmt.Println("ReceivePossibleNeighboursPayload() Within the radius")
 
-
+		fmt.Println()
 		fmt.Println("Join signal is sent.................................................")
 		fmt.Println("join sig received")
 		fmt.Println("neighbour IP is: ", newNeighbour.Addr)
 		fmt.Println("Waiting for the other robots to join")
+		fmt.Println()
 
 		responsePayload.WithInComRadius = true
 
@@ -185,7 +183,6 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 
 		if robotRPC.PiRobot.State.rState == JOIN {
 			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
-			fmt.Println("Remaining Time is ", responsePayload.RemainingTime)
 		}
 
 	}else{

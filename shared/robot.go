@@ -22,7 +22,7 @@ const XMAX = "xmax"
 const YMIN = "ymix"
 const YMAX = "ymax"
 const EXRADIUS = 6
-const TIMETOJOINSECONDUNIT = 5
+const TIMETOJOINSECONDUNIT = 7
 const TIMETOJOIN = TIMETOJOINSECONDUNIT*time.Second
 
 type JoiningInfo struct {
@@ -247,9 +247,8 @@ func (r *RobotStruct) RespondToButtons() error {
 }
 
 func (r *RobotStruct) Explore() error {
-	fmt.Println("Explore() top my map ", r.RMap)
+	fmt.Printf("Explore() start of explore. Robot ID %+v Robot state: %+v", r.RobotID,r.State)
 	for {
-		fmt.Println("Explore() at the top")
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
 			if err != nil {
@@ -272,7 +271,7 @@ func (r *RobotStruct) Explore() error {
 			// DISPLAY task with GPIO
 		}
 
-		fmt.Println("\nWaiting for signal to proceed.....")
+		fmt.Println("Explore() \nWaiting for signal to proceed.....")
 
 		select {
 		case <-r.FreeSpaceSig:
@@ -293,13 +292,13 @@ func (r *RobotStruct) Explore() error {
 		case <-r.LeftWallSig:
 			r.UpdateMap(LeftWall)
 		case <-r.BusySig: // TODO whole thing
-			fmt.Println("busy sig received")
+			fmt.Println("Explore() busy sig received. Robot ID %+v Robot state: %+v", r.RobotID,r.State)
 
 			listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
 
 			fmt.Println("THE CURRENT MAP IS BEFORE MERGING")
 			fmt.Println(r.RMap)
-			fmt.Println("Getting the maps from the neighbour.................")
+			// fmt.Println("Getting the maps from the neighbour.................")
 			for _, nei := range r.RobotNeighbours {
 				neighbourMap := Map{}
 				client, err := rpc.Dial("tcp", nei.Addr)
@@ -647,116 +646,137 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 		// TESTING UNCOMMENT
 	}
 }
+// FN: payload to ask neighbour if I and my current hommies are within this new neighbours radius
+func createFarNeighbourPayload(r RobotStruct, finalsend []byte) FarNeighbourPayload{
+
+
+	farNeighbourPayload := FarNeighbourPayload{
+		NeighbourID:         r.RobotID,
+		NeighbourIPAddr:     r.RobotIP,
+		NeighbourCoordinate: r.CurLocation,
+		//NeighbourMap:        r.RMap,
+		SendlogMessage:      finalsend,
+		//State: 				 r.State.rState,
+		//ItsNeighbours:       r.RobotNeighbours,
+	}
+
+	for _, robot := range r.RobotNeighbours{
+		farNeighbourPayload.ItsNeighbours = append(farNeighbourPayload.ItsNeighbours, robot)
+	}
+	return farNeighbourPayload
+}
 
 
 // Client -> R2
+// Fn: From the list of possible neighbours (address' that were pinged befo)
 func (r *RobotStruct) CallNeighbours() {
-	for {
-		for _, possibleNeighbour := range r.PossibleNeighbours.List() {
-			client, err := rpc.Dial("tcp", possibleNeighbour.(string))
-			if err != nil {
-				r.PossibleNeighbours.Remove(possibleNeighbour)
-				continue
-			}
-			// fmt.Println(client)
-			// messagepayload := []byte("Receiving coorindates info from neighbour: " + strconv.Itoa(r.RobotID))
-			// finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
-			messagepayload := 1
-			finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
-
-
-			farNeighbourPayload := FarNeighbourPayload{
-				NeighbourID:         r.RobotID,
-				NeighbourIPAddr:     r.RobotIP,
-				NeighbourCoordinate: r.CurLocation,
-				NeighbourMap:        r.RMap,
-				SendlogMessage:      finalsend,
-				State: 				 r.State.rState,
-				//ItsNeighbours:       r.RobotNeighbours,
-			}
-
-			for _, robot := range r.RobotNeighbours{
-				farNeighbourPayload.ItsNeighbours = append(farNeighbourPayload.ItsNeighbours, robot)
-			}
-
-			if err != nil {
-				fmt.Println(err)
-			}
-			responsePayload := ResponseForNeighbourPayload{}
-
-			if (r.State.rState == ROAM && r.exchangeFlag.flag) {
-				fmt.Println("CallNeighbours() my state and id ", r.State.rState, " ", r.RobotID)
-				err := client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
-
+	if !(r.State.rState == BUSY) {
+		for {
+			for _, possibleNeighbour := range r.PossibleNeighbours.List() {
+				client, err := rpc.Dial("tcp", possibleNeighbour.(string))
 				if err != nil {
-					fmt.Println("ERROR: ", err)
-
+					r.PossibleNeighbours.Remove(possibleNeighbour)
+					continue
 				}
+				// fmt.Println(client)
+				// messagepayload := []byte("Receiving coorindates info from neighbour: " + strconv.Itoa(r.RobotID))
+				// finalsend := r.Logger.PrepareSend("Sending Message", messagepayload)
 
-				//if other robot is in join/roam and within cr, current robot tries joining
-				if responsePayload.WithInComRadius {
-					r.State.Lock()
-					r.State.rState = JOIN
-					r.State.Unlock()
-					fmt.Printf(" ClientRobot:----> Robot %v 's state has been changed from ROAM to JOIN\n", r.RobotIP)
-				}
+				//farNeighbourPayload := FarNeighbourPayload{
+				//	NeighbourID:         r.RobotID,
+				//	NeighbourIPAddr:     r.RobotIP,
+				//	NeighbourCoordinate: r.CurLocation,
+				//	NeighbourMap:        r.RMap,
+				//	SendlogMessage:      finalsend,
+				//	State: 				 r.State.rState,
+				//	//ItsNeighbours:       r.RobotNeighbours,
+				//}
+				//
+				//for _, robot := range r.RobotNeighbours{
+				//	farNeighbourPayload.ItsNeighbours = append(farNeighbourPayload.ItsNeighbours, robot)
+				//}
 
-				r.joinInfo.joiningTime = time.Now()
-				ticker := time.NewTicker(1000 * time.Millisecond)
+				//if exchangeFlag false -> should not talk to other robot
+				// if this robot satisfies this, it can communicate with other robots
+				if (r.State.rState == ROAM && r.exchangeFlag.flag) {
 
-				//start the time, which time depending on the neighbour's response
-				if responsePayload.NeighbourState == JOIN {
-					fmt.Println("The Pi has the remaining time of ", responsePayload.RemainingTime)
-					fmt.Println("THIS PI HAS JUST JOIN THE NETWORK. FCUK ENGINEERING PHYSICS")
-					//robot start its time using the remainingTime
-					go func(){
-						counter := 0
-						for t := range ticker.C {
-							counter += 1
-							fmt.Println("CallNeighbours(JOIN):----------->Tick at", t)
-							fmt.Printf("Counter is %s\n", counter)
-							if time.Now().Sub(r.joinInfo.joiningTime) >= (TIMETOJOIN - responsePayload.RemainingTime){
-								fmt.Println("WE ARE FINISHED.FUCK 416 -- JOIN")
-								ticker.Stop()
-								r.State.Lock()
-								r.State.rState = BUSY
-								r.State.Unlock()
-								r.BusySig <- true
+					responsePayload := ResponseForNeighbourPayload{}
+
+					messagepayload := 1
+					finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
+					farNeighbourPayload := createFarNeighbourPayload(*r, finalsend)
+					// This robot is calling its (potential) neighbour to see if its within the communication radius of itself and its current neighbours
+					err := client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
+
+					if err != nil {
+						fmt.Println("ERROR: ", err)
+
+					}
+
+					//if other robot is in join/roam and within cr, current robot tries joining
+					if responsePayload.WithInComRadius {
+						r.State.Lock()
+						r.State.rState = JOIN
+						r.State.Unlock()
+					}
+
+					r.joinInfo.joiningTime = time.Now()
+					ticker := time.NewTicker(1000 * time.Millisecond)
+
+					//start the time, which time depending on the neighbour's response
+					if responsePayload.NeighbourState == JOIN {
+						//fmt.Println("The Pi has the remaining time of ", responsePayload.RemainingTime)
+						//robot start its time using the remainingTime
+
+						go func(){
+							counter := 0
+							for _ = range ticker.C {
+								counter += 1
+								fmt.Printf("Joinning timer--------> Counter is %s\n", counter)
+								if time.Now().Sub(r.joinInfo.joiningTime) >= (TIMETOJOIN - responsePayload.RemainingTime){
+									fmt.Println("WE ARE FINISHED.FUCK 416 -- JOIN")
+									ticker.Stop()
+									r.State.Lock()
+									r.State.rState = BUSY
+									r.State.Unlock()
+									r.BusySig <- true
+								}
 							}
-						}
-					}()
+						}()
 
 
-				}else if(responsePayload.NeighbourState == ROAM){
+					}else if(responsePayload.NeighbourState == ROAM){
 
-					//robot starts its owner timer
-					go func() {
-						counter :=0
-						for t := range ticker.C {
-							counter += 1
-							fmt.Printf("CallNeighbours( my state %+v):----------->Tick at %+v\n", r.State.rState, t)
-							fmt.Printf("Counter is %s\n", counter)
-							if counter >= TIMETOJOINSECONDUNIT{
-								fmt.Println("WE ARE FINISHED.FUCK 416 -- ROAM")
+						//robot starts its owner timer
+						go func() {
+							counter :=0
+							for _ = range ticker.C {
+								counter += 1
+								fmt.Printf("Roaming timer--------> Counter is %s\n", counter)
+								if counter >= TIMETOJOINSECONDUNIT{
+									fmt.Println("WE ARE FINISHED.FUCK 416 -- ROAM")
 
-								ticker.Stop()
-								r.State.Lock()
-								r.State.rState = BUSY
-								r.State.Unlock()
-								r.BusySig <- true
+									ticker.Stop()
+									r.State.Lock()
+									r.State.rState = BUSY
+									r.State.Unlock()
+									r.BusySig <- true
+								}
 							}
-						}
-					}()
+						}()
 
-				}else{
-					//do nothing
-					//neightbours are in hte busy state
+					}else{
+						//do nothing
+						//neightbours are in hte busy state
+					}
 				}
+
 			}
-
+			//time.Sleep(500 * time.Millisecond)
 		}
-		//time.Sleep(500 * time.Millisecond)
+
 	}
+
 }
 
 // TODO
@@ -861,22 +881,19 @@ func (r *RobotStruct) UpdateStateForNewJourney() {
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	temp := time.Now()
 
-	fmt.Println("UpdateStateFOrNewJourey()---------> Requiring the lock")
 	r.exchangeFlag.Lock()
 	r.exchangeFlag.flag = false
 	r.exchangeFlag.Unlock()
-	fmt.Printf(" My current state is %+v\n", r.State.rState)
+
 	r.State.Lock()
 	r.State.rState = ROAM
 	r.State.Unlock()
-	fmt.Printf(" My current state is after i changed from busy to roam %+v\n", r.State.rState)
 
 	go func(){
 		counter := 0
-		for t := range ticker.C {
+		for _ = range ticker.C {
 			counter += 1
-			fmt.Println("Tick at", t)
-			fmt.Printf("UpdateStateForNewJourney() Counter is %s\n", counter)
+			fmt.Printf("Roaming state && exchange_state ==> false. \n        Counter is %s\n", counter)
 			if time.Now().Sub(temp) >= TIMETOJOIN {
 				fmt.Println("WE ARE FINISHED.FUCK 416 -- CAN JOIN AGAIN")
 				ticker.Stop()
