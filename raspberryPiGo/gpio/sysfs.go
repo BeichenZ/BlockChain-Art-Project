@@ -47,7 +47,7 @@ func exportGPIO(p Pin) {
 	defer export.Close()
 	export.Write([]byte(strconv.Itoa(int(p.Number))))	
 	//It take times for Raspbian to create GPIO# folder and subsequent files once a pin is exported
-	time.Sleep(10*time.Millisecond)
+	time.Sleep(100*time.Millisecond)
 }
 
 func unexportGPIO(p Pin) {

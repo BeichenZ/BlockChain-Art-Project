@@ -1,5 +1,5 @@
-package RPiGPIO
-//package main
+//package RPiGPIO
+package main
 
 import (
 	bgpio "./gpio"
@@ -9,20 +9,23 @@ import (
 const LEDOnMiliSecond = 500
 
 const (
-	NorthLED uint  = 5 
-	SouthLED uint = 6
-	EastLED  uint = 13
-	WestLED  uint = 19
+	NorthLED uint  = 4 //green
+	SouthLED uint = 17 //red
+	EastLED  uint = 27 //yellow
+	WestLED  uint = 22 //blue
 )
-/*
+
 //Test Program
 func main() {
 	for i:= 0; i<5;i++ {
 		FlashLEDOnce(NorthLED)
+		FlashLEDOnce(SouthLED)
+		FlashLEDOnce(EastLED)
+		FlashLEDOnce(WestLED)
 	}
 
 }
-*/
+
 
 func FlashLEDOnce(LEDName uint) {
 	outputPin := bgpio.NewOutput(LEDName,false)

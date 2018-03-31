@@ -1,34 +1,54 @@
-package main
-//package RPiGPIO
+package main //package RPiGPIO
 
 import (
 	bgpio "./gpio"
 	"fmt"
 	"time"
-)
-const ButtonWaitMiliSecond =  300
+	"os" )
+const ButtonWaitMiliSecond = 300
 
 //Used to distinguish between different button pressed
-
 type ButtonType int
 const (
-	FrontWallButton ButtonType = iota
-	LeftWallButton
-	RightWallButton
+	FrontObstacleButton ButtonType = 1+iota
+	FrontEmptyButton
+	LeftObstacleButton
+	RightObstacleButton
+
 )
+const (
+	FrontObstacleButton_Pin uint = 5
+	FrontEmptyButton_Pin uint = 6
+	LeftObstacleButton_Pin uint = 13
+	RightObstacleButton_Pin uint =19 )
 
 func main() {
 	//Test Codes for button
 	recChannel := make(chan int)
-	MonitorButtonAtPin(LeftWallButton,19,recChannel)	
+	MonitorButtonAtPin(LeftObstacleButton,recChannel)	
 	temp := <- recChannel
-	fmt.Printf("Button is indeed pressed as mode %d\n",temp)
+	fmt.Printf("Button is pressed with Enum: %d\n",temp)
 	
 }
 
 
 //Note:Function Assumes Monitored Pin has been pulled down
-func MonitorButtonAtPin(buttonType ButtonType,pinNum uint,outputChan chan int ){
+func MonitorButtonAtPin(button ButtonType,outputChan chan int ){
+	var pinNum uint
+	switch button {
+		case FrontObstacleButton:
+			pinNum = FrontObstacleButton_Pin
+		case FrontEmptyButton:
+			pinNum = FrontEmptyButton_Pin
+		case LeftObstacleButton:
+			pinNum = LeftObstacleButton_Pin
+		case RightObstacleButton:
+			pinNum = RightObstacleButton_Pin
+		default:
+		     fmt.Println("Unrecognized Button Pressed with ButtonType Enum:",button)
+		     os.Exit(1)
+
+	}
 	buttonPin := bgpio.NewInput(pinNum)
 	go func (){
 		Loop:
@@ -38,7 +58,7 @@ func MonitorButtonAtPin(buttonType ButtonType,pinNum uint,outputChan chan int ){
 					fmt.Printf("Button at Pin%d is pressed\n",pinNum)
 					if err != nil {fmt.Println(err)}
 					time.Sleep(ButtonWaitMiliSecond*time.Millisecond)
-					outputChan <- int(buttonType)
+					outputChan <- int(button)
          				        break Loop //Terminate after button is pressed once								  }		
                 		}
 			  }
