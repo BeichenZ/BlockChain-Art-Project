@@ -13,7 +13,7 @@ import (
 	"time"
 	"github.com/DistributedClocks/GoVector/govec"
 	"github.com/fatih/set"
-	"encoding/json"
+//	"encoding/json"
 	"sync"
 )
 
@@ -22,8 +22,8 @@ const XMAX = "xmax"
 const YMIN = "ymix"
 const YMAX = "ymax"
 const EXRADIUS = 6
-const TIMETOJOIN = 10*time.Second
-const TIMETOJOINSECONDUNIT = 10
+const TIMETOJOINSECONDUNIT = 5
+const TIMETOJOIN = TIMETOJOINSECONDUNIT*time.Second
 
 type JoiningInfo struct {
 	joiningTime  time.Time
@@ -242,6 +242,7 @@ func (r *RobotStruct) RespondToButtons() error {
 }
 
 func (r *RobotStruct) Explore() error {
+	fmt.Println("Explore() top my map ", r.RMap)
 	for {
 		fmt.Println("Explore() at the top")
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
@@ -291,6 +292,8 @@ func (r *RobotStruct) Explore() error {
 
 			listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
 
+			fmt.Println("THE CURRENT MAP IS BEFORE MERGING")
+			fmt.Println(r.RMap)
 			fmt.Println("Getting the maps from the neighbour.................")
 			for _, nei := range r.RobotNeighbours {
 				neighbourMap := Map{}
@@ -330,41 +333,60 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println("The current robot state is")
 			fmt.Println(r.State)
 
-			fmt.Println("I am going to sleep now")
-			time.Sleep(10*time.Minute)
-			//r.MergeMaps(listOfNeighbourMaps)
-			//fmt.Println("Finished Merging")
+			r.MergeMaps(listOfNeighbourMaps)
+
+			fmt.Println()
+			fmt.Println("Map after merged is ")
+			fmt.Println(r.RMap)
+
+			fmt.Println("Finished Merging")
+
 			//
 			//// Exchange my map with neighbours
 			//// Wait till maps from all neighbours are recevied
 			//// Merge my map with neighbours
 			//// Create tasks for current robot network
-			//tasks, _ := r.TaskCreation()
+			tasks, _ := r.TaskCreation()
+
+			fmt.Println("The following is the list of tasks created by ", r.RobotIP)
+			for  _, t := range tasks {
+				fmt.Println(t)
+			}
+
+			fmt.Println("DONE DISPLAYING TASKs. ENGINEERING PHYSICS IS THE MOST USELESS DEGREE")
 			//// Allocate tasks to current robot network
-			//r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
+			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
 			//// r.CurrTask = tasks[0]
 			//fmt.Println("tasks length is")
 			//fmt.Println(len(tasks))
 			//
 			//fmt.Println("number of neighbour is ")
-			//fmt.Println(len(r.RobotNeighbours))
-			//r.TaskAllocationToNeighbours(tasks[1:])
+			//fmt.Println(len(r.RobotNeighbours)
+			r.TaskAllocationToNeighbours(tasks[1:])
+
 			//
 			//// Wait for tasks from each neighbour
-			//r.WaitForEnoughTaskFromNeighbours()
+			fmt.Println("Done allocating tasks for neighbours")
+			r.WaitForEnoughTaskFromNeighbours()
 			//// Choose task based with the lowest ID including its own
-			//taskToDo := r.PickTaskWithLowestID(tasks[0])
+			fmt.Println("The task I chose for myself ", tasks[0])
+			taskToDo := r.PickTaskWithLowestID(tasks[0])
 			//// r.CurrTask = taskToDo
-			//r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
+			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
+			fmt.Println("The task I am going to dooooo ", taskToDo)
+
 			//
 			//// Respond to each task given by my fellow robots
-			//r.RespondToNeighoursAboutTask(taskToDo)
+			r.RespondToNeighoursAboutTask(taskToDo)
+
 			// TODO wait for neighbours response
 			// set busysig off
 			// procede with new task
 
-
+			fmt.Println("CALLING UPDATE UpdateStateForNewJourney")
 			r.UpdateStateForNewJourney()
+			//fmt.Println("I am going to sleep now")
+			//time.Sleep(10*time.Minute)
 		case <-r.WaitingSig: // TODO
 			// keep pinging the neighbour that is within it's communication radius
 			// if neighbour in busy state
@@ -472,7 +494,7 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 		}
 		responsePayload := ResponseForNeighbourPayload{}
 
-		if neighbour.Addr == taskToDo.SenderAddr {
+		if neighbour.NID == taskToDo.SenderID {
 			messagepayload := 1
 			finalsend := r.Logger.PrepareSend("Sending Message - "+"Accpeting task from my neighbour:"+neighbour.Addr, messagepayload)
 			taskResponsePayloadYes := TaskDescisionPayload{
@@ -481,7 +503,8 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 				Descision:      true,
 				SendlogMessage: finalsend,
 			}
-			client.Call("RobotRPC.ReceivePossibleNeighboursPayload", taskResponsePayloadYes, &responsePayload)
+			fmt.Println("RespondToNeighoursAboutTask() I will do my neighbours task ",taskResponsePayloadYes)
+			client.Call("RobotRPC.ReceiveTaskDecsionResponse", taskResponsePayloadYes, &responsePayload)
 		} else {
 			messagepayload := 1
 			finalsend := r.Logger.PrepareSend("Sending Message - "+"Denying task from my neighbour:"+neighbour.Addr, messagepayload)
@@ -491,9 +514,12 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 				Descision:      false,
 				SendlogMessage: finalsend,
 			}
-			client.Call("RobotRPC.ReceivePossibleNeighboursPayload", taskResponsePayloadNo, &responsePayload)
+			fmt.Println("RespondToNeighoursAboutTask() I will not do my neighbours task",taskResponsePayloadNo)
+			client.Call("RobotRPC.ReceiveTaskDecsionResponse", taskResponsePayloadNo, &responsePayload)
 		}
+
 	}
+
 }
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
@@ -550,13 +576,16 @@ WaitingForEnoughTask:
 }
 
 func (r *RobotStruct) PickTaskWithLowestID(taskFromMe PointStruct) TaskPayload {
-	localMin := -1
+	localMin := 100000
 	var taskToDo TaskPayload
+	fmt.Println("IN PICK_TASKWITHLOWESTID ")
+	fmt.Printf( " Robot ID %+v and its state %+v\n", r.RobotID, r.State)
 	for _, task := range r.ReceivedTasks {
 		if task.SenderID < localMin {
 			localMin = task.SenderID
 			taskToDo = task
 		}
+		fmt.Println("PickTaskWithLowestID() received task ", task)
 	}
 	// Check if the task assigned is larger than the one it assigned itself
 	if (r.RobotID < taskToDo.SenderID){
@@ -572,11 +601,15 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 	// TODO: What happens when len(ldp) == 1
 	ldpn := ldp
 	rand.Seed(time.Now().UnixNano())
+	fmt.Println("In TASK ALLOCATION TO NEIGHBOURS")
+	fmt.Printf("There are %+v robots \n", len(r.RobotNeighbours))
+
 	for _, robotNeighbour := range r.RobotNeighbours {
 		//fmt.Printf( "The length of LDPN is  %v \n", len(ldpn))
+		fmt.Println("Examining Robot ", robotNeighbour.NID)
 		dpn := ldpn[rand.Intn(len(ldpn))]
 		removeElFromlist(dpn, &ldpn)
-		fmt.Printf("Current Neighour %s \n", robotNeighbour)
+		//fmt.Printf("Current Neighour %s \n", robotNeighbour)
 		// fmt.Println(neighbourRoboAddr)
 		messagepayload := 1
 		finalsend := r.Logger.PrepareSend("Sending Message to Robot"+robotNeighbour.Addr, messagepayload)
@@ -587,11 +620,10 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 			SendlogMessage: finalsend,
 		}
 
-		fmt.Println()
-		fmt.Printf("TaskAllocateToNeighbours(%s -------> %s) \n", task.SenderAddr, robotNeighbour.Addr)
-		data, _ := json.MarshalIndent(task, "", "")
-		fmt.Println(string(data))
-		fmt.Println()
+		fmt.Println("finalSEND")
+		//fmt.Printf("TaskAllocateToNeighbours(%s -------> %s) \n", task.SenderAddr, robotNeighbour.Addr)
+		//data, _ := json.MarshalIndent(task, "", "")
+		//fmt.Println(string(data)
 
 		// TESTING UNCOMMENT
 		neighbourClient, err := rpc.Dial("tcp", robotNeighbour.Addr)
@@ -601,7 +633,9 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 		//fmt.Printf("%+v", neighbourClient)
 		alive := false
 		// Here I send my robot the task
+		fmt.Println("Going to send following task ", task)
 		err = neighbourClient.Call("RobotRPC.ReceiveTask", task, &alive)
+		fmt.Println("Why are you hanging????????????")
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -645,9 +679,14 @@ func (r *RobotStruct) CallNeighbours() {
 			}
 			responsePayload := ResponseForNeighbourPayload{}
 
-			if (r.State == ROAM) {
+			if (r.State == ROAM && r.exchangeFlag.flag) {
+				fmt.Println("CallNeighbours() my state and id ", r.State, " ", r.RobotID)
+				err := client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
 
-				client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
+				if err != nil {
+					fmt.Println("ERROR: ", err)
+
+				}
 
 				//if other robot is in join/roam and within cr, current robot tries joining
 				if responsePayload.WithInComRadius {
@@ -660,7 +699,7 @@ func (r *RobotStruct) CallNeighbours() {
 				ticker := time.NewTicker(1000 * time.Millisecond)
 
 				//start the time, which time depending on the neighbour's response
-				if responsePayload.NeighbourState == JOIN{
+				if responsePayload.NeighbourState == JOIN {
 					fmt.Println("The Pi has the remaining time of ", responsePayload.RemainingTime)
 					fmt.Println("THIS PI HAS JUST JOIN THE NETWORK. FCUK ENGINEERING PHYSICS")
 					//robot start its time using the remainingTime
@@ -668,7 +707,7 @@ func (r *RobotStruct) CallNeighbours() {
 						counter := 0
 						for t := range ticker.C {
 							counter += 1
-							fmt.Println("Tick at", t)
+							fmt.Println("CallNeighbours(JOIN):----------->Tick at", t)
 							fmt.Printf("Counter is %s\n", counter)
 							if time.Now().Sub(r.joinInfo.joiningTime) >= (TIMETOJOIN - responsePayload.RemainingTime){
 								fmt.Println("WE ARE FINISHED.FUCK 416 -- JOIN")
@@ -687,7 +726,7 @@ func (r *RobotStruct) CallNeighbours() {
 						counter :=0
 						for t := range ticker.C {
 							counter += 1
-							fmt.Println("Tick at", t)
+							fmt.Printf("CallNeighbours( my state %+v):----------->Tick at %+v\n", r.State, t)
 							fmt.Printf("Counter is %s\n", counter)
 							if counter >= TIMETOJOINSECONDUNIT{
 								fmt.Println("WE ARE FINISHED.FUCK 416 -- ROAM")
@@ -741,6 +780,12 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string, lo
 		exchangeFlag:       CanExchangeInfoWithRobots{ flag:true },
 	}
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
+
+	tempEXploredMap := make(map[Coordinate] PointStruct)
+	tempLocation := Coordinate{float64(newRobot.RobotID) + 10.0, float64(newRobot.RobotID) + 10.0}
+	tempEXploredMap[tempLocation] = PointStruct{Point: tempLocation}
+	newRobot.RMap = Map{tempEXploredMap, 0}
+
 	return &newRobot
 }
 
@@ -800,23 +845,28 @@ func (r *RobotStruct) LocateLog() (*os.File, error) {
 }
 
 func (r *RobotStruct) UpdateStateForNewJourney() {
-	r.State = ROAM
+
 	r.RobotNeighbours = make(map[int]Neighbour)
 
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	temp := time.Now()
 
+	fmt.Println("UpdateStateFOrNewJourey()---------> Requiring the lock")
 	r.exchangeFlag.Lock()
 	r.exchangeFlag.flag = false
 	r.exchangeFlag.Unlock()
+	fmt.Printf(" My current state is %+v\n", r.State)
+	r.State = ROAM
+	fmt.Printf(" My current state is after i changed from busy to roam %+v\n", r.State)
+
 	go func(){
 		counter := 0
 		for t := range ticker.C {
 			counter += 1
 			fmt.Println("Tick at", t)
-			fmt.Printf("Counter is %s\n", counter)
+			fmt.Printf("UpdateStateForNewJourney() Counter is %s\n", counter)
 			if time.Now().Sub(temp) >= TIMETOJOIN {
-				fmt.Println("WE ARE FINISHED.FUCK 416 -- CAN EXCHANGE")
+				fmt.Println("WE ARE FINISHED.FUCK 416 -- CAN JOIN AGAIN")
 				ticker.Stop()
 				r.exchangeFlag.Lock()
 				r.exchangeFlag.flag = true
