@@ -294,7 +294,7 @@ func (r *RobotStruct) Explore() error {
 		case <-r.BusySig: // TODO whole thing
 			fmt.Println("Explore() busy sig received. Robot ID %+v Robot state: %+v", r.RobotID,r.State)
 
-			listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
+			//listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
 
 			fmt.Println("THE CURRENT MAP IS BEFORE MERGING")
 			fmt.Println(r.RMap)
@@ -306,7 +306,7 @@ func (r *RobotStruct) Explore() error {
 					fmt.Println("1 Explore() ",err)
 					continue
 				}
-
+				// This robot recevies maps from its neighbour
 				err = client.Call("RobotRPC.ReceiveMap", false, &neighbourMap)
 				fmt.Printf("Receive map from %s \n", nei.Addr)
 				fmt.Println(neighbourMap)
@@ -318,7 +318,8 @@ func (r *RobotStruct) Explore() error {
 					fmt.Println("2 Explore() ",err)
 					continue
 				}
-				listOfNeighbourMaps = append(listOfNeighbourMaps, neighbourMap)
+				nei.NMap = neighbourMap
+				//listOfNeighbourMaps = append(listOfNeighbourMaps, neighbourMap)
 			}
 
 			fmt.Println()
@@ -337,8 +338,8 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println(r.State)
 			fmt.Println()
 
-			r.MergeMaps(listOfNeighbourMaps)
-
+			//r.MergeMaps(listOfNeighbourMaps)
+			r.MergeMaps()
 			fmt.Println()
 			fmt.Println("Map after merged is ")
 			fmt.Println(r.RMap)
@@ -538,15 +539,40 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 }
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
-func (r *RobotStruct) MergeMaps(neighbourMaps []Map)  {
+//func (r *RobotStruct) MergeMaps(neighbourMaps []Map)  {
+//	refToOriginalMap := r.RMap
+//
+//	for _, neighbourRobotMap := range neighbourMaps {
+//
+//		if len(refToOriginalMap.ExploredPath) == 0 {
+//			r.RMap.ExploredPath = neighbourRobotMap.ExploredPath
+//		} else {
+//			neighbourExploredPath := neighbourRobotMap.ExploredPath
+//
+//			for neighbourCoordinate, neighbourPointInfo := range neighbourExploredPath {
+//				if currentPointInfo, ok := r.RMap.ExploredPath[neighbourCoordinate]; ok &&
+//					currentPointInfo.TraversedTime < neighbourPointInfo.TraversedTime {
+//
+//					r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointInfo
+//					continue
+//				}
+//				r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointInfo
+//			}
+//
+//		}
+//	}
+//}
+
+// New version of merge maps, uses the Neighbour struct map feild
+func (r *RobotStruct) MergeMaps()  {
 	refToOriginalMap := r.RMap
 
-	for _, neighbourRobotMap := range neighbourMaps {
+	for _, neighbourRobot := range r.RobotNeighbours {
 
 		if len(refToOriginalMap.ExploredPath) == 0 {
-			r.RMap.ExploredPath = neighbourRobotMap.ExploredPath
+			r.RMap.ExploredPath = neighbourRobot.NMap.ExploredPath
 		} else {
-			neighbourExploredPath := neighbourRobotMap.ExploredPath
+			neighbourExploredPath := neighbourRobot.NMap.ExploredPath
 
 			for neighbourCoordinate, neighbourPointInfo := range neighbourExploredPath {
 				if currentPointInfo, ok := r.RMap.ExploredPath[neighbourCoordinate]; ok &&
