@@ -115,7 +115,15 @@ func (r  *RobotStruct) WithinRadiusOfNetwork(p *FarNeighbourPayload) bool {
 		}
 	}
 
-	return true && (r.State.rState == ROAM || r.State.rState == JOIN)
+	return true
+}
+
+func (r *RobotStruct) RobotStateCommunicationAllowed(nid int) bool {
+	var a bool
+	if _, ok := r.RobotNeighbours[nid]; ok && (r.State.rState == BUSY) {
+		a =true;
+	}else { a = false}
+	return (a || r.State.rState == ROAM || r.State.rState == JOIN)
 }
 
 
@@ -141,7 +149,7 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		"this robot state ", robotRPC.PiRobot.State.rState)
 
 	//connection is formed only if the current robot is within CR and os either in ROAM or JOIN
-	if robotRPC.PiRobot.WithinRadiusOfNetwork(p){
+	if robotRPC.PiRobot.WithinRadiusOfNetwork(p) && robotRPC.PiRobot.RobotStateCommunicationAllowed(p.NeighbourID){
 
 		//newNeighbour.IsWithinCR  = true
 
@@ -180,6 +188,9 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
 		}
 		responsePayload.WithInComRadius = true
+
+		//// This robot (server) will add the client and its neighbours to itself
+		//SaveNeighbour(robotRPC.PiRobot, p.ItsNeighbours)
 
 	}else{
 		//skip the request client
