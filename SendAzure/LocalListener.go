@@ -1,23 +1,22 @@
 package main
 
 import (
-	"../shared"
 	"os/exec"
 
-	"os"
-	"fmt"
-	"net"
+	"../shared"
+
 	"bytes"
 	"encoding/gob"
+	"fmt"
+	"net"
+	"os"
 )
-
 
 type MapRPC struct {
 	latestMergedMap shared.Map
 }
 
-
-func DecodeMap(sentMap []byte) shared.Map  {
+func DecodeMap(sentMap []byte) shared.Map {
 
 	//robotLogContent, _ := ioutil.ReadFile("./" + r.Logname)
 	buf := bytes.NewBuffer(sentMap)
@@ -62,19 +61,17 @@ func handleRequest(conn net.Conn) {
 	fmt.Println(string(output))
 
 	//Wait until connected to Internet
-	WaitingForInternet:
-		for {
-			_, err := net.Dial("tcp", "Azure.com:8080")
-			if err != nil {
-				continue
-			} else {
-				break WaitingForInternet
-			}
+WaitingForInternet:
+	for {
+		_, err := net.Dial("tcp", "Azure.com:8080")
+		if err != nil {
+			continue
+		} else {
+			break WaitingForInternet
 		}
+	}
 
 	//Send Map to Azure
-
-
 
 	//Change back to Ad-hoc
 	output, err = exec.Command("networksetup", "-setairportnetwork", "en0", "PiAdHocNetwork").CombinedOutput()
@@ -82,14 +79,13 @@ func handleRequest(conn net.Conn) {
 		os.Stderr.WriteString(err.Error())
 	}
 	fmt.Println(string(output))
-	
+
 	os.Exit(0)
 
 }
 
-
 func main() {
-	l, err := net.Listen("tcp", "169.254.82.142:8081")
+	l, err := net.Listen("tcp", ":8888")
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
@@ -108,9 +104,6 @@ func main() {
 		handleRequest(conn)
 	}
 }
-
-
-
 
 /*
 networksetup -setairportnetwork en0 PiAdHocNetwork
