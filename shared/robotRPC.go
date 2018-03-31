@@ -45,7 +45,7 @@ func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *bool) erro
 
 	fmt.Println("RobotRPC:---> ReceiveTASK")
 	//data, _ :=json.MarshalIndent(senderTask, "", "")
-	fmt.Println(*senderTask)
+	fmt.Println("SenderID", (*senderTask).SenderID, "=>", (*senderTask).DestPoint)
 
 	var incommingMessage int
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTask.SendlogMessage, &incommingMessage)
@@ -119,23 +119,17 @@ func (r  *RobotStruct) WithinRadiusOfNetwork(p *FarNeighbourPayload) bool {
 
   // Server -> R2
 // FN: Called by a robot to see if THIS robot is within its and its current neighbours CR
+// Robot on this end will only return true if its in join or roam state (not if its in the busy state or if its in the roaming but the flag is of"
 func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, responsePayload *ResponseForNeighbourPayload) error {
 	fmt.Println("ReceivePossibleNeighboursPayload() robot Client that called this method and state (should be in roaming) ", p.NeighbourID, " ", p.State)
 	var incommingMessage int
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
 	// TODO change this
-	newNeighbour := Neighbour{
-		NID:                 p.NeighbourID,
-		Addr:                p.NeighbourIPAddr,
-		NeighbourCoordinate: p.NeighbourCoordinate,
-		//NMap:                p.NeighbourMap,
-		IsWithinCR:			 false,
-	}
 
 	for _, val :=range robotRPC.PiRobot.RobotNeighbours{
 		responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, val)
 	}
-
+	// check on this later
 	if !robotRPC.PiRobot.exchangeFlag.flag {
 		fmt.Println("FINISHED BUSY STATE. MUST WAIT UNTIL TIMER IS DONE TO TALK TO NEIGHBOR AGAIN")
 		responsePayload.WithInComRadius = false
@@ -147,31 +141,30 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 	//connection is formed only if the current robot is within CR and os either in ROAM or JOIN
 	if robotRPC.PiRobot.WithinRadiusOfNetwork(p){
 
-		newNeighbour.IsWithinCR  = true
+		//newNeighbour.IsWithinCR  = true
 
-		fmt.Println("ReceivePossibleNeighboursPayload() Within the radius")
+		//fmt.Println("ReceivePossibleNeighboursPayload() Within the radius")
+		//
+		//fmt.Println()
+		//fmt.Println("Join signal is sent.................................................")
+		//fmt.Println("join sig received")
+		//fmt.Println("neighbour IP is: ", newNeighbour.Addr)
+		//fmt.Println("Waiting for the other robots to join")
+		//fmt.Println()
+		//
 
-		fmt.Println()
-		fmt.Println("Join signal is sent.................................................")
-		fmt.Println("join sig received")
-		fmt.Println("neighbour IP is: ", newNeighbour.Addr)
-		fmt.Println("Waiting for the other robots to join")
-		fmt.Println()
+		//
+		//fmt.Printf("Checking FirstTimeJoining: %x \n", robotRPC.PiRobot.joinInfo.firstTimeJoining)
 
-		responsePayload.WithInComRadius = true
-
-		fmt.Printf("Checking FirstTimeJoining: %x \n", robotRPC.PiRobot.joinInfo.firstTimeJoining)
-
-
+		// This robot is sending ITS information
 		rpcRobot := Neighbour{
 			NID:                 robotRPC.PiRobot.RobotID,
 			Addr:                robotRPC.PiRobot.RobotIP,
 			NeighbourCoordinate: robotRPC.PiRobot.CurLocation,
 			NMap:                robotRPC.PiRobot.RMap,
-			IsWithinCR:			 true,
 		}
 
-		responsePayload.NeighbourRobot = rpcRobot
+		//responsePayload.NeighbourRobot = rpcRobot
 
 		// put the robot itself into the NeighboursNeighbourRobots
 		responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, rpcRobot)
@@ -179,11 +172,12 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		//responsePayload.NeighboursNeighbourRobots = robotRPC.PiRobot.RobotNeighbours
 		responsePayload.NeighbourState = robotRPC.PiRobot.State.rState
 
-		robotRPC.PiRobot.RobotNeighbours[newNeighbour.NID] = newNeighbour
+		// robotRPC.PiRobot.RobotNeighbours[newNeighbour.NID] = newNeighbour
 
 		if robotRPC.PiRobot.State.rState == JOIN {
 			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
 		}
+		responsePayload.WithInComRadius = true
 
 	}else{
 		//skip the request client
