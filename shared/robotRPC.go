@@ -39,7 +39,7 @@ func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
 	//*receivedMap = temp
 	return nil
 }
-
+// This robot (server) adds the task given by the caller robot
 func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *bool) error {
 	robotRPC.PiRobot.ReceivedTasks = append(robotRPC.PiRobot.ReceivedTasks, *senderTask)
 
@@ -53,9 +53,11 @@ func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *bool) erro
 }
 
 // TODO
-func (robotRPC *RobotRPC) ReceiveTaskDecsionResponse(senderTaskDecision *TaskDescisionPayload, reply *int) error {
+func (robotRPC *RobotRPC) ReceiveTaskDecsionResponse(senderTaskDecision *TaskDescisionPayload, reply *ResponseForNeighbourPayload) error {
 	var incommingMessage int
 	fmt.Println("Receive task response from neighbour: ", senderTaskDecision.SenderAddr)
+	robotRPC.PiRobot.ReceivedTasksResponse = append(robotRPC.PiRobot.ReceivedTasksResponse, *senderTaskDecision)
+	fmt.Println(robotRPC.PiRobot.ReceivedTasksResponse)
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTaskDecision.SendlogMessage, &incommingMessage)
 	return nil
 }

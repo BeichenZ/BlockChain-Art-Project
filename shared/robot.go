@@ -51,6 +51,7 @@ type RobotStruct struct {
 	// CurPath        []Coordinate // TODO: yo micheal here uncomment, n delete the whole struct
 	CurLocation   Coordinate    // TODO why isn't type coordinate instead?
 	ReceivedTasks []TaskPayload // change this later
+	ReceivedTasksResponse []TaskDescisionPayload
 	JoiningSig    chan Neighbour
 	BusySig       chan bool
 	WaitingSig    chan bool
@@ -347,7 +348,7 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println("Finished Merging")
 			fmt.Println()
 
-			//
+
 			//// Exchange my map with neighbours
 			//// Wait till maps from all neighbours are recevied
 			//// Merge my map with neighbours
@@ -394,6 +395,9 @@ func (r *RobotStruct) Explore() error {
 			r.RespondToNeighoursAboutTask(taskToDo)
 
 			// TODO wait for neighbours response
+			fmt.Println("Done responding to task, going to wait for my neighbour to respond to my task")
+			r.WaitForNeighbourTaskResponse()
+			fmt.Println("Done getting response from all neighbour")
 			// set busysig off
 			// procede with new task
 
@@ -501,10 +505,12 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 }
 
 func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
-	for _, neighbour := range r.RobotNeighbours {
+	for ids, neighbour := range r.RobotNeighbours {
 		client, err := rpc.Dial("tcp", neighbour.Addr)
 		if err != nil {
 			fmt.Println("1 RespondToNeighoursAboutTask() ",err)
+			delete(r.RobotNeighbours,ids)
+			continue
 			//fmt.Println("There is a problem respoing to neighbour about its task")
 		}
 		responsePayload := ResponseForNeighbourPayload{}
@@ -618,6 +624,24 @@ WaitingForEnoughTask:
 	}
 }
 
+func (r *RobotStruct) WaitForNeighbourTaskResponse()  {
+WaitingForEnoughTaskResponse:
+	for {
+		//fmt.Println("received Task", len(r.ReceivedTasks))
+		//fmt.Println("length neighbour", len(r.RobotNeighbours))
+		fmt.Println("num of received task ",len(r.ReceivedTasksResponse), " num neighbour ", len(r.RobotNeighbours))
+		if len(r.ReceivedTasksResponse) == len(r.RobotNeighbours) {
+			fmt.Println("waiting for my neighbours to send me tasks")
+			// choose task
+			// r.CurPath = something
+			// should enter default Roaming state, aka don't need to do anything
+			fmt.Println("(Inside) num of received task ",len(r.ReceivedTasksResponse), " num neighbour ", len(r.RobotNeighbours))
+			break WaitingForEnoughTaskResponse
+		}
+	}
+
+}
+
 func (r *RobotStruct) PickTaskWithLowestID(taskFromMe PointStruct) TaskPayload {
 	localMin := 100000
 	var taskToDo TaskPayload
@@ -641,7 +665,6 @@ func (r *RobotStruct) PickTaskWithLowestID(taskFromMe PointStruct) TaskPayload {
 
 func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 	//fmt.Printf( "The length of LDPN is  %v \n", len(ldp))
-	// TODO: What happens when len(ldp) == 1
 	ldpn := ldp
 	rand.Seed(time.Now().UnixNano())
 	fmt.Println("In TASK ALLOCATION TO NEIGHBOURS")
@@ -668,7 +691,7 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 		//data, _ := json.MarshalIndent(task, "", "")
 		//fmt.Println(string(data)
 
-		// TESTING UNCOMMENT
+		// Dial neighbour - if neighbour not there remove from its list of neighbours
 		neighbourClient, err := rpc.Dial("tcp", robotNeighbour.Addr)
 		if err != nil {
 
@@ -688,7 +711,6 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 		if err != nil {
 			fmt.Println("2 TaskAllocationToNeighbours() ",err)
 		}
-		// TESTING UNCOMMENT
 	}
 
 
@@ -1000,7 +1022,8 @@ func (r *RobotStruct) LocateLog() (*os.File, error) {
 func (r *RobotStruct) UpdateStateForNewJourney() {
 
 	r.RobotNeighbours = make(map[int]Neighbour)
-	r.ReceivedTasks = make([]TaskPayload,0)
+	r.ReceivedTasks = make([]TaskPayload, 0)
+	r.ReceivedTasksResponse = make([]TaskDescisionPayload, 0)
 
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	temp := time.Now()
