@@ -303,8 +303,7 @@ func (r *RobotStruct) Explore() error {
 				neighbourMap := Map{}
 				client, err := rpc.Dial("tcp", nei.Addr)
 				if err != nil {
-					fmt.Println("Error in connecting with neighbour")
-					fmt.Println(err)
+					fmt.Println("1 Explore() ",err)
 					continue
 				}
 
@@ -316,8 +315,7 @@ func (r *RobotStruct) Explore() error {
 
 
 				if err != nil {
-					fmt.Println("Error in getting the neighbour's map")
-					fmt.Println(err)
+					fmt.Println("2 Explore() ",err)
 					continue
 				}
 				listOfNeighbourMaps = append(listOfNeighbourMaps, neighbourMap)
@@ -328,6 +326,7 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println()
 
 			//logging
+			fmt.Println()
 			fmt.Println("The CURRENT ROBOT's id is")
 			fmt.Println(r.RobotID)
 
@@ -336,6 +335,7 @@ func (r *RobotStruct) Explore() error {
 
 			fmt.Println("The current robot state is")
 			fmt.Println(r.State)
+			fmt.Println()
 
 			r.MergeMaps(listOfNeighbourMaps)
 
@@ -344,6 +344,7 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println(r.RMap)
 
 			fmt.Println("Finished Merging")
+			fmt.Println()
 
 			//
 			//// Exchange my map with neighbours
@@ -352,12 +353,13 @@ func (r *RobotStruct) Explore() error {
 			//// Create tasks for current robot network
 			tasks, _ := r.TaskCreation()
 
+			fmt.Println()
 			fmt.Println("The following is the list of tasks created by ", r.RobotIP)
 			for  _, t := range tasks {
 				fmt.Println(t)
 			}
+			fmt.Println()
 
-			fmt.Println("DONE DISPLAYING TASKs. ENGINEERING PHYSICS IS THE MOST USELESS DEGREE")
 			//// Allocate tasks to current robot network
 			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
 			//// r.CurrTask = tasks[0]
@@ -371,6 +373,12 @@ func (r *RobotStruct) Explore() error {
 			//
 			//// Wait for tasks from each neighbour
 			fmt.Println("Done allocating tasks for neighbours")
+			fmt.Println("My neighbours are ")
+			fmt.Println(r.RobotNeighbours)
+			fmt.Println(len(r.RobotNeighbours))
+			//rawRobotNeighbour, _:= json.MarshalIndent(r.RobotNeighbours, "", "")
+			//fmt.Println(string(rawRobotNeighbour))
+
 			r.WaitForEnoughTaskFromNeighbours()
 			//// Choose task based with the lowest ID including its own
 			fmt.Println("The task I chose for myself ", tasks[0])
@@ -378,6 +386,7 @@ func (r *RobotStruct) Explore() error {
 			//// r.CurrTask = taskToDo
 			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
 			fmt.Println("The task I am going to dooooo ----> Sending ID", taskToDo.SenderID, "=>", taskToDo.DestPoint)
+			fmt.Println()
 
 			//
 			//// Respond to each task given by my fellow robots
@@ -494,7 +503,8 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 	for _, neighbour := range r.RobotNeighbours {
 		client, err := rpc.Dial("tcp", neighbour.Addr)
 		if err != nil {
-			fmt.Println("There is a problem respoing to neighbour about its task")
+			fmt.Println("1 RespondToNeighoursAboutTask() ",err)
+			//fmt.Println("There is a problem respoing to neighbour about its task")
 		}
 		responsePayload := ResponseForNeighbourPayload{}
 
@@ -570,6 +580,8 @@ func (r *RobotStruct) UpdateCurLocation() {
 func (r *RobotStruct) WaitForEnoughTaskFromNeighbours() {
 WaitingForEnoughTask:
 	for {
+		//fmt.Println("received Task", len(r.ReceivedTasks))
+		//fmt.Println("length neighbour", len(r.RobotNeighbours))
 		if len(r.ReceivedTasks) == len(r.RobotNeighbours) {
 			fmt.Println("waiting for my neighbours to send me tasks")
 			// choose task
@@ -609,7 +621,7 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 	fmt.Println("In TASK ALLOCATION TO NEIGHBOURS")
 	fmt.Printf("There are %+v robots \n", len(r.RobotNeighbours))
 
-	for _, robotNeighbour := range r.RobotNeighbours {
+	for idx, robotNeighbour := range r.RobotNeighbours {
 		//fmt.Printf( "The length of LDPN is  %v \n", len(ldpn))
 		fmt.Println("Examining Robot ", robotNeighbour.NID)
 		dpn := ldpn[rand.Intn(len(ldpn))]
@@ -633,22 +645,27 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 		// TESTING UNCOMMENT
 		neighbourClient, err := rpc.Dial("tcp", robotNeighbour.Addr)
 		if err != nil {
-			fmt.Println(err)
+
+			fmt.Println("1 TaskAllocationToNeighbours() ",err)
+			delete(r.RobotNeighbours, idx)
+			continue
 		}
+
 		//fmt.Printf("%+v", neighbourClient)
 		alive := false
 		// Here I send my robot the task
 		fmt.Println("Going to send following task ", "Sender_ID", task.SenderID, "=>", task.DestPoint)
-		if err != nil{
-			err = neighbourClient.Call("RobotRPC.ReceiveTask", task, &alive)
-		}
+
+		err = neighbourClient.Call("RobotRPC.ReceiveTask", task, &alive)
 
 		fmt.Println("Why are you hanging????????????")
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("2 TaskAllocationToNeighbours() ",err)
 		}
 		// TESTING UNCOMMENT
 	}
+
+
 }
 // FN: payload to ask neighbour if I and my current hommies are within this new neighbours radius
 func createFarNeighbourPayload(r RobotStruct, finalsend []byte) FarNeighbourPayload{
@@ -672,7 +689,7 @@ func createFarNeighbourPayload(r RobotStruct, finalsend []byte) FarNeighbourPayl
 
 func SaveNeighbour(r *RobotStruct, robotsToAdd []Neighbour){
 	for idx, val := range robotsToAdd{
-		if robotsToAdd[idx].NID == r.RobotID && CheckNeighbourExists(r, robotsToAdd[idx]){
+		if (robotsToAdd[idx].NID == r.RobotID ) || CheckNeighbourExists(r, val){
 			continue
 		}
 		r.RobotNeighbours[idx] = val
@@ -696,6 +713,8 @@ func (r *RobotStruct) CallNeighbours() {
 			for _, possibleNeighbour := range r.PossibleNeighbours.List() {
 				client, err := rpc.Dial("tcp", possibleNeighbour.(string))
 				if err != nil {
+					fmt.Println("HUGE ERROR on possible neighbour-- all nighter")
+					fmt.Println("1 CallNeighbours() ",err.Error())
 					r.PossibleNeighbours.Remove(possibleNeighbour)
 					continue
 				}
@@ -730,7 +749,7 @@ func (r *RobotStruct) CallNeighbours() {
 					err := client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
 
 					if err != nil {
-						fmt.Println("ERROR: ", err)
+						fmt.Println("2 CallNeighbours() ", err)
 
 					}
 
