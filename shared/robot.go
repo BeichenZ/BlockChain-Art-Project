@@ -740,7 +740,7 @@ func SaveNeighbour(r *RobotStruct, robotsToAdd []Neighbour){
 		if (robotsToAdd[idx].NID == r.RobotID ) || CheckNeighbourExists(r, val){
 			continue
 		}
-		r.RobotNeighbours[idx] = val
+		r.RobotNeighbours[robotsToAdd[idx].NID] = val
 	}
 }
 func CheckNeighbourExists(r *RobotStruct, rn Neighbour) bool  {
@@ -752,6 +752,22 @@ func CheckNeighbourExists(r *RobotStruct, rn Neighbour) bool  {
 	return false
 }
 
+func CheckNeighbourExistsByIPd(r *RobotStruct, rn string) bool  {
+	for _, val :=range r.RobotNeighbours {
+
+		fmt.Println()
+		fmt.Println("Comparing neighbour with existing neighbour")
+		fmt.Println(val.Addr)
+		fmt.Println(rn)
+		fmt.Println()
+
+		if val.Addr == rn {
+			fmt.Printf("\nI have neighbour[%s] already\n", val.Addr)
+			return true
+		}
+	}
+	return false
+}
 
 // Client -> R2
 // Fn: From the list of possible neighbours (address' that were pinged befo)
@@ -787,34 +803,76 @@ func (r *RobotStruct) CallNeighbours() {
 
 				//if exchangeFlag false -> should not talk to other robot
 				// if this robot satisfies this, it can communicate with other robots
-				if ((r.State.rState == ROAM || r.State.rState == JOIN) && r.exchangeFlag.flag) {
+				//if ((r.State.rState == ROAM || r.State.rState == JOIN) && r.exchangeFlag.flag) {
+				//
+				//	responsePayload := ResponseForNeighbourPayload{}
+				//
+				//	messagepayload := 1
+				//	finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
+				//	farNeighbourPayload := createFarNeighbourPayload(*r, finalsend)
+				//	// This robot is calling its (potential) neighbour to see if its within the communication radius of itself and its current neighbours
+				//	err := client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
+				//
+				//	if err != nil {
+				//		fmt.Println("2 CallNeighbours() ", err)
+				//
+				//	}
+				//
+				//	//if other robot is in join/roam and within cr, current robot tries joining
+				//	if !responsePayload.WithInComRadius {
+				//		continue
+				//	}
+				//
+				//	r.State.Lock()
+				//	r.State.rState = JOIN
+				//	r.State.Unlock()
+				//	SaveNeighbour(r, responsePayload.NeighboursNeighbourRobots) // Client robot saves the other robot and its neighbours which ARE in CR
+				//
+				//	if r.State.rState != JOIN{
+				//		StartClock(responsePayload.NeighbourState, r, responsePayload.RemainingTime)
+				//	}
+				//}
+
+				if (r.State.rState == ROAM && r.exchangeFlag.flag) || (r.State.rState == JOIN) {
+
+					//Test
+					if (CheckNeighbourExistsByIPd(r, possibleNeighbour.(string))){
+						continue
+					}
 
 					responsePayload := ResponseForNeighbourPayload{}
 
 					messagepayload := 1
+
+
 					finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
 					farNeighbourPayload := createFarNeighbourPayload(*r, finalsend)
 					// This robot is calling its (potential) neighbour to see if its within the communication radius of itself and its current neighbours
+					fmt.Println("CallNeighbours() my ID and state ", r.RobotID, " ", r.State.rState)
 					err := client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
-
 					if err != nil {
 						fmt.Println("2 CallNeighbours() ", err)
 
 					}
-
 					//if other robot is in join/roam and within cr, current robot tries joining
 					if !responsePayload.WithInComRadius {
 						continue
 					}
 
+					SaveNeighbour(r, responsePayload.NeighboursNeighbourRobots) // Client robot saves the other robot and its neighbours which ARE in CR
+
+					if r.State.rState == JOIN{
+						continue
+					}
+					//Up to this point, Robot with JOINNING state should exit here
+
+
 					r.State.Lock()
 					r.State.rState = JOIN
 					r.State.Unlock()
-					SaveNeighbour(r, responsePayload.NeighboursNeighbourRobots) // Client robot saves the other robot and its neighbours which ARE in CR
 
-					if r.State.rState != JOIN{
-						StartClock(responsePayload.NeighbourState, r, responsePayload.RemainingTime)
-					}
+					StartClock(responsePayload.NeighbourState, r, responsePayload.RemainingTime)
+
 
 				}
 

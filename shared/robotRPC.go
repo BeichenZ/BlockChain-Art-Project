@@ -34,7 +34,7 @@ func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
 	*receivedMap = robotRPC.PiRobot.RMap
 	//Testing
 	//temp:= RandomMapGenerator()
-	fmt.Println("RobotRPC:------> Sending map")
+	fmt.Println("RPC: RobotRPC:------> Sending map")
 	fmt.Println(robotRPC.PiRobot.RMap)
 	//*receivedMap = temp
 	return nil
@@ -43,9 +43,9 @@ func (robotRPC *RobotRPC) ReceiveMap(ignore bool, receivedMap *Map) error {
 func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *bool) error {
 	robotRPC.PiRobot.ReceivedTasks = append(robotRPC.PiRobot.ReceivedTasks, *senderTask)
 
-	fmt.Println("RobotRPC:---> ReceiveTASK")
+	fmt.Println("RPC:RobotRPC:---> ReceiveTASK")
 	//data, _ :=json.MarshalIndent(senderTask, "", "")
-	fmt.Println("SenderID", (*senderTask).SenderID, "=>", (*senderTask).DestPoint)
+	fmt.Println("RPC:SenderID", (*senderTask).SenderID, "=>", (*senderTask).DestPoint)
 
 	var incommingMessage int
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTask.SendlogMessage, &incommingMessage)
@@ -55,9 +55,9 @@ func (robotRPC *RobotRPC) ReceiveTask(senderTask *TaskPayload, reply *bool) erro
 // TODO
 func (robotRPC *RobotRPC) ReceiveTaskDecsionResponse(senderTaskDecision *TaskDescisionPayload, reply *ResponseForNeighbourPayload) error {
 	var incommingMessage int
-	fmt.Println("Receive task response from neighbour: ", senderTaskDecision.SenderAddr)
+	fmt.Println("RPC:Receive task response from neighbour: ", senderTaskDecision.SenderAddr)
 	robotRPC.PiRobot.ReceivedTasksResponse = append(robotRPC.PiRobot.ReceivedTasksResponse, *senderTaskDecision)
-	fmt.Println(robotRPC.PiRobot.ReceivedTasksResponse)
+	fmt.Println("RPC: ",robotRPC.PiRobot.ReceivedTasksResponse)
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", senderTaskDecision.SendlogMessage, &incommingMessage)
 	return nil
 }
@@ -74,7 +74,7 @@ func (robotRPC *RobotRPC) RegisterNeighbour(message *string, reply *string) erro
 }
 
 func (robotRPC *RobotRPC) NotifyNeighbours(p *Neighbour, ignore *bool) error {
-	fmt.Printf("Adding neighbour %s to this robot %s \n", p.Addr, robotRPC.PiRobot.RobotIP )
+	fmt.Printf("RPC:Adding neighbour %s to this robot %s \n", p.Addr, robotRPC.PiRobot.RobotIP )
 
 	if robotRPC.PiRobot.RobotIP != p.Addr {
 		robotRPC.PiRobot.RobotNeighbours[(*p).NID] = *p
@@ -131,7 +131,7 @@ func (r *RobotStruct) RobotStateCommunicationAllowed(nid int) bool {
 // FN: Called by a robot to see if THIS robot is within its and its current neighbours CR
 // Robot on this end will only return true if its in join or roam state (not if its in the busy state or if its in the roaming but the flag is of"
 func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, responsePayload *ResponseForNeighbourPayload) error {
-	fmt.Println("ReceivePossibleNeighboursPayload() robot Client that called this method and state (should be in roaming) ", p.NeighbourID, " ", p.State)
+	fmt.Println("RPC: ReceivePossibleNeighboursPayload() robot Client that called this method and state (should be in roaming) ", p.NeighbourID, " ", p.State)
 	var incommingMessage int
 	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
 	// TODO change this
@@ -141,11 +141,11 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 	}
 	// check on this later
 	if !robotRPC.PiRobot.exchangeFlag.flag {
-		fmt.Println("FINISHED BUSY STATE. MUST WAIT UNTIL TIMER IS DONE TO TALK TO NEIGHBOR AGAIN")
+		fmt.Println("RPC: FINISHED BUSY STATE. MUST WAIT UNTIL TIMER IS DONE TO TALK TO NEIGHBOR AGAIN")
 		responsePayload.WithInComRadius = false
 		return nil
 	}
-	fmt.Println("ReceivePossibleNeighboursPayload()  exchange flag ",robotRPC.PiRobot.exchangeFlag.flag, " robot within radius? ", robotRPC.PiRobot.WithinRadiusOfNetwork(p),
+	fmt.Println("RPC: ReceivePossibleNeighboursPayload()  exchange flag ",robotRPC.PiRobot.exchangeFlag.flag, " robot within radius? ", robotRPC.PiRobot.WithinRadiusOfNetwork(p),
 		"this robot state ", robotRPC.PiRobot.State.rState)
 
 	//connection is formed only if the current robot is within CR and os either in ROAM or JOIN
