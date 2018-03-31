@@ -112,7 +112,7 @@ func (r  *RobotStruct) WithinRadiusOfNetwork(p *FarNeighbourPayload) bool {
 		}
 	}
 
-	return true && (r.State == ROAM || r.State == JOIN)
+	return true && (r.State.rState == ROAM || r.State.rState == JOIN)
 }
 
 
@@ -143,7 +143,7 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		return nil
 	}
 	fmt.Println("ReceivePossibleNeighboursPayload()  exchange flag ",robotRPC.PiRobot.exchangeFlag.flag, " robot within radius? ", robotRPC.PiRobot.WithinRadiusOfNetwork(p),
-		"this robot state ", robotRPC.PiRobot.State)
+		"this robot state ", robotRPC.PiRobot.State.rState)
 
 	//connection is formed only if the current robot is within CR and os either in ROAM or JOIN
 	if robotRPC.PiRobot.WithinRadiusOfNetwork(p){
@@ -179,11 +179,11 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		responsePayload.NeighboursNeighbourRobots = append(responsePayload.NeighboursNeighbourRobots, rpcRobot)
 
 		//responsePayload.NeighboursNeighbourRobots = robotRPC.PiRobot.RobotNeighbours
-		responsePayload.NeighbourState = robotRPC.PiRobot.State
+		responsePayload.NeighbourState = robotRPC.PiRobot.State.rState
 
 		robotRPC.PiRobot.RobotNeighbours[newNeighbour.NID] = newNeighbour
 
-		if robotRPC.PiRobot.State == JOIN {
+		if robotRPC.PiRobot.State.rState == JOIN {
 			responsePayload.RemainingTime = time.Now().Sub(robotRPC.PiRobot.joinInfo.joiningTime)
 			fmt.Println("Remaining Time is ", responsePayload.RemainingTime)
 		}

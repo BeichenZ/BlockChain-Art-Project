@@ -61,7 +61,7 @@ type RobotStruct struct {
 	WalkSig       chan bool
 	Logname       string
 	Logger        *govec.GoLog
-	State         RobotState
+	State         RobotMutexState
     joinInfo      JoiningInfo
     exchangeFlag  CanExchangeInfoWithRobots
 }
@@ -77,6 +77,11 @@ type Robot interface {
 type CanExchangeInfoWithRobots struct {
 	sync.RWMutex
 	flag bool
+}
+
+type RobotMutexState struct {
+	sync.RWMutex
+	rState RobotState
 }
 
 
@@ -666,7 +671,7 @@ func (r *RobotStruct) CallNeighbours() {
 				NeighbourCoordinate: r.CurLocation,
 				NeighbourMap:        r.RMap,
 				SendlogMessage:      finalsend,
-				State: 				 r.State,
+				State: 				 r.State.rState,
 				//ItsNeighbours:       r.RobotNeighbours,
 			}
 
@@ -679,8 +684,8 @@ func (r *RobotStruct) CallNeighbours() {
 			}
 			responsePayload := ResponseForNeighbourPayload{}
 
-			if (r.State == ROAM && r.exchangeFlag.flag) {
-				fmt.Println("CallNeighbours() my state and id ", r.State, " ", r.RobotID)
+			if (r.State.rState == ROAM && r.exchangeFlag.flag) {
+				fmt.Println("CallNeighbours() my state and id ", r.State.rState, " ", r.RobotID)
 				err := client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
 
 				if err != nil {
@@ -690,8 +695,9 @@ func (r *RobotStruct) CallNeighbours() {
 
 				//if other robot is in join/roam and within cr, current robot tries joining
 				if responsePayload.WithInComRadius {
-
-					r.State = JOIN
+					r.State.Lock()
+					r.State.rState = JOIN
+					r.State.Unlock()
 					fmt.Printf(" ClientRobot:----> Robot %v 's state has been changed from ROAM to JOIN\n", r.RobotIP)
 				}
 
@@ -712,7 +718,9 @@ func (r *RobotStruct) CallNeighbours() {
 							if time.Now().Sub(r.joinInfo.joiningTime) >= (TIMETOJOIN - responsePayload.RemainingTime){
 								fmt.Println("WE ARE FINISHED.FUCK 416 -- JOIN")
 								ticker.Stop()
-								r.State = BUSY
+								r.State.Lock()
+								r.State.rState = BUSY
+								r.State.Unlock()
 								r.BusySig <- true
 							}
 						}
@@ -726,15 +734,16 @@ func (r *RobotStruct) CallNeighbours() {
 						counter :=0
 						for t := range ticker.C {
 							counter += 1
-							fmt.Printf("CallNeighbours( my state %+v):----------->Tick at %+v\n", r.State, t)
+							fmt.Printf("CallNeighbours( my state %+v):----------->Tick at %+v\n", r.State.rState, t)
 							fmt.Printf("Counter is %s\n", counter)
 							if counter >= TIMETOJOINSECONDUNIT{
 								fmt.Println("WE ARE FINISHED.FUCK 416 -- ROAM")
 
 								ticker.Stop()
-								r.State = BUSY
+								r.State.Lock()
+								r.State.rState = BUSY
+								r.State.Unlock()
 								r.BusySig <- true
-
 							}
 						}
 					}()
@@ -775,7 +784,7 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string, lo
 		WalkSig:            make(chan bool),
 		Logname:            logname,
 		Logger:             logger,
-		State:              ROAM,
+		State:              RobotMutexState{rState: ROAM},
 		joinInfo:           JoiningInfo{time.Now(), true},
 		exchangeFlag:       CanExchangeInfoWithRobots{ flag:true },
 	}
@@ -847,6 +856,7 @@ func (r *RobotStruct) LocateLog() (*os.File, error) {
 func (r *RobotStruct) UpdateStateForNewJourney() {
 
 	r.RobotNeighbours = make(map[int]Neighbour)
+	r.ReceivedTasks = make([]TaskPayload,0)
 
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	temp := time.Now()
@@ -855,9 +865,11 @@ func (r *RobotStruct) UpdateStateForNewJourney() {
 	r.exchangeFlag.Lock()
 	r.exchangeFlag.flag = false
 	r.exchangeFlag.Unlock()
-	fmt.Printf(" My current state is %+v\n", r.State)
-	r.State = ROAM
-	fmt.Printf(" My current state is after i changed from busy to roam %+v\n", r.State)
+	fmt.Printf(" My current state is %+v\n", r.State.rState)
+	r.State.Lock()
+	r.State.rState = ROAM
+	r.State.Unlock()
+	fmt.Printf(" My current state is after i changed from busy to roam %+v\n", r.State.rState)
 
 	go func(){
 		counter := 0
