@@ -5,28 +5,64 @@ import HeatMap from 'react-heatmap-grid';
 
 const xLabels = new Array(50).fill(0).map((_, i) => "");
 const yLabels = new Array(50).fill(0).map((_, i) => "");
-const data = new Array(yLabels.length)
-  .fill(0)
-  .map(() => new Array(xLabels.length).fill(0).map(() => Math.floor(Math.random() * 100)));
+let data1 = new Array(yLabels.length)
+  .fill(100)
+  .map(() => new Array(xLabels.length).fill(100));
+
+let data2 = new Array(yLabels.length)
+.fill(100)
+.map(() => new Array(xLabels.length).fill(100));
+
+let data3 = new Array(yLabels.length)
+.fill(100)
+.map(() => new Array(xLabels.length).fill(100));
+
+let data4 = new Array(yLabels.length)
+  .fill(100)
+  .map(() => new Array(xLabels.length).fill(100));
+
+
+let resultArray = [data1, data2, data3, data4];
 
 class App extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      allRobotsMap: []
+      allRobotsMap: {}
     };
   }
 
+  mapPayloadToMap = () => {
+    for (var key in this.state.allRobotsMap) {
+      this.state.allRobotsMap[key].map((gridItem) => {
+        if (!gridItem.IsItFreeToRoam) {
+          resultArray[Number(key)][gridItem.X+23][gridItem.Y+23] = 0
+        } else {
+          resultArray[Number(key)][gridItem.X+23][gridItem.Y+23] = 100
+        }
+      })
+    }
+  }
+
+  componentDidMount(){
+    setInterval(this.periodicFetchMap, 1000);
+  }
+
   periodicFetchMap = () => {
-    fetch("http://localhost:8888/getmaps", {
+    fetch("http://13.93.181.35:5000/getallmaps", {
       method: 'GET'
     })
     .then(res => res.json())
     .then(response => {
       console.log('this is the response')
       console.log(response)
-      this.setState({allRobotsMap: response})
+
+      this.setState({allRobotsMap: response}, ()=> {
+        this.mapPayloadToMap()
+        console.log(resultArray[0])
+      }
+    )
     })
     .catch(error => console.error('Error:', error))
   }
@@ -38,7 +74,7 @@ class App extends Component {
           <HeatMap
               xLabels={xLabels}
               yLabels={yLabels}
-              data={data}
+              data={resultArray[0]}
               height={4.5}
               xLabelWidth={1}
               background={"red"}
@@ -49,7 +85,7 @@ class App extends Component {
           <HeatMap
               xLabels={xLabels}
               yLabels={yLabels}
-              data={data}
+              data={resultArray[1]}
               height={4.5}
               xLabelWidth={1}
               background={"blue"}
@@ -60,7 +96,7 @@ class App extends Component {
           <HeatMap
               xLabels={xLabels}
               yLabels={yLabels}
-              data={data}
+              data={resultArray[2]}
               height={4.5}
               xLabelWidth={1}
               background={"green"}
@@ -71,7 +107,7 @@ class App extends Component {
           <HeatMap
               xLabels={xLabels}
               yLabels={yLabels}
-              data={data}
+              data={resultArray[3]}
               height={4.5}
               xLabelWidth={1}
               background={"yellow"}
