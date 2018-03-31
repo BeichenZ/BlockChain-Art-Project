@@ -1,14 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"sync"
 )
+
 type CoordinateStruct struct {
-	X float64
-	Y float64
+	X              float64
+	Y              float64
 	IsItFreeToRoam bool
 }
 
@@ -17,17 +20,33 @@ type InformationToWebApp struct {
 	all map[int][]CoordinateStruct
 }
 
-var allInfo = InformationToWebApp{all: make( map[int][]CoordinateStruct)}
+var allInfo = InformationToWebApp{all: make(map[int][]CoordinateStruct)}
 
+func GetAllMaps(w http.ResponseWriter, r *http.Request) {
+	s, err := json.Marshal(allInfo.all)
+	if err != nil {
+		panic(err)
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set(
+		"Access-Control-Allow-Headers",
+		"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
+	)
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.WriteHeader(http.StatusOK)
+	//Write json response back to response
+	w.Write(s)
+}
 
 func handleRequestFromLocalListener(conn net.Conn) {
-   buf := make([]byte, 1024)
-   infoLen, err := conn.Read(buf)
+	buf := make([]byte, 1024)
+	infoLen, err := conn.Read(buf)
 
-   if err != nil {
-	fmt.Println("ERROR")
-   }
-
+	if err != nil {
+		fmt.Println("ERROR")
+	}
 
 	newMap := DecodeMap(buf[:infoLen])
 	fmt.Println("Successfully decoded info")
@@ -36,7 +55,7 @@ func handleRequestFromLocalListener(conn net.Conn) {
 
 	tmpListOfCoordinates := make([]CoordinateStruct, len(newMap.ExploredPath))
 
-	for cord, points := range  newMap.ExploredPath{
+	for cord, points := range newMap.ExploredPath {
 		tmpCordStruct := CoordinateStruct{}
 
 		tmpCordStruct.X = cord.X
@@ -51,11 +70,14 @@ func handleRequestFromLocalListener(conn net.Conn) {
 	allInfo.all[newMap.FrameOfRef] = tmpListOfCoordinates
 	allInfo.Unlock()
 
-
-}	
+}
 
 func main() {
 	port := os.Args[1]
+	mux := http.NewServeMux()
+	mux.HandleFunc("/getallmaps", GetAllMaps)
+	go http.ListenAndServe(":5000", mux)
+
 	l, err := net.Listen("tcp", port)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
@@ -66,11 +88,11 @@ func main() {
 	fmt.Println("Listening on port", port)
 	for {
 		// Listen for an incoming connection.
-		conn , err := l.Accept()
+		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
-		} 
+		}
 		go handleRequestFromLocalListener(conn)
 	}
 }
