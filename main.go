@@ -95,19 +95,17 @@ func main() {
 	timeout := time.Duration(100 * time.Millisecond)
 	go scanForNeighbours(ips[:5], ipv4Addr, timeout, robot, Port)
 	go robot.CallNeighbours()
+	go robot.SendMapToLocalServer()
 	// for {
 	// 	// wait for user input
 	// 	// if button is pressed, break out of the loop
 	// 	break
 	// }
 
-
-		// asynchronously check for other robots
-		// if a robot is nearby, get IP address and make RPC call
-		//go robot.RespondToButtons()
+	// asynchronously check for other robots
+	// if a robot is nearby, get IP address and make RPC call
+	//go robot.RespondToButtons()
 	robot.Explore()
-
-
 
 }
 
@@ -130,10 +128,10 @@ func scanForNeighbours(ips []string, ipv4Addr net.IP, timeout time.Duration, rob
 				if err != nil {
 					fmt.Println(err)
 				}
-				error :=client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, &neighbourIPAddr)
-				if error != nil{
+				error := client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, &neighbourIPAddr)
+				if error != nil {
 					fmt.Println(error.Error())
-				}else{
+				} else {
 					robot.PossibleNeighbours.Add(neighbourIPAddr)
 				}
 			}

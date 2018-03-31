@@ -4,17 +4,18 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/rand"
+	"net"
 	"net/rpc"
 	"os"
+	"sync"
 	"time"
+
 	"github.com/DistributedClocks/GoVector/govec"
 	"github.com/fatih/set"
-	"encoding/json"
-	"sync"
 )
 
 const XMIN = "xmin"
@@ -22,14 +23,13 @@ const XMAX = "xmax"
 const YMIN = "ymix"
 const YMAX = "ymax"
 const EXRADIUS = 6
-const TIMETOJOIN = 10*time.Second
+const TIMETOJOIN = 10 * time.Second
 const TIMETOJOINSECONDUNIT = 10
 
 type JoiningInfo struct {
-	joiningTime  time.Time
+	joiningTime      time.Time
 	firstTimeJoining bool
 }
-
 
 type RobotLog struct {
 	CurrTask    TaskPayload
@@ -45,9 +45,9 @@ type RobotStruct struct {
 	RobotEnergy        int
 	RobotListenConn    *rpc.Client
 	//RobotNeighbours    []Neighbour
-	RobotNeighbours	   map[int]Neighbour
-	RMap               Map
-	CurPath            Path
+	RobotNeighbours map[int]Neighbour
+	RMap            Map
+	CurPath         Path
 	// CurPath        []Coordinate // TODO: yo micheal here uncomment, n delete the whole struct
 	CurLocation   Coordinate    // TODO why isn't type coordinate instead?
 	ReceivedTasks []TaskPayload // change this later
@@ -62,8 +62,8 @@ type RobotStruct struct {
 	Logname       string
 	Logger        *govec.GoLog
 	State         RobotState
-    joinInfo      JoiningInfo
-    exchangeFlag  CanExchangeInfoWithRobots
+	joinInfo      JoiningInfo
+	exchangeFlag  CanExchangeInfoWithRobots
 }
 
 type Robot interface {
@@ -78,7 +78,6 @@ type CanExchangeInfoWithRobots struct {
 	sync.RWMutex
 	flag bool
 }
-
 
 var robotStruct RobotStruct
 
@@ -120,7 +119,6 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 	//fmt.Println(DestNum)
 	//fmt.Println(r.RobotNeighbours)
 
-
 	DestPoints := FindDestPoints(DestNum, center)
 
 	// move DestpointForMe to beginning of list
@@ -150,7 +148,7 @@ func (r *RobotStruct) FindMapExtrema(e string) float64 {
 			}
 		}
 
-		if len(r.RMap.ExploredPath) == 0{
+		if len(r.RMap.ExploredPath) == 0 {
 			return 0.0
 		}
 
@@ -163,7 +161,7 @@ func (r *RobotStruct) FindMapExtrema(e string) float64 {
 			}
 		}
 
-		if len(r.RMap.ExploredPath) == 0{
+		if len(r.RMap.ExploredPath) == 0 {
 			return 0.0
 		}
 		return Round(xMin)
@@ -175,7 +173,7 @@ func (r *RobotStruct) FindMapExtrema(e string) float64 {
 			}
 		}
 
-		if len(r.RMap.ExploredPath) == 0{
+		if len(r.RMap.ExploredPath) == 0 {
 			return 0.0
 		}
 		return Round(yMax)
@@ -187,7 +185,7 @@ func (r *RobotStruct) FindMapExtrema(e string) float64 {
 			}
 		}
 
-		if len(r.RMap.ExploredPath) == 0{
+		if len(r.RMap.ExploredPath) == 0 {
 			return 0.0
 		}
 		return Round(yMin)
@@ -223,9 +221,9 @@ func (r *RobotStruct) RespondToButtons() error {
 		if command == "j" {
 
 			r.JoiningSig <- Neighbour{
-				Addr: ":8080",
-				NID: 1,
-				NMap: RandomMapGenerator(),
+				Addr:                ":8080",
+				NID:                 1,
+				NMap:                RandomMapGenerator(),
 				NeighbourCoordinate: Coordinate{4.0, 5.0},
 			}
 
@@ -289,7 +287,7 @@ func (r *RobotStruct) Explore() error {
 		case <-r.BusySig: // TODO whole thing
 			fmt.Println("busy sig received")
 
-			listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
+			listOfNeighbourMaps := make([]Map, len(r.RobotNeighbours))
 
 			fmt.Println("Getting the maps from the neighbour.................")
 			for _, nei := range r.RobotNeighbours {
@@ -307,7 +305,6 @@ func (r *RobotStruct) Explore() error {
 				rawMap, _ := json.MarshalIndent(neighbourMap, "", "")
 				fmt.Printf("Receive map from %s \n", nei.Addr)
 				fmt.Println(string(rawMap))
-
 
 				if err != nil {
 					fmt.Println("Error in getting the neighbour's map")
@@ -487,7 +484,7 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 }
 
 // Assuming same coordinate system, and each robot has difference ExploredPath
-func (r *RobotStruct) MergeMaps(neighbourMaps []Map)  {
+func (r *RobotStruct) MergeMaps(neighbourMaps []Map) {
 	refToOriginalMap := r.RMap
 
 	for _, neighbourRobotMap := range neighbourMaps {
@@ -549,7 +546,7 @@ func (r *RobotStruct) PickTaskWithLowestID(taskFromMe PointStruct) TaskPayload {
 		}
 	}
 	// Check if the task assigned is larger than the one it assigned itself
-	if (r.RobotID < taskToDo.SenderID){
+	if r.RobotID < taskToDo.SenderID {
 		taskToDo.SenderID = r.RobotID
 		taskToDo.DestPoint = taskFromMe
 	}
@@ -598,7 +595,6 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 	}
 }
 
-
 // Client -> R2
 func (r *RobotStruct) CallNeighbours() {
 	for {
@@ -614,18 +610,17 @@ func (r *RobotStruct) CallNeighbours() {
 			messagepayload := 1
 			finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
 
-
 			farNeighbourPayload := FarNeighbourPayload{
 				NeighbourID:         r.RobotID,
 				NeighbourIPAddr:     r.RobotIP,
 				NeighbourCoordinate: r.CurLocation,
 				NeighbourMap:        r.RMap,
 				SendlogMessage:      finalsend,
-				State: 				 r.State,
+				State:               r.State,
 				//ItsNeighbours:       r.RobotNeighbours,
 			}
 
-			for _, robot := range r.RobotNeighbours{
+			for _, robot := range r.RobotNeighbours {
 				farNeighbourPayload.ItsNeighbours = append(farNeighbourPayload.ItsNeighbours, robot)
 			}
 
@@ -634,7 +629,7 @@ func (r *RobotStruct) CallNeighbours() {
 			}
 			responsePayload := ResponseForNeighbourPayload{}
 
-			if (r.State == ROAM) {
+			if r.State == ROAM {
 
 				client.Call("RobotRPC.ReceivePossibleNeighboursPayload", farNeighbourPayload, &responsePayload)
 
@@ -649,17 +644,17 @@ func (r *RobotStruct) CallNeighbours() {
 				ticker := time.NewTicker(1000 * time.Millisecond)
 
 				//start the time, which time depending on the neighbour's response
-				if responsePayload.NeighbourState == JOIN{
+				if responsePayload.NeighbourState == JOIN {
 					fmt.Println("The Pi has the remaining time of ", responsePayload.RemainingTime)
 
 					//robot start its time using the remainingTime
-					go func(){
+					go func() {
 						counter := 0
 						for t := range ticker.C {
 							counter += 1
 							fmt.Println("Tick at", t)
 							fmt.Printf("Counter is %s\n", counter)
-							if time.Now().Sub(r.joinInfo.joiningTime) >= (TIMETOJOIN - responsePayload.RemainingTime){
+							if time.Now().Sub(r.joinInfo.joiningTime) >= (TIMETOJOIN - responsePayload.RemainingTime) {
 								fmt.Println("WE ARE FINISHED.FUCK 416 -- JOIN")
 								ticker.Stop()
 								r.State = BUSY
@@ -668,17 +663,16 @@ func (r *RobotStruct) CallNeighbours() {
 						}
 					}()
 
-
-				}else if(responsePayload.NeighbourState == ROAM){
+				} else if responsePayload.NeighbourState == ROAM {
 
 					//robot starts its owner timer
 					go func() {
-						counter :=0
+						counter := 0
 						for t := range ticker.C {
 							counter += 1
 							fmt.Println("Tick at", t)
 							fmt.Printf("Counter is %s\n", counter)
-							if counter >= TIMETOJOINSECONDUNIT{
+							if counter >= TIMETOJOINSECONDUNIT {
 								fmt.Println("WE ARE FINISHED.FUCK 416 -- ROAM")
 
 								ticker.Stop()
@@ -689,7 +683,7 @@ func (r *RobotStruct) CallNeighbours() {
 						}
 					}()
 
-				}else{
+				} else {
 					//do nothing
 					//neightbours are in hte busy state
 				}
@@ -727,67 +721,35 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string, lo
 		Logger:             logger,
 		State:              ROAM,
 		joinInfo:           JoiningInfo{time.Now(), true},
-		exchangeFlag:       CanExchangeInfoWithRobots{ flag:true },
+		exchangeFlag:       CanExchangeInfoWithRobots{flag: true},
 	}
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 	return &newRobot
 }
 
-func (r *RobotStruct) EncodeRobotLogInfo(robotLog RobotLog) string {
-	buf := new(bytes.Buffer)
-	encoder := gob.NewEncoder(buf)
-	err := encoder.Encode(robotLog)
-	if err != nil {
-		panic(err)
+func (r *RobotStruct) SendMapToLocalServer() {
+	for {
+		// Encode Map info
+		buf := new(bytes.Buffer)
+		encoder := gob.NewEncoder(buf)
+		err := encoder.Encode(r.RMap)
+		if err != nil {
+			panic(err)
+		}
+		// output := string(buf.Bytes())
+		// Send it to local Server using TCP
+		conn, err := net.Dial("tcp", ":8888")
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			conn.Write(buf.Bytes())
+			fmt.Println("----------------------------------------------")
+			fmt.Println("Encoded map send")
+			fmt.Println("----------------------------------------------")
+		}
+		time.Sleep(5000 * time.Millisecond)
 	}
-	output := string(buf.Bytes())
-	return output
-	// fmt.Println(buf.Bytes())
 }
-
-func (r *RobotStruct) ReadFromLog() {
-	robotLogContent, _ := ioutil.ReadFile("./" + r.Logname)
-	buf := bytes.NewBuffer(robotLogContent)
-
-	var decodedRobotLog RobotLog
-
-	decoder := gob.NewDecoder(buf)
-	err := decoder.Decode(&decodedRobotLog)
-	if err != nil {
-		panic(err)
-	}
-
-	r.RMap = decodedRobotLog.RMap
-	r.CurLocation = decodedRobotLog.CurLocation
-	r.CurrTask = decodedRobotLog.CurrTask
-	fmt.Println(decodedRobotLog.RMap)
-	fmt.Println(decodedRobotLog.CurLocation)
-	fmt.Println(decodedRobotLog.CurrTask)
-	fmt.Println("finshed loading from log")
-}
-
-func (r *RobotStruct) CreateLog() (*os.File, error) {
-	file, err := os.Create("./" + r.Logname)
-	if err != nil {
-		fmt.Println("error creating robot log")
-	}
-	return file, err
-}
-
-func (r *RobotStruct) ProduceLogInfo() RobotLog {
-	robotLog := RobotLog{
-		CurrTask:    r.CurrTask,
-		RMap:        r.RMap,
-		CurLocation: r.CurLocation,
-	}
-	return robotLog
-}
-
-func (r *RobotStruct) LocateLog() (*os.File, error) {
-	file, err := os.Open(r.Logname)
-	return file, err
-}
-
 func (r *RobotStruct) UpdateStateForNewJourney() {
 	r.State = ROAM
 	r.RobotNeighbours = make(map[int]Neighbour)
@@ -798,7 +760,7 @@ func (r *RobotStruct) UpdateStateForNewJourney() {
 	r.exchangeFlag.Lock()
 	r.exchangeFlag.flag = false
 	r.exchangeFlag.Unlock()
-	go func(){
+	go func() {
 		counter := 0
 		for t := range ticker.C {
 			counter += 1
