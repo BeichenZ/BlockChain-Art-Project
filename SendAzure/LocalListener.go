@@ -63,10 +63,11 @@ func handleRequest(conn net.Conn) {
 	//Wait until connected to Internet
 WaitingForInternet:
 	for {
-		_, err := net.Dial("tcp", "Azure.com:8080")
+		conn, err := net.Dial("tcp", "13.93.181.35:8080")
 		if err != nil {
 			continue
 		} else {
+			conn.Write([]byte("hello, world"))
 			break WaitingForInternet
 		}
 	}
@@ -80,7 +81,7 @@ WaitingForInternet:
 	}
 	fmt.Println(string(output))
 
-	os.Exit(0)
+	// os.Exit(0)
 
 }
 
@@ -98,7 +99,7 @@ func main() {
 		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
-			os.Exit(1)
+			// os.Exit(1)
 		}
 		// Handle connections in a new goroutine.
 		handleRequest(conn)
