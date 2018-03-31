@@ -1,6 +1,13 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import HeatMap from 'react-heatmap-grid';
+
+const xLabels = new Array(50).fill(0).map((_, i) => "");
+const yLabels = new Array(50).fill(0).map((_, i) => "");
+const data = new Array(yLabels.length)
+  .fill(0)
+  .map(() => new Array(xLabels.length).fill(0).map(() => Math.floor(Math.random() * 100)));
 
 class App extends Component {
   constructor(props) {
@@ -27,13 +34,50 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
+        <div id="NW" className="quarter">
+          <HeatMap
+              xLabels={xLabels}
+              yLabels={yLabels}
+              data={data}
+              height={4.5}
+              xLabelWidth={1}
+              background={"red"}
+            />
+        </div>
+
+        <div id="NE" className="quarter">
+          <HeatMap
+              xLabels={xLabels}
+              yLabels={yLabels}
+              data={data}
+              height={4.5}
+              xLabelWidth={1}
+              background={"blue"}
+            />
+        </div>
+
+        <div id="SW" className="quarter">
+          <HeatMap
+              xLabels={xLabels}
+              yLabels={yLabels}
+              data={data}
+              height={4.5}
+              xLabelWidth={1}
+              background={"green"}
+            />
+        </div>
+
+        <div id="SE" className="quarter">
+          <HeatMap
+              xLabels={xLabels}
+              yLabels={yLabels}
+              data={data}
+              height={4.5}
+              xLabelWidth={1}
+              background={"yellow"}
+            />
+        </div>
+
       </div>
     );
   }

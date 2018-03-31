@@ -1,5 +1,13 @@
+html, body { height:100%; margin:0; padding:0 }
+
 .App {
   text-align: center;
+}
+
+.quarter {
+  position:fixed;
+  width:50%;
+  height:50%
 }
 
 .App-logo {
@@ -21,6 +29,11 @@
 .App-intro {
   font-size: large;
 }
+
+#NW { top:0;   left:0;   margin: 5; padding:5;}
+#NE { top:0;   left:50%;  margin: 5; padding:5;   }
+#SW { top:50%; left:0;    margin: 5; padding:5;  }
+#SE { top:50%; left:50%;  margin: 5; padding:5;    }
 
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }
