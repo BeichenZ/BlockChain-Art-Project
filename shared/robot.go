@@ -732,15 +732,17 @@ func (r *RobotStruct) SendMapToLocalServer() {
 		// Encode Map info
 		buf := new(bytes.Buffer)
 		encoder := gob.NewEncoder(buf)
-		err := encoder.Encode(r.RMap)
+		err := encoder.Encode(RandomMapGenerator())
 		if err != nil {
-			panic(err)
+			continue
 		}
+		fmt.Println("Encoded map")
 		// output := string(buf.Bytes())
 		// Send it to local Server using TCP
 		conn, err := net.Dial("tcp", ":8888")
 		if err != nil {
 			fmt.Println(err)
+			continue
 		} else {
 			conn.Write(buf.Bytes())
 			fmt.Println("----------------------------------------------")
