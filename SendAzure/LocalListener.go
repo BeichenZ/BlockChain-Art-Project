@@ -2,35 +2,10 @@ package main
 
 import (
 	"os/exec"
-
-	"../shared"
-
-	"bytes"
-	"encoding/gob"
 	"fmt"
 	"net"
 	"os"
 )
-
-type MapRPC struct {
-	latestMergedMap shared.Map
-}
-
-func DecodeMap(sentMap []byte) shared.Map {
-
-	//robotLogContent, _ := ioutil.ReadFile("./" + r.Logname)
-	buf := bytes.NewBuffer(sentMap)
-
-	var decodedMap shared.Map
-
-	decoder := gob.NewDecoder(buf)
-	err := decoder.Decode(&decodedMap)
-	if err != nil {
-		panic(err)
-	}
-
-	return decodedMap
-}
 
 func handleRequest(conn net.Conn) {
 
