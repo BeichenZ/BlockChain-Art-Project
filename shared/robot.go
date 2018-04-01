@@ -762,7 +762,7 @@ func CheckNeighbourExistsByIPd(r *RobotStruct, rn string) bool  {
 		//fmt.Println()
 
 		if val.Addr == rn {
-			//fmt.Printf("\nI have neighbour[%s] already\n", val.Addr)
+			fmt.Printf("\nI have neighbour[%s] already\n", val.Addr)
 			return true
 		}
 	}
