@@ -120,12 +120,15 @@ func scanForNeighbours(ips []string, ipv4Addr net.IP, timeout time.Duration, rob
 			if err == nil {
 				//log.Println("Able to locate neighbour")
 				// Start registeration protocol
+				// TODO -- maybe potential bug - hardcoded stuff
 				robot.PossibleNeighbours.Add(ip + ":8080")
+				//robot.PossibleNeighbours.Add(ip + Port)
 				// robot.PossibleNeighbours = append(robot.PossibleNeighbours, ip+":5000")
 				//fmt.Println(robot.PossibleNeighbours)
 				neighbourIPAddr := ""
 				client, err := rpc.Dial("tcp", ip+":5000")
 				if err != nil {
+					continue
 					fmt.Println(err)
 				}
 				error := client.Call("RobotRPC.RegisterNeighbour", ipv4Addr.String()+Port, &neighbourIPAddr)
