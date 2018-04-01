@@ -755,14 +755,14 @@ func CheckNeighbourExists(r *RobotStruct, rn Neighbour) bool  {
 func CheckNeighbourExistsByIPd(r *RobotStruct, rn string) bool  {
 	for _, val :=range r.RobotNeighbours {
 
-		fmt.Println()
-		fmt.Println("Comparing neighbour with existing neighbour")
-		fmt.Println(val.Addr)
-		fmt.Println(rn)
-		fmt.Println()
+		//fmt.Println()
+		//fmt.Println("Comparing neighbour with existing neighbour")
+		//fmt.Println(val.Addr)
+		//fmt.Println(rn)
+		//fmt.Println()
 
 		if val.Addr == rn {
-			fmt.Printf("\nI have neighbour[%s] already\n", val.Addr)
+			//fmt.Printf("\nI have neighbour[%s] already\n", val.Addr)
 			return true
 		}
 	}
