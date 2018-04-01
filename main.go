@@ -138,6 +138,7 @@ func scanForNeighbours(ips []string, ipv4Addr net.IP, timeout time.Duration, rob
 					fmt.Println(error.Error())
 				}else{
 					robot.PossibleNeighbours.Add(neighbourIPAddr)
+					client.Close()
 				}
 			}
 		}
