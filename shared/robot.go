@@ -393,7 +393,7 @@ func (r *RobotStruct) Explore() error {
 
 			r.WaitForEnoughTaskFromNeighbours()
 			//// Choose task based with the lowest ID including its own
-			fmt.Println("The task I chose for myself ", tasks[0])
+			fmt.Println("Done waiting for tasks from my neighbours")
 			taskToDo := r.PickTaskWithLowestID(tasks[0])
 			//// r.CurrTask = taskToDo
 			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
@@ -623,14 +623,12 @@ func (r *RobotStruct) UpdateCurLocation() {
 }
 
 func (robot *RobotStruct) CheckAliveNeighbour(){
-	robot.RobotNeighbours.Lock()
 	for idx, val := range robot.RobotNeighbours.rNeighbour{
 		_, err := rpc.Dial("tcp", val.Addr)
 		if err != nil{
 			delete(robot.RobotNeighbours.rNeighbour, idx)
 		}
 	}
-	robot.RobotNeighbours.Unlock()
 }
 
 func (r *RobotStruct) WaitForEnoughTaskFromNeighbours() {
@@ -661,6 +659,7 @@ WaitingForEnoughTaskResponse:
 		//fmt.Println("received Task", len(r.ReceivedTasks))
 		//fmt.Println("length neighbour", len(r.RobotNeighbours))
 		fmt.Println("# task receive RESPONSE ",len(r.ReceivedTasksResponse), " num neighbour ", len(r.RobotNeighbours.rNeighbour))
+		r.CheckAliveNeighbour()
 		if len(r.ReceivedTasksResponse) >= len(r.RobotNeighbours.rNeighbour) {
 			fmt.Println("waiting for my neighbours to send me tasks")
 			// choose task
