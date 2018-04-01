@@ -622,12 +622,27 @@ func (r *RobotStruct) UpdateCurLocation() {
 	r.CurLocation.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
 }
 
+func (robot *RobotStruct) CheckAliveNeighbour(){
+	robot.RobotNeighbours.Lock()
+	for idx, val := range robot.RobotNeighbours.rNeighbour{
+		_, err := rpc.Dial("tcp", val.Addr)
+		if err != nil{
+			delete(robot.RobotNeighbours.rNeighbour, idx)
+		}
+	}
+	robot.RobotNeighbours.Unlock()
+}
+
 func (r *RobotStruct) WaitForEnoughTaskFromNeighbours() {
 	r.RobotNeighbours.Lock()
 WaitingForEnoughTask:
 	for {
 		fmt.Println("received Task", len(r.ReceivedTasks))
 		fmt.Println("length neighbour", len(r.RobotNeighbours.rNeighbour))
+		// Check how many neighbours are alive
+
+		r.CheckAliveNeighbour()
+
 		if len(r.ReceivedTasks) == len(r.RobotNeighbours.rNeighbour) {
 			fmt.Println("waiting for my neighbours to send me tasks")
 			// choose task
@@ -680,7 +695,7 @@ func (r *RobotStruct) PickTaskWithLowestID(taskFromMe PointStruct) TaskPayload {
 	return taskToDo
 }
 
-func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
+func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) int {
 	//fmt.Printf( "The length of LDPN is  %v \n", len(ldp))
 	ldpn := ldp
 	rand.Seed(time.Now().UnixNano())
@@ -732,7 +747,11 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 			fmt.Println("2 TaskAllocationToNeighbours() ",err)
 		}
 	}
+
+	tempRobotLen := len(r.RobotNeighbours.rNeighbour)
 	r.RobotNeighbours.Unlock()
+
+	return tempRobotLen
 }
 // FN: payload to ask neighbour if I and my current hommies are within this new neighbours radius
 func createFarNeighbourPayload(r RobotStruct, finalsend []byte) FarNeighbourPayload{
