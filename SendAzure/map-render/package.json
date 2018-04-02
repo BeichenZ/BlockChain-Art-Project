@@ -1,0 +1,28 @@
+{
+  "name": "map-render",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "react-scripts": "1.1.1"
+  },
+  "dependencies": {
+    "@vx/group": "0.0.153",
+    "@vx/heatmap": "0.0.153",
+    "@vx/mock-data": "0.0.153",
+    "@vx/scale": "0.0.153",
+    "@vx/shape": "0.0.158",
+    "prop-types": "^15.6.1",
+    "react": "^16.3.0",
+    "react-component-grid": "^0.2.2",
+    "react-dom": "^16.3.0",
+    "react-heatmap-grid": "^0.2.0",
+    "react-matrix": "0.0.6",
+    "react-matrix-viz": "^0.2.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
