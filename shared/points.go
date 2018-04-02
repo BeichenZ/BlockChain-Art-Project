@@ -31,8 +31,8 @@ var SOUTH = PointStruct{Coordinate{0.0, -1.0}, false, 0, false}
 
 // ----------------------------------------- FUNCTIONS ---------------------------------------------------------- //
 // FN: Finds magnitiude of the distance btwn two points
-func DistBtwnTwoPoints(dp PointStruct, cp PointStruct) float64 {
-	d := math.Sqrt(math.Pow(dp.Point.X-cp.Point.X, 2) + math.Pow(dp.Point.Y-cp.Point.Y, 2))
+func DistBtwnTwoPoints(dp Coordinate, cp Coordinate) float64 {
+	d := Round(math.Sqrt(math.Pow(dp.X-cp.X, 2) + math.Pow(dp.Y-cp.Y, 2)))
 	return d
 }
 
@@ -66,22 +66,29 @@ func removeElFromlist(p PointStruct, listp *[]PointStruct) {
 	}
 }
 //FN: Return list of destNum destination points EXRADIUS away from the given center
-func FindDestPoints(desNum int, center PointStruct) []PointStruct {
+
+// desNumForRobots: Neighbours including yourself
+// center
+func FindDestPoints(desNumForRobots int, center Coordinate) []PointStruct {
 
 	destPointsToReturn := []PointStruct{}
 
-	for i := 0; i < desNum; i++ {
-		theta := float64(i) * 2 * math.Pi / float64(desNum)
-		delPoint := PointStruct{Point: Coordinate{float64(EXRADIUS * math.Cos(theta)), float64(EXRADIUS * math.Sin(theta))}}
+	for i := 0; i < desNumForRobots; i++ {
+		theta := float64(i) * 2 * math.Pi / float64(desNumForRobots)
+		delPoint := Coordinate{Round(float64(EXRADIUS * Round(math.Cos(theta)))), Round(float64(EXRADIUS * Round(math.Sin(theta))))}
 		destPoint := PointStruct{}
-		destPoint.Point.X = center.Point.X + delPoint.Point.X
-		destPoint.Point.Y = center.Point.Y + delPoint.Point.Y
+		destPoint.Point.X = center.X + delPoint.X
+		destPoint.Point.Y = center.Y + delPoint.Y
 		destPointsToReturn = append(destPointsToReturn, destPoint)
 	}
 
 	return destPointsToReturn
 }
-// TODO
-func CompareCoordinateTimeStamp(t1 int, t2 int ) bool {
-	return false;
+// FN: checks if the first timestamp is greater than the second
+// 		returns an error if timestamp is equal
+//		Cause : raspberry pi clock error, code
+// TODO: how to handle this error
+func CompareCoordinateTimeStamp(t1 int, t2 int ) (bool, error) {
+	if t1 == t2 {return false, SameTimeStampError("CompareCoordinateTimeStamp() ")}
+	return t1 > t2, nil
 }
