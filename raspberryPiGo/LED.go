@@ -1,5 +1,5 @@
 //package RPiGPIO
-package main
+package RPiGPIO
 
 import (
 	bgpio "./gpio"

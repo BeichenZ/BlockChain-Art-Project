@@ -1,4 +1,5 @@
-package main //package RPiGPIO
+//package main
+package RPiGPIO
 
 import (
 	bgpio "./gpio"
@@ -28,7 +29,6 @@ func main() {
 	MonitorButtonAtPin(LeftObstacleButton,recChannel)	
 	temp := <- recChannel
 	fmt.Printf("Button is pressed with Enum: %d\n",temp)
-	
 }
 
 
