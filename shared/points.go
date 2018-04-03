@@ -69,7 +69,7 @@ func removeElFromlist(p PointStruct, listp *[]PointStruct) {
 
 // desNumForRobots: Neighbours including yourself
 // center
-func FindDestPoints(desNumForRobots int, center Coordinate) []PointStruct {
+func FindDestPoints(desNumForRobots int, center Coordinate, curPoint Coordinate) []PointStruct {
 
 	destPointsToReturn := []PointStruct{}
 
@@ -77,8 +77,8 @@ func FindDestPoints(desNumForRobots int, center Coordinate) []PointStruct {
 		theta := float64(i) * 2 * math.Pi / float64(desNumForRobots)
 		delPoint := Coordinate{Round(float64(EXRADIUS * Round(math.Cos(theta)))), Round(float64(EXRADIUS * Round(math.Sin(theta))))}
 		destPoint := PointStruct{}
-		destPoint.Point.X = center.X + delPoint.X
-		destPoint.Point.Y = center.Y + delPoint.Y
+		destPoint.Point.X = center.X + delPoint.X + curPoint.X
+		destPoint.Point.Y = center.Y + delPoint.Y + curPoint.Y
 		destPointsToReturn = append(destPointsToReturn, destPoint)
 	}
 

@@ -37,6 +37,7 @@ const YMAX = "ymax"
 const EXRADIUS = 6
 const TIMETOJOINSECONDUNIT = 10
 const TIMETOJOIN = TIMETOJOINSECONDUNIT * time.Second
+var DEFAULTPATH = []PointStruct{SOUTH, SOUTH, SOUTH, WEST, WEST, WEST, NORTH, NORTH, NORTH, EAST, EAST, EAST, EAST}
 
 type JoiningInfo struct {
 	joiningTime      time.Time
@@ -144,7 +145,7 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 	//fmt.Println(DestNum)
 	//fmt.Println(r.RobotNeighbours)
 
-	DestPoints := FindDestPoints(DestNum, center)
+	DestPoints := FindDestPoints(DestNum, center, r.CurLocation)
 
 	// move DestpointForMe to beginning of list
 	DestPointForMe := r.FindClosestDest(DestPoints)
@@ -236,7 +237,7 @@ func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
 func (r *RobotStruct) RespondToButtons() error {
 	// This function listen to GPIO
 	for {
-		fmt.Println(" Press j to send JoinSig \n Press b to send BusySig \n Press w to send WaitSig \n Press s to send WalkSig \n Press o to send WallSig")
+		fmt.Println(" Press j to send JoinSig \n Press b to send BusySig \n Press w to send WaitSig \n Press f to send WalkSig \n Press u to send WallSig \n Press c to send RightWallSig \n Press k to send LeftWallSig")
 		buf := bufio.NewReader(os.Stdin)
 		signal, err := buf.ReadByte()
 		if err != nil {
@@ -257,10 +258,14 @@ func (r *RobotStruct) RespondToButtons() error {
 			r.BusySig <- true
 		} else if command == "w" {
 			r.WaitingSig <- true
-		} else if command == "s" {
+		} else if command == "f" {
 			r.FreeSpaceSig <- true
-		} else if command == "o" {
+		} else if command == "u" {
 			r.WallSig <- true
+		} else if command == "c" {
+			r.RightWallSig <- true
+		} else if command == "k" {
+			r.LeftWallSig <- true
 		}
 	}
 }
@@ -270,6 +275,7 @@ func (r *RobotStruct) Explore() error {
 	for {
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
+			fmt.Println("The new is ", dpts[0].Point)
 			if err != nil {
 				fmt.Println("error generating task")
 			}
@@ -287,6 +293,7 @@ func (r *RobotStruct) Explore() error {
 			}
 			*/
 			r.CurPath = newPath
+			fmt.Println("Explore() current path ", r.CurPath)
 			// DISPLAY task with GPIO
 		}
 
@@ -295,25 +302,28 @@ func (r *RobotStruct) Explore() error {
 		select {
 		case <-r.FreeSpaceSig:
 			fmt.Println("FreeSpaceSig received")
-			// r.UpdateMap(FreeSpace)
-			// r.UpdateCurLocation()
-			// r.UpdatePath()
+			 r.UpdateMap(FreeSpace)
+			 fmt.Println("My current task: ", r.CurrTask)
+			 fmt.Println("Cur location before: ", r.CurLocation)
+			fmt.Println("Cur path before: ", r.CurPath)
+			 r.UpdateCurLocation()
+			fmt.Println("Cur location after: ", r.CurLocation)
+			r.UpdatePath()
+			fmt.Println("Cur path after: ", r.CurPath)
 			// update LCD
-			// r.SetCurrentLocation()
-			// r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
 
 			// Display task with GPIO
 		case <-r.WallSig:
 			fmt.Println("front wall sig received")
-			// r.UpdateMap(Wall)
-			// r.ModifyPathForWall()
+			 r.UpdateMap(Wall)
+			 r.ModifyPathForWall()
 			// Display task with GPIO
 		case <-r.RightWallSig:
 			fmt.Println("right wall sig received")
-			// r.UpdateMap(RightWall)
+			 r.UpdateMap(RightWall)
 		case <-r.LeftWallSig:
 			fmt.Println("left wall sig received")
-			// r.UpdateMap(LeftWall)
+			 r.UpdateMap(LeftWall)
 		case <-r.BusySig: // TODO whole thing
 			fmt.Println("3 Explore() busy sig received. Robot ID %+v Robot state: %+v", r.RobotID, r.State)
 
@@ -445,18 +455,21 @@ func (r *RobotStruct) ModifyPathForWall() {
 
 	wallCoor := r.CurPath.ListOfPCoordinates[0]
 	tempList := r.CurPath.ListOfPCoordinates
+	i:=0
 	//tempList := make([]Coordinate, 0)
-	for i, c := range tempList {
+	for j, c := range tempList {
+		i =j;
 		if wallCoor == c {
 			continue
 		}
-		r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[i:]
 		break
 	}
-}
-
-func (r *RobotStruct) TookOneStep() {
-	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
+	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[i+1:]
+	if (len(r.CurPath.ListOfPCoordinates) == 0 ) {
+		r.CurPath.ListOfPCoordinates = DEFAULTPATH
+		fmt.Println("changed path to default path")
+		r.ModifyPathForWall()
+	}
 }
 
 // FN: Removes the just traversed coordinate (first element in the Path list)
@@ -525,7 +538,10 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 		oldcoor.TraversedTime = justExploredPoint.TraversedTime
 		oldcoor.Traversed = justExploredPoint.Traversed
 		oldcoor.PointKind = justExploredPoint.PointKind
+	} else {
+		r.RMap.ExploredPath[justExploredPoint.Point] = justExploredPoint;
 	}
+
 
 	return nil
 }
@@ -633,11 +649,6 @@ func (r *RobotStruct) MergeMaps() {
 
 func (r *RobotStruct) GetMap() Map {
 	return r.RMap
-}
-
-// TODO comment: we dont need this
-func (r *RobotStruct) SetCurrentLocation() {
-	r.CurLocation = r.CurPath.ListOfPCoordinates[0].Point
 }
 
 // TODO comment: update this when path type is updated
@@ -1018,10 +1029,10 @@ func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string, lo
 	}
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 
-	tempEXploredMap := make(map[Coordinate]PointStruct)
-	tempLocation := Coordinate{float64(newRobot.RobotID) + 10.0, float64(newRobot.RobotID) + 10.0}
-	tempEXploredMap[tempLocation] = PointStruct{Point: tempLocation}
-	newRobot.RMap = Map{tempEXploredMap, 0}
+	//tempEXploredMap := make(map[Coordinate]PointStruct)
+	//tempLocation := Coordinate{float64(newRobot.RobotID) + 10.0, float64(newRobot.RobotID) + 10.0}
+	//tempEXploredMap[tempLocation] = PointStruct{Point: tempLocation}
+	//newRobot.RMap = Map{tempEXploredMap, 0}
 
 	return &newRobot
 }

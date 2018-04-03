@@ -6,15 +6,23 @@ import (
 
 const NUMOFPATHTOGENERATE = 10
 
+//func Round(n float64) float64 {
+//	i := int(n*1000)
+//	if (n*100000 - float64(i)) >= 0.5 {
+//		return math.Ceil(float64(i))/100000
+//	} else {
+//		return math.Floor(float64(i))/100000
+//	}
+//}
+
 func Round(n float64) float64 {
-	i := int(n*100000)
-	if (n*100000 - float64(i)) >= 0.5 {
-		return math.Ceil(float64(i))/100000
+	i := int(n)
+	if (n - float64(i)) >= 0.5 {
+		return math.Ceil(float64(i))
 	} else {
-		return math.Floor(float64(i))/100000
+		return math.Floor(float64(i))
 	}
 }
-
 
 // xMin=yMin=0, xMax=yMax=9
 func RandomMapGenerator() Map{

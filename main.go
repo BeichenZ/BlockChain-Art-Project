@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	bgpio "./gpio"
+	//bgpio "./gpio"
 	"./shared"
 	"github.com/DistributedClocks/GoVector/govec"
 )
@@ -103,15 +103,15 @@ func main() {
 	timeout := time.Duration(100 * time.Millisecond)
 	go scanForNeighbours(ips[:5], ipv4Addr, timeout, robot, Port)
 	go robot.CallNeighbours()
-	leftObstacleButtonPin := bgpio.NewInput(LeftObstacleButton_Pin)
-	rightObstacleButtonPin := bgpio.NewInput(RightObstacleButton_Pin)
-	frontEmptyButtonPin := bgpio.NewInput(FrontEmptyButton_Pin)
-	frontObstacleButtonPin := bgpio.NewInput(FrontObstacleButton_Pin)
-
-	go robot.MonitorButtonsOnPins(leftObstacleButtonPin)
-	go robot.MonitorRightButtonOnPin(rightObstacleButtonPin)
-	go robot.MonitorFrontButtonOnPin(frontEmptyButtonPin)
-	go robot.MonitorFrontObsButtonOnPin(frontObstacleButtonPin)
+	//leftObstacleButtonPin := bgpio.NewInput(LeftObstacleButton_Pin)
+	//rightObstacleButtonPin := bgpio.NewInput(RightObstacleButton_Pin)
+	//frontEmptyButtonPin := bgpio.NewInput(FrontEmptyButton_Pin)
+	//frontObstacleButtonPin := bgpio.NewInput(FrontObstacleButton_Pin)
+	//
+	//go robot.MonitorButtonsOnPins(leftObstacleButtonPin)
+	//go robot.MonitorRightButtonOnPin(rightObstacleButtonPin)
+	//go robot.MonitorFrontButtonOnPin(frontEmptyButtonPin)
+	//go robot.MonitorFrontObsButtonOnPin(frontObstacleButtonPin)
 
 	// robot.MonitorButtons()
 	//go robot.SendMapToLocalServer()
@@ -123,7 +123,7 @@ func main() {
 
 	// asynchronously check for other robots
 	// if a robot is nearby, get IP address and make RPC call
-	//go robot.RespondToButtons()
+	go robot.RespondToButtons()
 	robot.Explore()
 
 }
