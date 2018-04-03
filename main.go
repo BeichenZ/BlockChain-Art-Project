@@ -10,8 +10,16 @@ import (
 	"strconv"
 	"time"
 
+	bgpio "./gpio"
 	"./shared"
 	"github.com/DistributedClocks/GoVector/govec"
+)
+
+const (
+	FrontObstacleButton_Pin uint = 5
+	FrontEmptyButton_Pin    uint = 6
+	LeftObstacleButton_Pin  uint = 13
+	RightObstacleButton_Pin uint = 19
 )
 
 // TODO: Include golang GPIO
@@ -95,6 +103,17 @@ func main() {
 	timeout := time.Duration(100 * time.Millisecond)
 	go scanForNeighbours(ips[:5], ipv4Addr, timeout, robot, Port)
 	go robot.CallNeighbours()
+	leftObstacleButtonPin := bgpio.NewInput(LeftObstacleButton_Pin)
+	rightObstacleButtonPin := bgpio.NewInput(RightObstacleButton_Pin)
+	frontEmptyButtonPin := bgpio.NewInput(FrontEmptyButton_Pin)
+	frontObstacleButtonPin := bgpio.NewInput(FrontObstacleButton_Pin)
+
+	go robot.MonitorButtonsOnPins(leftObstacleButtonPin)
+	go robot.MonitorRightButtonOnPin(rightObstacleButtonPin)
+	go robot.MonitorFrontButtonOnPin(frontEmptyButtonPin)
+	go robot.MonitorFrontObsButtonOnPin(frontObstacleButtonPin)
+
+	// robot.MonitorButtons()
 	//go robot.SendMapToLocalServer()
 	// for {
 	// 	// wait for user input
