@@ -95,7 +95,7 @@ func main() {
 	timeout := time.Duration(100 * time.Millisecond)
 	go scanForNeighbours(ips[:5], ipv4Addr, timeout, robot, Port)
 	go robot.CallNeighbours()
-	go robot.SendMapToLocalServer()
+	//go robot.SendMapToLocalServer()
 	// for {
 	// 	// wait for user input
 	// 	// if button is pressed, break out of the loop

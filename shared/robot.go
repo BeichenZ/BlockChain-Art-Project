@@ -128,9 +128,10 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 	center := Coordinate{Round(float64((xmax - xmin) / 2)), Round(float64((ymax - ymin) / 2))}
 	center.X = Round(center.X)
 	center.Y = Round(center.Y)
-	r.RobotNeighbours.Lock()
+	//r.RobotNeighbours.Lock()
+	r.RemoveDeadNeighbours()
 	DestNum := len(r.RobotNeighbours.rNeighbour) + 1
-	r.RobotNeighbours.Unlock()
+	//r.RobotNeighbours.Unlock()
 	//fmt.Println("DESTNum is ")
 	//fmt.Println(DestNum)
 	//fmt.Println(r.RobotNeighbours)
@@ -257,7 +258,7 @@ func (r *RobotStruct) RespondToButtons() error {
 }
 
 func (r *RobotStruct) Explore() error {
-	fmt.Printf("Explore() start of explore. Robot ID %+v Robot state: %+v", r.RobotID,r.State)
+	fmt.Printf("1 Explore() start of explore. Robot ID %+v Robot state: %+v", r.RobotID,r.State)
 	for {
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
@@ -281,7 +282,7 @@ func (r *RobotStruct) Explore() error {
 			// DISPLAY task with GPIO
 		}
 
-		fmt.Println("Explore() \nWaiting for signal to proceed.....")
+		fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
 
 		select {
 		case <-r.FreeSpaceSig:
@@ -302,7 +303,7 @@ func (r *RobotStruct) Explore() error {
 		case <-r.LeftWallSig:
 			r.UpdateMap(LeftWall)
 		case <-r.BusySig: // TODO whole thing
-			fmt.Println("Explore() busy sig received. Robot ID %+v Robot state: %+v", r.RobotID,r.State)
+			fmt.Println("3 Explore() busy sig received. Robot ID %+v Robot state: %+v", r.RobotID,r.State)
 
 			//listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
 
@@ -314,21 +315,22 @@ func (r *RobotStruct) Explore() error {
 				neighbourMap := Map{}
 				client, err := rpc.Dial("tcp", nei.Addr)
 				if err != nil {
-					fmt.Println("1 Explore() ",err)
+					fmt.Println("4 Explore() ",err)
 					delete(r.RobotNeighbours.rNeighbour, k)
 					continue
 				}
 				// This robot recevies maps from its neighbour
 				err = client.Call("RobotRPC.ReceiveMap", false, &neighbourMap)
-				fmt.Printf("Receive map from %s \n", nei.Addr)
-				fmt.Println(neighbourMap)
-				client.Close()
-				//Logging
-
 				if err != nil {
-					fmt.Println("2 Explore() ",err)
+					fmt.Println("5 Explore() RIP neighbour - Going to delete this")
+					delete(r.RobotNeighbours.rNeighbour, k)
+					client.Close()
 					continue
 				}
+				client.Close()
+				fmt.Printf("Receive map from %s \n", nei.Addr)
+				fmt.Println(neighbourMap)
+
 				nei.NMap = neighbourMap
 				//listOfNeighbourMaps = append(listOfNeighbourMaps, neighbourMap)
 			}
@@ -539,7 +541,11 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 				SendlogMessage: finalsend,
 			}
 			fmt.Printf("RespondToNeighoursAboutTask() Will do NeighbourID [ %+v ] task \n", neighbour.NID)
-			client.Call("RobotRPC.ReceiveTaskDecsionResponse", taskResponsePayloadYes, &responsePayload)
+			err = client.Call("RobotRPC.ReceiveTaskDecsionResponse", taskResponsePayloadYes, &responsePayload)
+			if err != nil {
+				fmt.Println("2 RespondToNeighoursAboutTask() RIP neighbour - Going to delete this")
+				delete(r.RobotNeighbours.rNeighbour,ids)
+				}
 		} else {
 			messagepayload := 1
 			finalsend := r.Logger.PrepareSend("Sending Message - "+"Denying task from my neighbour:"+neighbour.Addr, messagepayload)
@@ -551,7 +557,11 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 			}
 			fmt.Printf("RespondToNeighoursAboutTask() Will not do NeighbourID [ %+v ] task \n", neighbour.NID)
 
-			client.Call("RobotRPC.ReceiveTaskDecsionResponse", taskResponsePayloadNo, &responsePayload)
+			err = client.Call("RobotRPC.ReceiveTaskDecsionResponse", taskResponsePayloadNo, &responsePayload)
+			if err != nil {
+				fmt.Println("3 RespondToNeighoursAboutTask() RIP neighbour - Going to delete this")
+				delete(r.RobotNeighbours.rNeighbour,ids)
+			}
 		}
 		client.Close()
 	}
@@ -642,7 +652,7 @@ WaitingForEnoughTask:
 		fmt.Println("length neighbour", len(r.RobotNeighbours.rNeighbour))
 		// Check how many neighbours are alive
 
-		r.CheckAliveNeighbour()
+		r.CheckAliveNeighbour() // TODO change to our new fn
 
 		if len(r.ReceivedTasks) == len(r.RobotNeighbours.rNeighbour) {
 			fmt.Println("waiting for my neighbours to send me tasks")
@@ -697,7 +707,7 @@ func (r *RobotStruct) PickTaskWithLowestID(taskFromMe PointStruct) TaskPayload {
 	return taskToDo
 }
 
-func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) int {
+func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 	//fmt.Printf( "The length of LDPN is  %v \n", len(ldp))
 	ldpn := ldp
 	rand.Seed(time.Now().UnixNano())
@@ -747,13 +757,18 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) int {
 		fmt.Println("Why are you hanging????????????")
 		if err != nil {
 			fmt.Println("2 TaskAllocationToNeighbours() ",err)
+			delete(r.RobotNeighbours.rNeighbour, idx)
 		}
+
+		neighbourClient.Close()
 	}
 
-	tempRobotLen := len(r.RobotNeighbours.rNeighbour)
+
+
+
 	r.RobotNeighbours.Unlock()
 
-	return tempRobotLen
+	return
 }
 // FN: payload to ask neighbour if I and my current hommies are within this new neighbours radius
 func createFarNeighbourPayload(r RobotStruct, finalsend []byte) FarNeighbourPayload{
@@ -901,6 +916,8 @@ func (r *RobotStruct) CallNeighbours() {
 					r.State.Unlock()
 
 					StartClock(responsePayload.NeighbourState, r, responsePayload.RemainingTime)
+				}else{
+					client.Close()
 				}
 
 			}
@@ -1125,4 +1142,32 @@ func (r *RobotStruct) SendMapToLocalServer() {
 		}
 		time.Sleep(5000 * time.Millisecond)
 	}
+}
+
+// FN: Removes the dead nieghbours from this robots list
+func (r *RobotStruct) RemoveDeadNeighbours()  {
+	r.RobotNeighbours.Lock()
+	maxCallTime := 1 // for network issue problem check later
+	var err error
+	for i, nei :=range r.RobotNeighbours.rNeighbour {
+		for i:=0; i<maxCallTime; i++ {
+			client, error := rpc.Dial("tcp", nei.Addr)
+			err = error
+			if err == nil {
+				break
+			}
+			client.Close()
+
+		}
+		if err != nil {
+			delete(r.RobotNeighbours.rNeighbour,i)
+			err = nil
+		}
+
+
+	}
+	r.RobotNeighbours.Unlock()
+
+
+
 }
