@@ -224,7 +224,7 @@ func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
 
 	return rdp
 }
-
+// FN: Depending on which button is pressed, set the according signal only if it is in the ROAM state
 func (r *RobotStruct) RespondToButtons() error {
 	// This function listen to GPIO
 	for {
@@ -235,7 +235,7 @@ func (r *RobotStruct) RespondToButtons() error {
 			fmt.Println(err)
 		}
 		command := string(signal)
-
+		//TODO:Check for current state before sending signals. No signals should be sent during busy state
 		if command == "j" {
 
 			r.JoiningSig <- Neighbour{
@@ -290,6 +290,7 @@ func (r *RobotStruct) Explore() error {
 			r.UpdateMap(FreeSpace)
 			r.UpdateCurLocation()
 			r.UpdatePath()
+			// update LCD
 			// r.SetCurrentLocation()
 			// r.TookOneStep() //remove the first element from r.CurPath.ListOfPCoordinates
 
