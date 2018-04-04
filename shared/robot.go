@@ -902,8 +902,8 @@ func (r *RobotStruct) CallNeighbours() {
 
 				responsePayload := ResponseForNeighbourPayload{}
 
-				// messagepayload := 1
-				// finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
+				messagepayload := 1
+				finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
 				farNeighbourPayload := createFarNeighbourPayload(*r, finalsend)
 				// This robot is calling its (potential) neighbour to see if its within the communication radius of itself and its current neighbours
 				fmt.Println("CallNeighbours() my ID and state ", r.RobotID, " ", r.State.rState)
