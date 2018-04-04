@@ -147,7 +147,7 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 	//fmt.Println(DestNum)
 	//fmt.Println(r.RobotNeighbours)
 
-	DestPoints := FindDestPoints(DestNum, center, r.CurLocation)
+	DestPoints := FindDestPoints(DestNum, center)
 
 	// move DestpointForMe to beginning of list
 	DestPointForMe := r.FindClosestDest(DestPoints)
@@ -273,11 +273,11 @@ func (r *RobotStruct) RespondToButtons() error {
 }
 
 func (r *RobotStruct) Explore() error {
-	fmt.Printf("1 Explore() start of explore. Robot ID %+v Robot state: %+v", r.RobotID, r.State)
+	fmt.Printf("1 Explore() start of explore. Robot ID %+v\n", r.RobotID)
 	for {
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
-			fmt.Println("The new is ", dpts[0].Point)
+			fmt.Println("The new destination point ", dpts[0].Point)
 			if err != nil {
 				fmt.Println("error generating task")
 			}
