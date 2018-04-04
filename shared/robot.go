@@ -277,7 +277,10 @@ func (r *RobotStruct) Explore() error {
 	for {
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
-			fmt.Println("The new destination point ", dpts[0].Point)
+			fmt.Println("The new destination point fresh from TaskCreation() ", dpts[0].Point)
+			dpts[0].Point.X = dpts[0].Point.X + r.CurLocation.X
+			dpts[0].Point.Y = dpts[0].Point.Y + r.CurLocation.Y
+			fmt.Println("The new destination point following offset addition", dpts[0].Point)
 			if err != nil {
 				fmt.Println("error generating task")
 			}
@@ -406,7 +409,7 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println()
 
 			//// Allocate tasks to current robot network
-			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
+			//r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
 			//// r.CurrTask = tasks[0]
 			//fmt.Println("tasks length is")
 			//fmt.Println(len(tasks))
@@ -430,32 +433,27 @@ func (r *RobotStruct) Explore() error {
 			//// Choose task based with the lowest ID including its own
 			fmt.Println("Done waiting for tasks from my neighbours")
 			taskToDo := r.PickTaskWithLowestID(tasks[0])
-			//// r.CurrTask = taskToDo
+			taskToDo.DestPoint.Point.X = taskToDo.DestPoint.Point.X + r.CurLocation.X
+			taskToDo.DestPoint.Point.Y = taskToDo.DestPoint.Point.Y + r.CurLocation.Y
 			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
+			r.CurrTask = taskToDo
 			fmt.Println("The task I am going to dooooo ----> Sending ID", taskToDo.SenderID, "=>", taskToDo.DestPoint)
 			fmt.Println()
 
-			//
 			//// Respond to each task given by my fellow robots
 			r.RespondToNeighoursAboutTask(taskToDo)
 
-			// TODO wait for neighbours response
+			// Wait for neighbours response
 			fmt.Println("Done responding to task, going to wait for my neighbour to respond to my task")
 			r.WaitForNeighbourTaskResponse()
 			fmt.Println("Done getting response from all neighbour")
-			// set busysig off
-			// procede with new task
+
 
 			fmt.Println("CALLING UPDATE UpdateStateForNewJourney")
 			r.UpdateStateForNewJourney()
 			//fmt.Println("I am going to sleep now")
 			//time.Sleep(10*time.Minute)
-		case <-r.WaitingSig: // TODO
-			// keep pinging the neighbour that is within it's communication radius
-			// if neighbour in busy state
-			// YES -> keep pinging
-			// NO -> - turn WaitingSig off
-			//		 - turn JoingingSig on
+
 		}
 	}
 }
