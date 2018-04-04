@@ -2,6 +2,7 @@ package shared
 
 import (
 	"bufio"
+	"strconv"
 	//"bytes"
 	//"encoding/gob"
 	"fmt"
@@ -37,6 +38,7 @@ const YMAX = "ymax"
 const EXRADIUS = 6
 const TIMETOJOINSECONDUNIT = 10
 const TIMETOJOIN = TIMETOJOINSECONDUNIT * time.Second
+
 var DEFAULTPATH = []PointStruct{SOUTH, SOUTH, SOUTH, WEST, WEST, WEST, NORTH, NORTH, NORTH, EAST, EAST, EAST, EAST}
 
 type JoiningInfo struct {
@@ -302,11 +304,11 @@ func (r *RobotStruct) Explore() error {
 		select {
 		case <-r.FreeSpaceSig:
 			fmt.Println("FreeSpaceSig received")
-			 r.UpdateMap(FreeSpace)
-			 fmt.Println("My current task: ", r.CurrTask)
-			 fmt.Println("Cur location before: ", r.CurLocation)
+			r.UpdateMap(FreeSpace)
+			fmt.Println("My current task: ", r.CurrTask)
+			fmt.Println("Cur location before: ", r.CurLocation)
 			fmt.Println("Cur path before: ", r.CurPath)
-			 r.UpdateCurLocation()
+			r.UpdateCurLocation()
 			fmt.Println("Cur location after: ", r.CurLocation)
 			r.UpdatePath()
 			fmt.Println("Cur path after: ", r.CurPath)
@@ -315,15 +317,15 @@ func (r *RobotStruct) Explore() error {
 			// Display task with GPIO
 		case <-r.WallSig:
 			fmt.Println("front wall sig received")
-			 r.UpdateMap(Wall)
-			 r.ModifyPathForWall()
+			r.UpdateMap(Wall)
+			r.ModifyPathForWall()
 			// Display task with GPIO
 		case <-r.RightWallSig:
 			fmt.Println("right wall sig received")
-			 r.UpdateMap(RightWall)
+			r.UpdateMap(RightWall)
 		case <-r.LeftWallSig:
 			fmt.Println("left wall sig received")
-			 r.UpdateMap(LeftWall)
+			r.UpdateMap(LeftWall)
 		case <-r.BusySig: // TODO whole thing
 			fmt.Println("3 Explore() busy sig received. Robot ID %+v Robot state: %+v", r.RobotID, r.State)
 
@@ -342,7 +344,14 @@ func (r *RobotStruct) Explore() error {
 					continue
 				}
 				// This robot recevies maps from its neighbour
-				err = client.Call("RobotRPC.ReceiveMap", false, &neighbourMap)
+				messagepayload := 1
+				finalsend := r.Logger.PrepareSend("I'm request map from my neighbour: "+nei.Addr, messagepayload)
+
+				requestMapPayload := RequestMapPayloadStruct{
+					arbitaryPayload:          false,
+					requestMapSendlogMessage: finalsend,
+				}
+				err = client.Call("RobotRPC.ReceiveMap", requestMapPayload, &neighbourMap)
 				if err != nil {
 					fmt.Println("5 Explore() RIP neighbour - Going to delete this")
 					delete(r.RobotNeighbours.rNeighbour, k)
@@ -455,17 +464,17 @@ func (r *RobotStruct) ModifyPathForWall() {
 
 	wallCoor := r.CurPath.ListOfPCoordinates[0]
 	tempList := r.CurPath.ListOfPCoordinates
-	i:=0
+	i := 0
 	//tempList := make([]Coordinate, 0)
 	for j, c := range tempList {
-		i =j;
+		i = j
 		if wallCoor == c {
 			continue
 		}
 		break
 	}
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[i+1:]
-	if (len(r.CurPath.ListOfPCoordinates) == 0 ) {
+	if len(r.CurPath.ListOfPCoordinates) == 0 {
 		r.CurPath.ListOfPCoordinates = DEFAULTPATH
 		fmt.Println("changed path to default path")
 		r.ModifyPathForWall()
@@ -539,9 +548,8 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 		oldcoor.Traversed = justExploredPoint.Traversed
 		oldcoor.PointKind = justExploredPoint.PointKind
 	} else {
-		r.RMap.ExploredPath[justExploredPoint.Point] = justExploredPoint;
+		r.RMap.ExploredPath[justExploredPoint.Point] = justExploredPoint
 	}
-
 
 	return nil
 }
@@ -747,7 +755,7 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 		//fmt.Printf("Current Neighour %s \n", robotNeighbour)
 		// fmt.Println(neighbourRoboAddr)
 		messagepayload := 1
-		finalsend := r.Logger.PrepareSend("Sending Message to Robot"+robotNeighbour.Addr, messagepayload)
+		finalsend := r.Logger.PrepareSend("Sending Task number"+strconv.Itoa(idx)+"to Robot"+robotNeighbour.Addr, messagepayload)
 		task := &TaskPayload{
 			SenderID:       r.RobotID,
 			SenderAddr:     r.RobotIP,
@@ -894,9 +902,8 @@ func (r *RobotStruct) CallNeighbours() {
 
 				responsePayload := ResponseForNeighbourPayload{}
 
-				messagepayload := 1
-
-				finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
+				// messagepayload := 1
+				// finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
 				farNeighbourPayload := createFarNeighbourPayload(*r, finalsend)
 				// This robot is calling its (potential) neighbour to see if its within the communication radius of itself and its current neighbours
 				fmt.Println("CallNeighbours() my ID and state ", r.RobotID, " ", r.State.rState)
