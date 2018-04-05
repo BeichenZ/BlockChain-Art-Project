@@ -32,14 +32,14 @@ func main() {
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	Port := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
-	RobotInitialPositionX, error :=  strconv.ParseFloat(os.Args[3], 64)
-	RobotInitialPositionY, error :=  strconv.ParseFloat(os.Args[4], 64)
+	RobotInitialPositionX, error := strconv.ParseFloat(os.Args[3], 64)
+	RobotInitialPositionY, error := strconv.ParseFloat(os.Args[4], 64)
 
-	if error != nil{
+	if error != nil {
 		fmt.Println("fail to parse the inital current location")
 		os.Exit(1)
 	}
-	RobotInitialPosition := shared.Coordinate{RobotInitialPositionX,RobotInitialPositionY}
+	RobotInitialPosition := shared.Coordinate{RobotInitialPositionX, RobotInitialPositionY}
 	// Logger := govec.InitGoVector("Port", "LogFile"+Port)
 
 	fmt.Println("Robot IP Address:", GetLocalIP().String())
@@ -88,7 +88,7 @@ func main() {
 		robotLog := robot.ProduceLogInfo()
 		logInfo := robot.EncodeRobotLogInfo(robotLog)
 		logFile.WriteString(logInfo)
-
+		logFile.Close()
 	} else {
 		file, err := os.Stat("./" + robot.Logname)
 		if err != nil {

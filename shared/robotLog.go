@@ -35,9 +35,12 @@ func (r *RobotStruct) ReadFromLog() {
 	r.RMap = decodedRobotLog.RMap
 	r.CurLocation = decodedRobotLog.CurLocation
 	r.CurrTask = decodedRobotLog.CurrTask
-	fmt.Println(decodedRobotLog.RMap)
+	r.CurPath = decodedRobotLog.CurPath
+
+	fmt.Printf("%+v", decodedRobotLog.RMap)
 	fmt.Println(decodedRobotLog.CurLocation)
 	fmt.Println(decodedRobotLog.CurrTask)
+	fmt.Println(decodedRobotLog.CurPath)
 	fmt.Println("finshed loading from log")
 }
 
@@ -52,6 +55,7 @@ func (r *RobotStruct) CreateLog() (*os.File, error) {
 func (r *RobotStruct) ProduceLogInfo() RobotLog {
 	robotLog := RobotLog{
 		CurrTask:    r.CurrTask,
+		CurPath:     r.CurPath,
 		RMap:        r.RMap,
 		CurLocation: r.CurLocation,
 	}
@@ -61,4 +65,18 @@ func (r *RobotStruct) ProduceLogInfo() RobotLog {
 func (r *RobotStruct) LocateLog() (*os.File, error) {
 	file, err := os.Open(r.Logname)
 	return file, err
+}
+
+func (r *RobotStruct) ClearLog() {
+
+}
+
+func (r *RobotStruct) WriteToLog() {
+	os.Remove(r.Logname)
+	newLog, _ := r.CreateLog()
+	robotLogInfo := r.ProduceLogInfo()
+	encodedRobotLog := r.EncodeRobotLogInfo(robotLogInfo)
+	newLog.WriteString(encodedRobotLog)
+	newLog.Close()
+	fmt.Println("Successfully wrote to robot's log")
 }

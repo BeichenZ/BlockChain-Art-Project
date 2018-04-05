@@ -48,6 +48,7 @@ type JoiningInfo struct {
 
 type RobotLog struct {
 	CurrTask    TaskPayload
+	CurPath     Path
 	RMap        Map
 	CurLocation Coordinate
 }
@@ -298,7 +299,11 @@ func (r *RobotStruct) Explore() error {
 			}
 			*/
 			r.CurPath = newPath
+
 			fmt.Println("Explore() current path ", r.CurPath)
+
+			r.WriteToLog()
+
 			// DISPLAY task with GPIO
 		}
 
@@ -448,8 +453,10 @@ func (r *RobotStruct) Explore() error {
 			r.WaitForNeighbourTaskResponse()
 			fmt.Println("Done getting response from all neighbour")
 
-
 			fmt.Println("CALLING UPDATE UpdateStateForNewJourney")
+			r.CurrTask = taskToDo
+			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
+			r.WriteToLog()
 			r.UpdateStateForNewJourney()
 			//fmt.Println("I am going to sleep now")
 			//time.Sleep(10*time.Minute)
@@ -471,17 +478,21 @@ func (r *RobotStruct) ModifyPathForWall() {
 		}
 		break
 	}
+
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[i+1:]
 	if len(r.CurPath.ListOfPCoordinates) == 0 {
 		r.CurPath.ListOfPCoordinates = DEFAULTPATH
 		fmt.Println("changed path to default path")
 		r.ModifyPathForWall()
 	}
+
+	r.WriteToLog()
 }
 
 // FN: Removes the just traversed coordinate (first element in the Path list)
 func (r *RobotStruct) UpdatePath() {
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
+	r.WriteToLog()
 }
 
 //update explored point in map:
@@ -548,7 +559,8 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 	} else {
 		r.RMap.ExploredPath[justExploredPoint.Point] = justExploredPoint
 	}
-
+	// Write to log to update RMap
+	r.WriteToLog()
 	return nil
 }
 
@@ -602,31 +614,6 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 
 }
 
-// Assuming same coordinate system, and each robot has difference ExploredPath
-//func (r *RobotStruct) MergeMaps(neighbourMaps []Map)  {
-//	refToOriginalMap := r.RMap
-//
-//	for _, neighbourRobotMap := range neighbourMaps {
-//
-//		if len(refToOriginalMap.ExploredPath) == 0 {
-//			r.RMap.ExploredPath = neighbourRobotMap.ExploredPath
-//		} else {
-//			neighbourExploredPath := neighbourRobotMap.ExploredPath
-//
-//			for neighbourCoordinate, neighbourPointInfo := range neighbourExploredPath {
-//				if currentPointInfo, ok := r.RMap.ExploredPath[neighbourCoordinate]; ok &&
-//					currentPointInfo.TraversedTime < neighbourPointInfo.TraversedTime {
-//
-//					r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointInfo
-//					continue
-//				}
-//				r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointInfo
-//			}
-//
-//		}
-//	}
-//}
-
 // New version of merge maps, uses the Neighbour struct map feild
 func (r *RobotStruct) MergeMaps() {
 	refToOriginalMap := r.RMap
@@ -651,6 +638,7 @@ func (r *RobotStruct) MergeMaps() {
 		}
 	}
 	r.RobotNeighbours.Unlock()
+	r.WriteToLog()
 }
 
 func (r *RobotStruct) GetMap() Map {
@@ -661,7 +649,7 @@ func (r *RobotStruct) GetMap() Map {
 func (r *RobotStruct) UpdateCurLocation() {
 	r.CurLocation.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X
 	r.CurLocation.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
-	// Write current location to log
+	r.WriteToLog()
 }
 
 func (robot *RobotStruct) CheckAliveNeighbour() {
