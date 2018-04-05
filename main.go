@@ -101,7 +101,8 @@ func main() {
 		}
 	}
 
-	fmt.Println("Robot current location after reading from log ", robot.CurLocation)
+	fmt.Println("AFTER reading from log: Current location", robot.CurLocation,
+		"Current energy ", robot.RobotEnergy, "Current task ")
 	var ips []string
 	for ip := ipv4Addr.Mask(ipv4Net.Mask); ipv4Net.Contains(ip); inc(ip) {
 		ips = append(ips, ip.String())

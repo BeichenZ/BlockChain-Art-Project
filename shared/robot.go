@@ -51,6 +51,7 @@ type RobotLog struct {
 	CurPath     Path
 	RMap        Map
 	CurLocation Coordinate
+	REnergy		int
 }
 
 type RobotStruct struct {
@@ -60,12 +61,10 @@ type RobotStruct struct {
 	RobotIP            string
 	RobotEnergy        int
 	RobotListenConn    *rpc.Client
-	//RobotNeighbours    []Neighbour
 	RobotNeighbours RobotNeighboursMutex
 	RMap            Map
 	CurPath         Path
-	// CurPath        []Coordinate // TODO: yo micheal here uncomment, n delete the whole struct
-	CurLocation           Coordinate    // TODO why isn't type coordinate instead?
+	CurLocation           Coordinate
 	ReceivedTasks         []TaskPayload // change this later
 	ReceivedTasksResponse []TaskDescisionPayload
 	JoiningSig            chan Neighbour
@@ -166,7 +165,6 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 
 }
 
-// TODO: comment: yo why isnt this a switch statement?
 func (r *RobotStruct) FindMapExtrema(e string) float64 {
 
 	if e == XMAX {
@@ -649,6 +647,7 @@ func (r *RobotStruct) GetMap() Map {
 func (r *RobotStruct) UpdateCurLocation() {
 	r.CurLocation.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X
 	r.CurLocation.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+	r.RobotEnergy--
 	r.WriteToLog()
 }
 

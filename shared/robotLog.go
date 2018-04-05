@@ -36,11 +36,13 @@ func (r *RobotStruct) ReadFromLog() {
 	r.CurLocation = decodedRobotLog.CurLocation
 	r.CurrTask = decodedRobotLog.CurrTask
 	r.CurPath = decodedRobotLog.CurPath
+	r.RobotEnergy = decodedRobotLog.REnergy
 
 	fmt.Printf("%+v", decodedRobotLog.RMap)
 	fmt.Println(decodedRobotLog.CurLocation)
 	fmt.Println(decodedRobotLog.CurrTask)
 	fmt.Println(decodedRobotLog.CurPath)
+	fmt.Println(decodedRobotLog.REnergy)
 	fmt.Println("finshed loading from log")
 }
 
@@ -58,6 +60,7 @@ func (r *RobotStruct) ProduceLogInfo() RobotLog {
 		CurPath:     r.CurPath,
 		RMap:        r.RMap,
 		CurLocation: r.CurLocation,
+		REnergy:	 r.RobotEnergy,
 	}
 	return robotLog
 }
