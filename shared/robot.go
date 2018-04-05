@@ -20,6 +20,7 @@ import (
 	"encoding/gob"
 	"net"
 	"sync"
+	hd44780 "../raspberryPiGo/go-hd44780"
 
 	bgpio "../gpio"
 )
@@ -273,10 +274,19 @@ func (r *RobotStruct) RespondToButtons() error {
 
 func (r *RobotStruct) Explore() error {
 	fmt.Printf("1 Explore() start of explore. Robot ID %+v\n", r.RobotID)
+
+	lcd := hd44780.NewGPIO4bit()
+	if err := lcd.Open();err != nil {
+		panic("Cannot OPen lcd:"+err.Error())
+	}
+	defer lcd.Close()
+	lcd.DisplayLines("fuck 416")
+
 	for {
+
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
-			fmt.Println("The new destination point fresh from TaskCreation() ", dpts[0].Point)
+			fmt.Println("0. The new destination point fresh from TaskCreation() ", dpts[0].Point)
 			dpts[0].Point.X = dpts[0].Point.X + r.CurLocation.X
 			dpts[0].Point.Y = dpts[0].Point.Y + r.CurLocation.Y
 			fmt.Println("The new destination point following offset addition", dpts[0].Point)
@@ -298,13 +308,37 @@ func (r *RobotStruct) Explore() error {
 			*/
 			r.CurPath = newPath
 
-			fmt.Println("Explore() current path ", r.CurPath)
+			fmt.Println("1. Explore() current path ", r.CurPath)
 
 			r.WriteToLog()
 
-			// DISPLAY task with GPIO
 		}
+		var dir string
 
+
+		fmt.Println("CHECKING FOR THE FIRST DIRECTION")
+		switch r.CurPath.ListOfPCoordinates[0].Point {
+		case WEST.Point:
+			dir = "WEST"
+			fmt.Println("LCD should display WEST")
+			break;
+		case EAST.Point:
+			dir = "EAST"
+			fmt.Println("LCD should display EAST")
+			break;
+		case SOUTH.Point:
+			dir = "SOUTH"
+			fmt.Println("LCD should display South")
+			break;
+		case NORTH.Point:
+			dir = "NORTH"
+			fmt.Println("LCD should display NORTH")
+			break;
+		default:
+			fmt.Println("Current path direction incorrect")
+			break
+		}
+		lcd.DisplayLines(dir)
 		fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
 
 		select {
@@ -464,7 +498,7 @@ func (r *RobotStruct) Explore() error {
 }
 
 func (r *RobotStruct) ModifyPathForWall() {
-
+	fmt.Println("ModifyPathForWall()() Pressed wall")
 	wallCoor := r.CurPath.ListOfPCoordinates[0]
 	tempList := r.CurPath.ListOfPCoordinates
 	i := 0
