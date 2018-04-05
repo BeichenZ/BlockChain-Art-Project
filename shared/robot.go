@@ -661,6 +661,7 @@ func (r *RobotStruct) GetMap() Map {
 func (r *RobotStruct) UpdateCurLocation() {
 	r.CurLocation.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X
 	r.CurLocation.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+	// Write current location to log
 }
 
 func (robot *RobotStruct) CheckAliveNeighbour() {
@@ -1010,12 +1011,13 @@ func (r *RobotStruct) decideTaskTodo() {
 
 }
 
-func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string, logname string) *RobotStruct {
+func InitRobot(rID int, initMap Map, ic Coordinate, logger *govec.GoLog, robotIPAddr string, logname string) *RobotStruct {
 	newRobot := RobotStruct{
 
 		PossibleNeighbours: set.New(),
 		RobotID:            rID,
 		RobotIP:            robotIPAddr,
+		CurLocation:        ic,
 		RobotNeighbours:    RobotNeighboursMutex{rNeighbour: make(map[int]Neighbour)},
 		RMap:               initMap,
 		JoiningSig:         make(chan Neighbour),
