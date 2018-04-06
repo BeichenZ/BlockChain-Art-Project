@@ -30,15 +30,17 @@ type ResponseForNeighbourPayload struct {
 
 type RequestMapPayloadStruct struct {
 	ArbitaryPayload          bool
+	SenderID                 string
 	RequestMapSendlogMessage []byte
 }
+
 //AYYYYYYYY BRO
 func (robotRPC *RobotRPC) ReceiveMap(requestMapPayload *RequestMapPayloadStruct, receivedMap *Map) error {
 	//Productio code
 	*receivedMap = robotRPC.PiRobot.RMap
 	//Testing
-	//var incommingMessage int
-	//robotRPC.PiRobot.Logger.UnpackReceive("My neighbour is requesting a Map from me:", requestMapPayload.RequestMapSendlogMessage, &incommingMessage)
+	var incommingMessage int
+	robotRPC.PiRobot.Logger.UnpackReceive("My neighbour: "+requestMapPayload.SenderID+"is requesting a Map from me:", requestMapPayload.RequestMapSendlogMessage, &incommingMessage)
 	//temp:= RandomMapGenerator()
 	fmt.Println("RPC: RobotRPC:------> Sending map")
 	fmt.Println(robotRPC.PiRobot.RMap)
@@ -153,8 +155,8 @@ func (r *RobotStruct) RobotStateCommunicationAllowed(nid int) bool {
 // Robot on this end will only return true if its in join or roam state (not if its in the busy state or if its in the roaming but the flag is of"
 func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, responsePayload *ResponseForNeighbourPayload) error {
 	fmt.Println("RPC: ReceivePossibleNeighboursPayload() robot Client that called this method and state (should be in roaming) ", p.NeighbourID, " ", p.State)
-	 var incommingMessage int
-	 robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
+	var incommingMessage int
+	robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
 	// TODO change this
 	robotRPC.PiRobot.RobotNeighbours.Lock()
 	for _, val := range robotRPC.PiRobot.RobotNeighbours.rNeighbour {
@@ -228,7 +230,6 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		responsePayload.WithInComRadius = false
 		fmt.Println("RPC: ReceivePossibleNeighboursPayload() I will return false for client", p.NeighbourID)
 	}
-
 
 	return nil
 }

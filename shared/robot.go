@@ -52,19 +52,19 @@ type RobotLog struct {
 	CurPath     Path
 	RMap        Map
 	CurLocation Coordinate
-	REnergy		int
+	REnergy     int
 }
 
 type RobotStruct struct {
-	CurrTask           TaskPayload
-	PossibleNeighbours *set.Set
-	RobotID            int // hardcoded
-	RobotIP            string
-	RobotEnergy        int
-	RobotListenConn    *rpc.Client
-	RobotNeighbours RobotNeighboursMutex
-	RMap            Map
-	CurPath         Path
+	CurrTask              TaskPayload
+	PossibleNeighbours    *set.Set
+	RobotID               int // hardcoded
+	RobotIP               string
+	RobotEnergy           int
+	RobotListenConn       *rpc.Client
+	RobotNeighbours       RobotNeighboursMutex
+	RMap                  Map
+	CurPath               Path
 	CurLocation           Coordinate
 	ReceivedTasks         []TaskPayload // change this later
 	ReceivedTasksResponse []TaskDescisionPayload
@@ -315,7 +315,6 @@ func (r *RobotStruct) Explore() error {
 		}
 		//var dir string
 
-
 		//fmt.Println("CHECKING FOR THE FIRST DIRECTION")
 		//switch r.CurPath.ListOfPCoordinates[0].Point {
 		//case WEST.Point:
@@ -385,10 +384,11 @@ func (r *RobotStruct) Explore() error {
 				}
 				// This robot recevies maps from its neighbour
 				messagepayload := 1
-				finalsend := r.Logger.PrepareSend("I'm request map from my neighbour: "+nei.Addr, messagepayload)
+				finalsend := r.Logger.PrepareSend("I'm requesting map from my neighbour: "+strconv.Itoa(nei.NID), messagepayload)
 
 				requestMapPayload := RequestMapPayloadStruct{
 					ArbitaryPayload:          false,
+					SenderID:                 strconv.Itoa(r.RobotID),
 					RequestMapSendlogMessage: finalsend,
 				}
 				err = client.Call("RobotRPC.ReceiveMap", requestMapPayload, &neighbourMap)
@@ -750,7 +750,7 @@ func (r *RobotStruct) PickTaskWithLowestID(taskFromMe PointStruct) TaskPayload {
 		fmt.Println("PickTaskWithLowestID() received task ", "task sender ID ", task.SenderID, " => ", task.DestPoint)
 	}
 	// Check if the task assigned is larger than the one it assigned itself
-	if r.RobotID < taskToDo.SenderID || len(r.ReceivedTasks) == 0{
+	if r.RobotID < taskToDo.SenderID || len(r.ReceivedTasks) == 0 {
 		taskToDo.SenderID = r.RobotID
 		taskToDo.DestPoint = taskFromMe
 	}
