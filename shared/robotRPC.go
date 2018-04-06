@@ -32,7 +32,7 @@ type RequestMapPayloadStruct struct {
 	ArbitaryPayload          bool
 	RequestMapSendlogMessage []byte
 }
-
+//AYYYYYYYY BRO
 func (robotRPC *RobotRPC) ReceiveMap(requestMapPayload *RequestMapPayloadStruct, receivedMap *Map) error {
 	//Productio code
 	*receivedMap = robotRPC.PiRobot.RMap
