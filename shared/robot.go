@@ -729,7 +729,7 @@ func (r *RobotStruct) PickTaskWithLowestID(taskFromMe PointStruct) TaskPayload {
 		fmt.Println("PickTaskWithLowestID() received task ", "task sender ID ", task.SenderID, " => ", task.DestPoint)
 	}
 	// Check if the task assigned is larger than the one it assigned itself
-	if r.RobotID < taskToDo.SenderID {
+	if r.RobotID < taskToDo.SenderID || len(r.ReceivedTasks) == 0{
 		taskToDo.SenderID = r.RobotID
 		taskToDo.DestPoint = taskFromMe
 	}
