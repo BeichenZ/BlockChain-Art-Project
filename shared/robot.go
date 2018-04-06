@@ -1183,6 +1183,7 @@ func (r *RobotStruct) SendMapToLocalServer() {
 }
 
 // FN: Removes the dead nieghbours from this robots list
+// TODO: MIGHT need to make this a go-routine in the main.go. Then need to remove checkAllNeighbours
 func (r *RobotStruct) RemoveDeadNeighbours() {
 	r.RobotNeighbours.Lock()
 	maxCallTime := 1 // for network issue problem check later
