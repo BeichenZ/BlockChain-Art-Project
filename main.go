@@ -32,7 +32,16 @@ func main() {
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
 	Port := os.Args[1]
 	RobotID, _ := strconv.Atoi(os.Args[2])
+	RobotInitialPositionX, error := strconv.ParseFloat(os.Args[3], 64)
+	RobotInitialPositionY, error := strconv.ParseFloat(os.Args[4], 64)
+
+	if error != nil {
+		fmt.Println("fail to parse the inital current location")
+		os.Exit(1)
+	}
+	RobotInitialPosition := shared.Coordinate{RobotInitialPositionX, RobotInitialPositionY}
 	// Logger := govec.InitGoVector("Port", "LogFile"+Port)
+
 	fmt.Println("Robot IP Address:", GetLocalIP().String())
 	ipv4Addr, ipv4Net, _ := net.ParseCIDR(GetLocalIP().String())
 	fmt.Println("--------------------")
@@ -51,8 +60,8 @@ func main() {
 	robot := shared.InitRobot(RobotID, shared.Map{
 		ExploredPath: make(map[shared.Coordinate]shared.PointStruct),
 		FrameOfRef:   1,
-	}, Logger, ipv4Addr.String()+Port, logname)
-
+	}, RobotInitialPosition, Logger, ipv4Addr.String()+Port, logname)
+	fmt.Println("Robot current location before reading from log ", robot.CurLocation)
 	// Open up user defined port RPC connection
 	robotRPC := &shared.RobotRPC{PiRobot: robot}
 	rpc.Register(robotRPC)
@@ -79,7 +88,7 @@ func main() {
 		robotLog := robot.ProduceLogInfo()
 		logInfo := robot.EncodeRobotLogInfo(robotLog)
 		logFile.WriteString(logInfo)
-
+		logFile.Close()
 	} else {
 		file, err := os.Stat("./" + robot.Logname)
 		if err != nil {
@@ -92,6 +101,8 @@ func main() {
 		}
 	}
 
+	fmt.Println("AFTER reading from log: Current location", robot.CurLocation,
+		"Current energy ", robot.RobotEnergy, "Current task ")
 	var ips []string
 	for ip := ipv4Addr.Mask(ipv4Net.Mask); ipv4Net.Contains(ip); inc(ip) {
 		ips = append(ips, ip.String())

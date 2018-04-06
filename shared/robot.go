@@ -20,6 +20,7 @@ import (
 	"encoding/gob"
 	"net"
 	"sync"
+	hd44780 "../raspberryPiGo/go-hd44780"
 
 	bgpio "../gpio"
 )
@@ -48,8 +49,10 @@ type JoiningInfo struct {
 
 type RobotLog struct {
 	CurrTask    TaskPayload
+	CurPath     Path
 	RMap        Map
 	CurLocation Coordinate
+	REnergy		int
 }
 
 type RobotStruct struct {
@@ -59,12 +62,10 @@ type RobotStruct struct {
 	RobotIP            string
 	RobotEnergy        int
 	RobotListenConn    *rpc.Client
-	//RobotNeighbours    []Neighbour
 	RobotNeighbours RobotNeighboursMutex
 	RMap            Map
 	CurPath         Path
-	// CurPath        []Coordinate // TODO: yo micheal here uncomment, n delete the whole struct
-	CurLocation           Coordinate    // TODO why isn't type coordinate instead?
+	CurLocation           Coordinate
 	ReceivedTasks         []TaskPayload // change this later
 	ReceivedTasksResponse []TaskDescisionPayload
 	JoiningSig            chan Neighbour
@@ -147,7 +148,7 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 	//fmt.Println(DestNum)
 	//fmt.Println(r.RobotNeighbours)
 
-	DestPoints := FindDestPoints(DestNum, center, r.CurLocation)
+	DestPoints := FindDestPoints(DestNum, center)
 
 	// move DestpointForMe to beginning of list
 	DestPointForMe := r.FindClosestDest(DestPoints)
@@ -165,7 +166,6 @@ func (r *RobotStruct) TaskCreation() ([]PointStruct, error) {
 
 }
 
-// TODO: comment: yo why isnt this a switch statement?
 func (r *RobotStruct) FindMapExtrema(e string) float64 {
 
 	if e == XMAX {
@@ -273,11 +273,23 @@ func (r *RobotStruct) RespondToButtons() error {
 }
 
 func (r *RobotStruct) Explore() error {
-	fmt.Printf("1 Explore() start of explore. Robot ID %+v Robot state: %+v", r.RobotID, r.State)
+	fmt.Printf("1 Explore() start of explore. Robot ID %+v\n", r.RobotID)
+
+	lcd := hd44780.NewGPIO4bit()
+	if err := lcd.Open();err != nil {
+		panic("Cannot OPen lcd:"+err.Error())
+	}
+	defer lcd.Close()
+	lcd.DisplayLines("fuck 416")
+
 	for {
+
 		if len(r.CurPath.ListOfPCoordinates) == 0 {
 			dpts, err := r.TaskCreation()
-			fmt.Println("The new is ", dpts[0].Point)
+			fmt.Println("0. The new destination point fresh from TaskCreation() ", dpts[0].Point)
+			dpts[0].Point.X = dpts[0].Point.X + r.CurLocation.X
+			dpts[0].Point.Y = dpts[0].Point.Y + r.CurLocation.Y
+			fmt.Println("The new destination point following offset addition", dpts[0].Point)
 			if err != nil {
 				fmt.Println("error generating task")
 			}
@@ -295,10 +307,38 @@ func (r *RobotStruct) Explore() error {
 			}
 			*/
 			r.CurPath = newPath
-			fmt.Println("Explore() current path ", r.CurPath)
-			// DISPLAY task with GPIO
-		}
 
+			fmt.Println("1. Explore() current path ", r.CurPath)
+
+			r.WriteToLog()
+
+		}
+		var dir string
+
+
+		fmt.Println("CHECKING FOR THE FIRST DIRECTION")
+		switch r.CurPath.ListOfPCoordinates[0].Point {
+		case WEST.Point:
+			dir = "WEST"
+			fmt.Println("LCD should display WEST")
+			break;
+		case EAST.Point:
+			dir = "EAST"
+			fmt.Println("LCD should display EAST")
+			break;
+		case SOUTH.Point:
+			dir = "SOUTH"
+			fmt.Println("LCD should display South")
+			break;
+		case NORTH.Point:
+			dir = "NORTH"
+			fmt.Println("LCD should display NORTH")
+			break;
+		default:
+			fmt.Println("Current path direction incorrect")
+			break
+		}
+		lcd.DisplayLines(dir)
 		fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
 
 		select {
@@ -406,7 +446,7 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println()
 
 			//// Allocate tasks to current robot network
-			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
+			//r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, tasks[0].Point)
 			//// r.CurrTask = tasks[0]
 			//fmt.Println("tasks length is")
 			//fmt.Println(len(tasks))
@@ -430,38 +470,35 @@ func (r *RobotStruct) Explore() error {
 			//// Choose task based with the lowest ID including its own
 			fmt.Println("Done waiting for tasks from my neighbours")
 			taskToDo := r.PickTaskWithLowestID(tasks[0])
-			//// r.CurrTask = taskToDo
+			taskToDo.DestPoint.Point.X = taskToDo.DestPoint.Point.X + r.CurLocation.X
+			taskToDo.DestPoint.Point.Y = taskToDo.DestPoint.Point.Y + r.CurLocation.Y
 			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
+			r.CurrTask = taskToDo
 			fmt.Println("The task I am going to dooooo ----> Sending ID", taskToDo.SenderID, "=>", taskToDo.DestPoint)
 			fmt.Println()
 
-			//
 			//// Respond to each task given by my fellow robots
 			r.RespondToNeighoursAboutTask(taskToDo)
 
-			// TODO wait for neighbours response
+			// Wait for neighbours response
 			fmt.Println("Done responding to task, going to wait for my neighbour to respond to my task")
 			r.WaitForNeighbourTaskResponse()
 			fmt.Println("Done getting response from all neighbour")
-			// set busysig off
-			// procede with new task
 
 			fmt.Println("CALLING UPDATE UpdateStateForNewJourney")
+			r.CurrTask = taskToDo
+			r.CurPath = CreatePathBetweenTwoPoints(r.CurLocation, taskToDo.DestPoint.Point)
+			r.WriteToLog()
 			r.UpdateStateForNewJourney()
 			//fmt.Println("I am going to sleep now")
 			//time.Sleep(10*time.Minute)
-		case <-r.WaitingSig: // TODO
-			// keep pinging the neighbour that is within it's communication radius
-			// if neighbour in busy state
-			// YES -> keep pinging
-			// NO -> - turn WaitingSig off
-			//		 - turn JoingingSig on
+
 		}
 	}
 }
 
 func (r *RobotStruct) ModifyPathForWall() {
-
+	fmt.Println("ModifyPathForWall()() Pressed wall")
 	wallCoor := r.CurPath.ListOfPCoordinates[0]
 	tempList := r.CurPath.ListOfPCoordinates
 	i := 0
@@ -473,17 +510,21 @@ func (r *RobotStruct) ModifyPathForWall() {
 		}
 		break
 	}
+
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[i+1:]
 	if len(r.CurPath.ListOfPCoordinates) == 0 {
 		r.CurPath.ListOfPCoordinates = DEFAULTPATH
 		fmt.Println("changed path to default path")
 		r.ModifyPathForWall()
 	}
+
+	r.WriteToLog()
 }
 
 // FN: Removes the just traversed coordinate (first element in the Path list)
 func (r *RobotStruct) UpdatePath() {
 	r.CurPath.ListOfPCoordinates = r.CurPath.ListOfPCoordinates[1:]
+	r.WriteToLog()
 }
 
 //update explored point in map:
@@ -550,7 +591,8 @@ func (r *RobotStruct) UpdateMap(b Button) error {
 	} else {
 		r.RMap.ExploredPath[justExploredPoint.Point] = justExploredPoint
 	}
-
+	// Write to log to update RMap
+	r.WriteToLog()
 	return nil
 }
 
@@ -604,31 +646,6 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 
 }
 
-// Assuming same coordinate system, and each robot has difference ExploredPath
-//func (r *RobotStruct) MergeMaps(neighbourMaps []Map)  {
-//	refToOriginalMap := r.RMap
-//
-//	for _, neighbourRobotMap := range neighbourMaps {
-//
-//		if len(refToOriginalMap.ExploredPath) == 0 {
-//			r.RMap.ExploredPath = neighbourRobotMap.ExploredPath
-//		} else {
-//			neighbourExploredPath := neighbourRobotMap.ExploredPath
-//
-//			for neighbourCoordinate, neighbourPointInfo := range neighbourExploredPath {
-//				if currentPointInfo, ok := r.RMap.ExploredPath[neighbourCoordinate]; ok &&
-//					currentPointInfo.TraversedTime < neighbourPointInfo.TraversedTime {
-//
-//					r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointInfo
-//					continue
-//				}
-//				r.RMap.ExploredPath[neighbourCoordinate] = neighbourPointInfo
-//			}
-//
-//		}
-//	}
-//}
-
 // New version of merge maps, uses the Neighbour struct map feild
 func (r *RobotStruct) MergeMaps() {
 	refToOriginalMap := r.RMap
@@ -653,6 +670,7 @@ func (r *RobotStruct) MergeMaps() {
 		}
 	}
 	r.RobotNeighbours.Unlock()
+	r.WriteToLog()
 }
 
 func (r *RobotStruct) GetMap() Map {
@@ -663,6 +681,8 @@ func (r *RobotStruct) GetMap() Map {
 func (r *RobotStruct) UpdateCurLocation() {
 	r.CurLocation.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X
 	r.CurLocation.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
+	r.RobotEnergy--
+	r.WriteToLog()
 }
 
 func (robot *RobotStruct) CheckAliveNeighbour() {
@@ -1012,12 +1032,13 @@ func (r *RobotStruct) decideTaskTodo() {
 
 }
 
-func InitRobot(rID int, initMap Map, logger *govec.GoLog, robotIPAddr string, logname string) *RobotStruct {
+func InitRobot(rID int, initMap Map, ic Coordinate, logger *govec.GoLog, robotIPAddr string, logname string) *RobotStruct {
 	newRobot := RobotStruct{
 
 		PossibleNeighbours: set.New(),
 		RobotID:            rID,
 		RobotIP:            robotIPAddr,
+		CurLocation:        ic,
 		RobotNeighbours:    RobotNeighboursMutex{rNeighbour: make(map[int]Neighbour)},
 		RMap:               initMap,
 		JoiningSig:         make(chan Neighbour),

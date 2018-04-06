@@ -61,6 +61,8 @@ func NewGPIO4bit() (h *GPIO4bit) {
 	return
 }
 
+
+
 // Open / initialize LCD interface
 func (h *GPIO4bit) Open() (err error) {
 	h.Lock()
@@ -107,7 +109,6 @@ func (h *GPIO4bit) reset() {
 	time.Sleep(120 * time.Microsecond)
 	h.write4Bits(0x3, lcdCmd)
 	time.Sleep(120 * time.Microsecond)
-
 	h.write4Bits(0x2, lcdCmd)
 	time.Sleep(120 * time.Microsecond)
 
