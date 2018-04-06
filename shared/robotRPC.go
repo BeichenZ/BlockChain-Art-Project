@@ -40,7 +40,7 @@ func (robotRPC *RobotRPC) ReceiveMap(requestMapPayload *RequestMapPayloadStruct,
 	*receivedMap = robotRPC.PiRobot.RMap
 	//Testing
 	var incommingMessage int
-	robotRPC.PiRobot.Logger.UnpackReceive("My neighbour: "+requestMapPayload.SenderID+"is requesting a Map from me:", requestMapPayload.RequestMapSendlogMessage, &incommingMessage)
+	robotRPC.PiRobot.Logger.UnpackReceive("My neighbour: "+requestMapPayload.SenderID+", is requesting a Map from me:", requestMapPayload.RequestMapSendlogMessage, &incommingMessage)
 	//temp:= RandomMapGenerator()
 	fmt.Println("RPC: RobotRPC:------> Sending map")
 	fmt.Println(robotRPC.PiRobot.RMap)
