@@ -20,7 +20,7 @@ import (
 	"encoding/gob"
 	"net"
 	"sync"
-	hd44780 "../raspberryPiGo/go-hd44780"
+	//hd44780 "../raspberryPiGo/go-hd44780"
 
 	bgpio "../gpio"
 )
@@ -37,7 +37,7 @@ const XMAX = "xmax"
 const YMIN = "ymix"
 const YMAX = "ymax"
 const EXRADIUS = 6
-const TIMETOJOINSECONDUNIT = 10
+const TIMETOJOINSECONDUNIT = 20
 const TIMETOJOIN = TIMETOJOINSECONDUNIT * time.Second
 
 var DEFAULTPATH = []PointStruct{SOUTH, SOUTH, SOUTH, WEST, WEST, WEST, NORTH, NORTH, NORTH, EAST, EAST, EAST, EAST}
@@ -275,12 +275,12 @@ func (r *RobotStruct) RespondToButtons() error {
 func (r *RobotStruct) Explore() error {
 	fmt.Printf("1 Explore() start of explore. Robot ID %+v\n", r.RobotID)
 
-	lcd := hd44780.NewGPIO4bit()
-	if err := lcd.Open();err != nil {
-		panic("Cannot OPen lcd:"+err.Error())
-	}
-	defer lcd.Close()
-	lcd.DisplayLines("fuck 416")
+	//lcd := hd44780.NewGPIO4bit()
+	//if err := lcd.Open();err != nil {
+	//	panic("Cannot OPen lcd:"+err.Error())
+	//}
+	//defer lcd.Close()
+	//lcd.DisplayLines("fuck 416")
 
 	for {
 
@@ -313,33 +313,33 @@ func (r *RobotStruct) Explore() error {
 			r.WriteToLog()
 
 		}
-		var dir string
+		//var dir string
 
 
-		fmt.Println("CHECKING FOR THE FIRST DIRECTION")
-		switch r.CurPath.ListOfPCoordinates[0].Point {
-		case WEST.Point:
-			dir = "WEST"
-			fmt.Println("LCD should display WEST")
-			break;
-		case EAST.Point:
-			dir = "EAST"
-			fmt.Println("LCD should display EAST")
-			break;
-		case SOUTH.Point:
-			dir = "SOUTH"
-			fmt.Println("LCD should display South")
-			break;
-		case NORTH.Point:
-			dir = "NORTH"
-			fmt.Println("LCD should display NORTH")
-			break;
-		default:
-			fmt.Println("Current path direction incorrect")
-			break
-		}
-		lcd.DisplayLines(dir)
-		fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
+		//fmt.Println("CHECKING FOR THE FIRST DIRECTION")
+		//switch r.CurPath.ListOfPCoordinates[0].Point {
+		//case WEST.Point:
+		//	dir = "WEST"
+		//	fmt.Println("LCD should display WEST")
+		//	break;
+		//case EAST.Point:
+		//	dir = "EAST"
+		//	fmt.Println("LCD should display EAST")
+		//	break;
+		//case SOUTH.Point:
+		//	dir = "SOUTH"
+		//	fmt.Println("LCD should display South")
+		//	break;
+		//case NORTH.Point:
+		//	dir = "NORTH"
+		//	fmt.Println("LCD should display NORTH")
+		//	break;
+		//default:
+		//	fmt.Println("Current path direction incorrect")
+		//	break
+		//}
+		//lcd.DisplayLines(dir)
+		//fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
 
 		select {
 		case <-r.FreeSpaceSig:
@@ -388,12 +388,13 @@ func (r *RobotStruct) Explore() error {
 				finalsend := r.Logger.PrepareSend("I'm request map from my neighbour: "+nei.Addr, messagepayload)
 
 				requestMapPayload := RequestMapPayloadStruct{
-					arbitaryPayload:          false,
-					requestMapSendlogMessage: finalsend,
+					ArbitaryPayload:          false,
+					RequestMapSendlogMessage: finalsend,
 				}
 				err = client.Call("RobotRPC.ReceiveMap", requestMapPayload, &neighbourMap)
 				if err != nil {
-					fmt.Println("5 Explore() RIP neighbour - Going to delete this")
+					fmt.Println(err.Error())
+					fmt.Println("5 Explore() RIP neighbour - Going to delete this ", nei.Addr, " ", nei.NID)
 					delete(r.RobotNeighbours.rNeighbour, k)
 					client.Close()
 					continue

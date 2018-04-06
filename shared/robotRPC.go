@@ -29,16 +29,16 @@ type ResponseForNeighbourPayload struct {
 }
 
 type RequestMapPayloadStruct struct {
-	arbitaryPayload          bool
-	requestMapSendlogMessage []byte
+	ArbitaryPayload          bool
+	RequestMapSendlogMessage []byte
 }
 
 func (robotRPC *RobotRPC) ReceiveMap(requestMapPayload *RequestMapPayloadStruct, receivedMap *Map) error {
 	//Productio code
 	*receivedMap = robotRPC.PiRobot.RMap
 	//Testing
-	var incommingMessage int
-	robotRPC.PiRobot.Logger.UnpackReceive("My neighbour is requesting a Map from me:", requestMapPayload.requestMapSendlogMessage, &incommingMessage)
+	//var incommingMessage int
+	//robotRPC.PiRobot.Logger.UnpackReceive("My neighbour is requesting a Map from me:", requestMapPayload.RequestMapSendlogMessage, &incommingMessage)
 	//temp:= RandomMapGenerator()
 	fmt.Println("RPC: RobotRPC:------> Sending map")
 	fmt.Println(robotRPC.PiRobot.RMap)
@@ -153,8 +153,8 @@ func (r *RobotStruct) RobotStateCommunicationAllowed(nid int) bool {
 // Robot on this end will only return true if its in join or roam state (not if its in the busy state or if its in the roaming but the flag is of"
 func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayload, responsePayload *ResponseForNeighbourPayload) error {
 	fmt.Println("RPC: ReceivePossibleNeighboursPayload() robot Client that called this method and state (should be in roaming) ", p.NeighbourID, " ", p.State)
-	// var incommingMessage int
-	// robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
+	 var incommingMessage int
+	 robotRPC.PiRobot.Logger.UnpackReceive("Receiving Message", p.SendlogMessage, &incommingMessage)
 	// TODO change this
 	robotRPC.PiRobot.RobotNeighbours.Lock()
 	for _, val := range robotRPC.PiRobot.RobotNeighbours.rNeighbour {
@@ -173,7 +173,7 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		robotRPC.PiRobot.exchangeFlag.Unlock()
 	}
 	fmt.Println("RPC: ReceivePossibleNeighboursPayload()  exchange flag ", robotRPC.PiRobot.exchangeFlag.flag, " robot within radius? ", robotRPC.PiRobot.WithinRadiusOfNetwork(p),
-		"this robot state ", robotRPC.PiRobot.State.rState)
+		"this robot state ", robotRPC.PiRobot.State.rState, "robotID client ", p.NeighbourID)
 
 	//connection is formed only if the current robot is within CR and os either in ROAM or JOIN
 	if robotRPC.PiRobot.WithinRadiusOfNetwork(p) && robotRPC.PiRobot.RobotStateCommunicationAllowed(p.NeighbourID) {
@@ -219,14 +219,16 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 			robotRPC.PiRobot.State.Unlock()
 		}
 		responsePayload.WithInComRadius = true
-
+		fmt.Println("RPC: ReceivePossibleNeighboursPayload() I will return true for client", p.NeighbourID)
 		//// This robot (server) will add the client and its neighbours to itself
 		//SaveNeighbour(robotRPC.PiRobot, p.ItsNeighbours)
 
 	} else {
 		//skip the request client
 		responsePayload.WithInComRadius = false
+		fmt.Println("RPC: ReceivePossibleNeighboursPayload() I will return false for client", p.NeighbourID)
 	}
+
 
 	return nil
 }
