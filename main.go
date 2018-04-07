@@ -50,7 +50,7 @@ func main() {
 	fmt.Println(ipv4Addr.String() + Port)
 	fmt.Println("----------------------")
 
-	Logger := govec.InitGoVector("Robot"+ipv4Addr.String()+Port, "LogFile"+ipv4Addr.String()+Port)
+	Logger := govec.InitGoVector("Robot"+os.Args[2], "LogFile"+os.Args[2]+Port)
 	resolvedIPAddr := Port
 	// resolvedIPAddress, error := net.ResolveTCPAddr("tcp", Port)
 	// if error != nil {
@@ -112,7 +112,7 @@ func main() {
 	ips = ips[1 : len(ips)-2]
 
 	timeout := time.Duration(100 * time.Millisecond)
-	go scanForNeighbours(ips[:5], ipv4Addr, timeout, robot, Port)
+	go scanForNeighbours(ips[:10], ipv4Addr, timeout, robot, Port)
 	go robot.CallNeighbours()
 	//leftObstacleButtonPin := bgpio.NewInput(LeftObstacleButton_Pin)
 	//rightObstacleButtonPin := bgpio.NewInput(RightObstacleButton_Pin)

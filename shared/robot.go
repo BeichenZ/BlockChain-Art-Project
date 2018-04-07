@@ -37,7 +37,7 @@ const XMAX = "xmax"
 const YMIN = "ymix"
 const YMAX = "ymax"
 const EXRADIUS = 6
-const TIMETOJOINSECONDUNIT = 20
+const TIMETOJOINSECONDUNIT = 10
 const TIMETOJOIN = TIMETOJOINSECONDUNIT * time.Second
 
 var DEFAULTPATH = []PointStruct{SOUTH, SOUTH, SOUTH, WEST, WEST, WEST, NORTH, NORTH, NORTH, EAST, EAST, EAST, EAST}
@@ -384,7 +384,7 @@ func (r *RobotStruct) Explore() error {
 				}
 				// This robot recevies maps from its neighbour
 				messagepayload := 1
-				finalsend := r.Logger.PrepareSend("I'm requesting map from my neighbour: "+strconv.Itoa(nei.NID), messagepayload)
+				finalsend := r.Logger.PrepareSend("Robot "+strconv.Itoa(r.RobotID)+" requesting map from neighbour "+strconv.Itoa(nei.NID), messagepayload)
 
 				requestMapPayload := RequestMapPayloadStruct{
 					ArbitaryPayload:          false,
@@ -611,7 +611,7 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 
 		if neighbour.NID == taskToDo.SenderID {
 			messagepayload := 1
-			finalsend := r.Logger.PrepareSend("Sending Message - "+"Accpeting task from my neighbour:"+neighbour.Addr, messagepayload)
+			finalsend := r.Logger.PrepareSend(strconv.Itoa(r.RobotID)+" accpeting task from my neighbour "+neighbour.Addr, messagepayload)
 			taskResponsePayloadYes := TaskDescisionPayload{
 				SenderID:       r.RobotID,
 				SenderAddr:     r.RobotIP,
@@ -626,7 +626,7 @@ func (r *RobotStruct) RespondToNeighoursAboutTask(taskToDo TaskPayload) {
 			}
 		} else {
 			messagepayload := 1
-			finalsend := r.Logger.PrepareSend("Sending Message - "+"Denying task from my neighbour:"+neighbour.Addr, messagepayload)
+			finalsend := r.Logger.PrepareSend(strconv.Itoa(r.RobotID)+" denying task from my neighbour "+neighbour.Addr, messagepayload)
 			taskResponsePayloadNo := TaskDescisionPayload{
 				SenderID:       r.RobotID,
 				SenderAddr:     r.RobotIP,
@@ -776,7 +776,7 @@ func (r *RobotStruct) TaskAllocationToNeighbours(ldp []PointStruct) {
 		//fmt.Printf("Current Neighour %s \n", robotNeighbour)
 		// fmt.Println(neighbourRoboAddr)
 		messagepayload := 1
-		finalsend := r.Logger.PrepareSend("Sending Task number"+strconv.Itoa(idx)+"to Robot"+robotNeighbour.Addr, messagepayload)
+		finalsend := r.Logger.PrepareSend("Robot "+strconv.Itoa(r.RobotID)+" sending task number "+strconv.Itoa(idx)+" to Robot "+strconv.Itoa(robotNeighbour.NID), messagepayload)
 		task := &TaskPayload{
 			SenderID:       r.RobotID,
 			SenderAddr:     r.RobotIP,
@@ -924,7 +924,7 @@ func (r *RobotStruct) CallNeighbours() {
 				responsePayload := ResponseForNeighbourPayload{}
 
 				messagepayload := 1
-				finalsend := r.Logger.PrepareSend("Sending Message - "+"Trying to call my neighbour:"+possibleNeighbour.(string), &messagepayload)
+				finalsend := r.Logger.PrepareSend("Robot "+strconv.Itoa(r.RobotID)+" Trying to call my neighbour "+possibleNeighbour.(string), &messagepayload)
 				farNeighbourPayload := createFarNeighbourPayload(*r, finalsend)
 				// This robot is calling its (potential) neighbour to see if its within the communication radius of itself and its current neighbours
 				fmt.Println("CallNeighbours() my ID and state ", r.RobotID, " ", r.State.rState)
