@@ -39,6 +39,7 @@ const YMAX = "ymax"
 const EXRADIUS = 6
 const TIMETOJOINSECONDUNIT = 10
 const TIMETOJOIN = TIMETOJOINSECONDUNIT * time.Second
+const INITENERGY = 3000
 
 var DEFAULTPATH = []PointStruct{SOUTH, SOUTH, SOUTH, WEST, WEST, WEST, NORTH, NORTH, NORTH, EAST, EAST, EAST, EAST}
 
@@ -258,15 +259,13 @@ func (r *RobotStruct) RespondToButtons() error {
 
 		} else if command == "b" {
 			r.BusySig <- true
-		} else if command == "w" {
-			r.WaitingSig <- true
 		} else if command == "f" {
 			r.FreeSpaceSig <- true
-		} else if command == "u" {
+		} else if command == "w" {
 			r.WallSig <- true
-		} else if command == "c" {
+		} else if command == "r" {
 			r.RightWallSig <- true
-		} else if command == "k" {
+		} else if command == "l" {
 			r.LeftWallSig <- true
 		}
 	}
@@ -280,7 +279,6 @@ func (r *RobotStruct) Explore() error {
 		panic("Cannot OPen lcd:"+err.Error())
 	}
 	defer lcd.Close()
-	lcd.DisplayLines("fuck 416")
 
 	for {
 
@@ -340,6 +338,12 @@ func (r *RobotStruct) Explore() error {
 		}
 		lcd.DisplayLines(dir)
 		fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
+
+
+		if r.RobotEnergy==0 {
+			lcd.Display(1,  "Energy Level is 0")
+			os.Exit(0)
+		}
 
 		select {
 		case <-r.FreeSpaceSig:
@@ -682,6 +686,7 @@ func (r *RobotStruct) UpdateCurLocation() {
 	r.CurLocation.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X
 	r.CurLocation.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
 	r.RobotEnergy--
+
 	r.WriteToLog()
 }
 
@@ -983,7 +988,7 @@ func StartClock(state RobotState, r *RobotStruct, remainingTime time.Duration) {
 				counter += 1
 				fmt.Printf("Joining Neighbour timer--------> Counter is %s\n", counter)
 				if time.Now().Sub(r.joinInfo.joiningTime) >= (TIMETOJOIN - remainingTime) {
-					fmt.Println("WE ARE FINISHED.FUCK 416 -- JOIN")
+					fmt.Println("WE ARE FINISHED. -- JOIN")
 					r.RobotNeighbours.Lock()
 					fmt.Println("TImer: # of Neighbour is --joining", len(r.RobotNeighbours.rNeighbour))
 					r.RobotNeighbours.Unlock()
@@ -1005,7 +1010,7 @@ func StartClock(state RobotState, r *RobotStruct, remainingTime time.Duration) {
 				counter += 1
 				fmt.Printf("Joining My timer--------> Counter is %s\n", counter)
 				if counter >= TIMETOJOINSECONDUNIT {
-					fmt.Println("WE ARE FINISHED.FUCK 416 -- ROAM")
+					fmt.Println("WE ARE FINISHED -- ROAM")
 					r.RobotNeighbours.Lock()
 					fmt.Println("TImer: # of Neighbour is --ROAM", len(r.RobotNeighbours.rNeighbour))
 					r.RobotNeighbours.Unlock()
@@ -1038,6 +1043,7 @@ func InitRobot(rID int, initMap Map, ic Coordinate, logger *govec.GoLog, robotIP
 		PossibleNeighbours: set.New(),
 		RobotID:            rID,
 		RobotIP:            robotIPAddr,
+		RobotEnergy:        INITENERGY,
 		CurLocation:        ic,
 		RobotNeighbours:    RobotNeighboursMutex{rNeighbour: make(map[int]Neighbour)},
 		RMap:               initMap,
@@ -1145,7 +1151,7 @@ func (r *RobotStruct) UpdateStateForNewJourney() {
 			counter += 1
 			fmt.Printf("Flag timer. \n        Counter is %s\n", counter)
 			if time.Now().Sub(temp) >= TIMETOJOIN {
-				fmt.Println("WE ARE FINISHED.FUCK 416 -- CAN JOIN AGAIN")
+				fmt.Println("WE ARE FINISHED -- CAN JOIN AGAIN")
 				ticker.Stop()
 				r.exchangeFlag.Lock()
 				r.exchangeFlag.flag = true
