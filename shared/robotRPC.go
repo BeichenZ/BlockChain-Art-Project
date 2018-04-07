@@ -145,10 +145,10 @@ func (r *RobotStruct) RobotStateCommunicationAllowed(nid int) bool {
 	}
 
 	r.State.Lock()
-	shit := r.State.rState == ROAM || r.State.rState == JOIN
+	checkState := r.State.rState == ROAM || r.State.rState == JOIN
 	r.State.Unlock()
 
-	return (a || shit)
+	return (a || checkState)
 }
 
 // Server -> R2

@@ -20,7 +20,8 @@ import (
 	"encoding/gob"
 	"net"
 	"sync"
-	//hd44780 "../raspberryPiGo/go-hd44780"
+
+	hd44780 "../raspberryPiGo/go-hd44780"
 
 	bgpio "../gpio"
 )
@@ -39,6 +40,7 @@ const YMAX = "ymax"
 const EXRADIUS = 6
 const TIMETOJOINSECONDUNIT = 10
 const TIMETOJOIN = TIMETOJOINSECONDUNIT * time.Second
+const INITENERGY = 3000
 
 var DEFAULTPATH = []PointStruct{SOUTH, SOUTH, SOUTH, WEST, WEST, WEST, NORTH, NORTH, NORTH, EAST, EAST, EAST, EAST}
 
@@ -258,15 +260,13 @@ func (r *RobotStruct) RespondToButtons() error {
 
 		} else if command == "b" {
 			r.BusySig <- true
-		} else if command == "w" {
-			r.WaitingSig <- true
 		} else if command == "f" {
 			r.FreeSpaceSig <- true
-		} else if command == "u" {
+		} else if command == "w" {
 			r.WallSig <- true
-		} else if command == "c" {
+		} else if command == "r" {
 			r.RightWallSig <- true
-		} else if command == "k" {
+		} else if command == "l" {
 			r.LeftWallSig <- true
 		}
 	}
@@ -275,12 +275,11 @@ func (r *RobotStruct) RespondToButtons() error {
 func (r *RobotStruct) Explore() error {
 	fmt.Printf("1 Explore() start of explore. Robot ID %+v\n", r.RobotID)
 
-	//lcd := hd44780.NewGPIO4bit()
-	//if err := lcd.Open();err != nil {
-	//	panic("Cannot OPen lcd:"+err.Error())
-	//}
-	//defer lcd.Close()
-	//lcd.DisplayLines("fuck 416")
+	lcd := hd44780.NewGPIO4bit()
+	if err := lcd.Open(); err != nil {
+		panic("Cannot OPen lcd:" + err.Error())
+	}
+	defer lcd.Close()
 
 	for {
 
@@ -313,32 +312,37 @@ func (r *RobotStruct) Explore() error {
 			r.WriteToLog()
 
 		}
-		//var dir string
+		var dir string
 
-		//fmt.Println("CHECKING FOR THE FIRST DIRECTION")
-		//switch r.CurPath.ListOfPCoordinates[0].Point {
-		//case WEST.Point:
-		//	dir = "WEST"
-		//	fmt.Println("LCD should display WEST")
-		//	break;
-		//case EAST.Point:
-		//	dir = "EAST"
-		//	fmt.Println("LCD should display EAST")
-		//	break;
-		//case SOUTH.Point:
-		//	dir = "SOUTH"
-		//	fmt.Println("LCD should display South")
-		//	break;
-		//case NORTH.Point:
-		//	dir = "NORTH"
-		//	fmt.Println("LCD should display NORTH")
-		//	break;
-		//default:
-		//	fmt.Println("Current path direction incorrect")
-		//	break
-		//}
-		//lcd.DisplayLines(dir)
-		//fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
+		fmt.Println("CHECKING FOR THE FIRST DIRECTION")
+		switch r.CurPath.ListOfPCoordinates[0].Point {
+		case WEST.Point:
+			dir = "WEST"
+			fmt.Println("LCD should display WEST")
+			break
+		case EAST.Point:
+			dir = "EAST"
+			fmt.Println("LCD should display EAST")
+			break
+		case SOUTH.Point:
+			dir = "SOUTH"
+			fmt.Println("LCD should display South")
+			break
+		case NORTH.Point:
+			dir = "NORTH"
+			fmt.Println("LCD should display NORTH")
+			break
+		default:
+			fmt.Println("Current path direction incorrect")
+			break
+		}
+		lcd.DisplayLines(dir)
+		fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
+
+		if r.RobotEnergy == 0 {
+			lcd.Display(1, "Energy Level is 0")
+			os.Exit(0)
+		}
 
 		select {
 		case <-r.FreeSpaceSig:
@@ -683,6 +687,7 @@ func (r *RobotStruct) UpdateCurLocation() {
 	r.CurLocation.X = r.CurLocation.X + r.CurPath.ListOfPCoordinates[0].Point.X
 	r.CurLocation.Y = r.CurLocation.Y + r.CurPath.ListOfPCoordinates[0].Point.Y
 	r.RobotEnergy--
+
 	r.WriteToLog()
 }
 
@@ -984,7 +989,7 @@ func StartClock(state RobotState, r *RobotStruct, remainingTime time.Duration) {
 				counter += 1
 				fmt.Printf("Joining Neighbour timer--------> Counter is %s\n", counter)
 				if time.Now().Sub(r.joinInfo.joiningTime) >= (TIMETOJOIN - remainingTime) {
-					fmt.Println("WE ARE FINISHED.FUCK 416 -- JOIN")
+					fmt.Println("WE ARE FINISHED. -- JOIN")
 					r.RobotNeighbours.Lock()
 					fmt.Println("TImer: # of Neighbour is --joining", len(r.RobotNeighbours.rNeighbour))
 					r.RobotNeighbours.Unlock()
@@ -1006,7 +1011,7 @@ func StartClock(state RobotState, r *RobotStruct, remainingTime time.Duration) {
 				counter += 1
 				fmt.Printf("Joining My timer--------> Counter is %s\n", counter)
 				if counter >= TIMETOJOINSECONDUNIT {
-					fmt.Println("WE ARE FINISHED.FUCK 416 -- ROAM")
+					fmt.Println("WE ARE FINISHED -- ROAM")
 					r.RobotNeighbours.Lock()
 					fmt.Println("TImer: # of Neighbour is --ROAM", len(r.RobotNeighbours.rNeighbour))
 					r.RobotNeighbours.Unlock()
@@ -1039,6 +1044,7 @@ func InitRobot(rID int, initMap Map, ic Coordinate, logger *govec.GoLog, robotIP
 		PossibleNeighbours: set.New(),
 		RobotID:            rID,
 		RobotIP:            robotIPAddr,
+		RobotEnergy:        INITENERGY,
 		CurLocation:        ic,
 		RobotNeighbours:    RobotNeighboursMutex{rNeighbour: make(map[int]Neighbour)},
 		RMap:               initMap,
@@ -1146,7 +1152,7 @@ func (r *RobotStruct) UpdateStateForNewJourney() {
 			counter += 1
 			fmt.Printf("Flag timer. \n        Counter is %s\n", counter)
 			if time.Now().Sub(temp) >= TIMETOJOIN {
-				fmt.Println("WE ARE FINISHED.FUCK 416 -- CAN JOIN AGAIN")
+				fmt.Println("WE ARE FINISHED -- CAN JOIN AGAIN")
 				ticker.Stop()
 				r.exchangeFlag.Lock()
 				r.exchangeFlag.flag = true
