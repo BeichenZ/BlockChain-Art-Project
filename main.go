@@ -11,10 +11,9 @@ import (
 	"time"
 
 	//bgpio "./gpio"
+	hd44780 "./raspberryPiGo/go-hd44780"
 	"./shared"
 	"github.com/DistributedClocks/GoVector/govec"
-	hd44780 "./raspberryPiGo/go-hd44780"
-	"strings"
 )
 
 // TODO: Include golang GPIO
@@ -26,14 +25,14 @@ func main() {
 	RobotInitialPositionX := float64(0)
 	RobotInitialPositionY := float64(0)
 
- 	lcd := hd44780.NewGPIO4bit()
-	if err := lcd.Open();err != nil {
-		panic("Cannot OPen lcd:"+err.Error())
+	lcd := hd44780.NewGPIO4bit()
+	if err := lcd.Open(); err != nil {
+		panic("Cannot OPen lcd:" + err.Error())
 		lcd.Close()
 		os.Exit(0)
 	}
-	lcd.Display(0,"Robot is Online")
-	lcd.Display(1,"Press Any Button to start")
+	lcd.Display(0, "Robot is Online")
+	lcd.Display(1, "Press Any Button to start")
 
 	var input string
 	fmt.Scanln(&input)
@@ -51,7 +50,6 @@ func main() {
 		lcd.Display(0, msg)
 		command := ""
 		fmt.Scanln(&command)
-		command = strings.Trim(command, " ")
 
 		switch indx {
 		case 0:
@@ -61,17 +59,17 @@ func main() {
 			break
 		case 1:
 			RobotID, _ = strconv.Atoi(command)
-			lcd.Display(1,command)
+			lcd.Display(1, command)
 			indx++
 			break
 		case 2:
 			RobotInitialPositionX, _ = strconv.ParseFloat(command, 64)
-			lcd.Display(1,command)
+			lcd.Display(1, command)
 			indx++
 			break
 		case 3:
 			RobotInitialPositionY, _ = strconv.ParseFloat(command, 64)
-			lcd.Display(1,command)
+			lcd.Display(1, command)
 			indx++
 			break
 		default:
@@ -80,7 +78,7 @@ func main() {
 			break
 		}
 
-		time.Sleep(4*time.Second)
+		time.Sleep(2 * time.Second)
 		lcd.Clear()
 		if indx == 5 {
 			lcd.Close()

@@ -359,6 +359,7 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println("left wall sig received")
 			r.UpdateMap(LeftWall)
 		case <-r.BusySig: // TODO whole thing
+
 			fmt.Println("3 Explore() busy sig received. Robot ID %+v Robot state: %+v", r.RobotID, r.State)
 
 			//listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
