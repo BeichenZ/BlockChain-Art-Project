@@ -13,6 +13,8 @@ import (
 	//bgpio "./gpio"
 	"./shared"
 	"github.com/DistributedClocks/GoVector/govec"
+	hd44780 "./raspberryPiGo/go-hd44780"
+	"strings"
 )
 
 const (
@@ -25,20 +27,84 @@ const (
 // TODO: Include golang GPIO
 
 func main() {
+
+	Port := ""
+	RobotID := 0
+	RobotInitialPositionX := float64(0)
+	RobotInitialPositionY := float64(0)
+
+ 	lcd := hd44780.NewGPIO4bit()
+	if err := lcd.Open();err != nil {
+		panic("Cannot OPen lcd:"+err.Error())
+		lcd.Close()
+		os.Exit(0)
+	}
+	lcd.Display(0,"Robot is Online")
+	lcd.Display(1,"Press Any Button to start")
+
+	var input string
+	fmt.Scanln(&input)
+
+	lcd.Clear()
+	state := make(map[int]string)
+	state[0] = "Enter Port"
+	state[1] = "Enter RID"
+	state[2] = "first X"
+	state[3] = "first Y"
+	state[4] = "Press Any Button To start"
+	indx := 0
+	for {
+		msg := state[indx]
+		lcd.Display(0, msg)
+		command := ""
+		fmt.Scanln(&command)
+		command = strings.Trim(command, " ")
+
+		switch indx {
+		case 0:
+			Port = ":" + command
+			lcd.Display(1, Port)
+			indx++
+			break
+		case 1:
+			RobotID, _ = strconv.Atoi(command)
+			lcd.Display(1,command)
+			indx++
+			break
+		case 2:
+			RobotInitialPositionX, _ = strconv.ParseFloat(command, 64)
+			lcd.Display(1,command)
+			indx++
+			break
+		case 3:
+			RobotInitialPositionY, _ = strconv.ParseFloat(command, 64)
+			lcd.Display(1,command)
+			indx++
+			break
+		default:
+			indx++
+			lcd.Display(1, "Confirmed")
+			break
+		}
+
+		time.Sleep(4*time.Second)
+		lcd.Clear()
+		if indx == 5 {
+			lcd.Close()
+			break
+		}
+	}
+
 	gob.Register(&net.TCPAddr{})
 	gob.Register(&shared.TaskPayload{})
 	gob.Register(&shared.Neighbour{})
 
 	/// Need to change to different ip address. May to use a different library due to ad-hoc
-	Port := os.Args[1]
-	RobotID, _ := strconv.Atoi(os.Args[2])
-	RobotInitialPositionX, error := strconv.ParseFloat(os.Args[3], 64)
-	RobotInitialPositionY, error := strconv.ParseFloat(os.Args[4], 64)
-
-	if error != nil {
-		fmt.Println("fail to parse the inital current location")
-		os.Exit(1)
-	}
+	//
+	//if error != nil {
+	//	fmt.Println("fail to parse the inital current location")
+	//	os.Exit(1)
+	//}
 	RobotInitialPosition := shared.Coordinate{RobotInitialPositionX, RobotInitialPositionY}
 	// Logger := govec.InitGoVector("Port", "LogFile"+Port)
 
