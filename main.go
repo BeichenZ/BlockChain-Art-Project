@@ -15,13 +15,6 @@ import (
 	"github.com/DistributedClocks/GoVector/govec"
 )
 
-const (
-	FrontObstacleButton_Pin uint = 5
-	FrontEmptyButton_Pin    uint = 6
-	LeftObstacleButton_Pin  uint = 13
-	RightObstacleButton_Pin uint = 19
-)
-
 // TODO: Include golang GPIO
 
 func main() {

@@ -241,7 +241,7 @@ func (r *RobotStruct) FindClosestDest(lodp []PointStruct) PointStruct {
 func (r *RobotStruct) RespondToButtons() error {
 	// This function listen to GPIO
 	for {
-		fmt.Println(" Press j to send JoinSig \n Press b to send BusySig \n Press w to send WaitSig \n Press f to send WalkSig \n Press u to send WallSig \n Press c to send RightWallSig \n Press k to send LeftWallSig")
+		fmt.Println("Press f to send FreeSpaceSig \n Press w to send WallSig \n Press r to send RightWallSig \n Press l to send LeftWallSig")
 		buf := bufio.NewReader(os.Stdin)
 		signal, err := buf.ReadByte()
 		if err != nil {
@@ -249,18 +249,7 @@ func (r *RobotStruct) RespondToButtons() error {
 		}
 		command := string(signal)
 		//TODO:Check for current state before sending signals. No signals should be sent during busy state
-		if command == "j" {
-
-			r.JoiningSig <- Neighbour{
-				Addr:                ":8080",
-				NID:                 1,
-				NMap:                RandomMapGenerator(),
-				NeighbourCoordinate: Coordinate{4.0, 5.0},
-			}
-
-		} else if command == "b" {
-			r.BusySig <- true
-		} else if command == "f" {
+		if command == "f" {
 			r.FreeSpaceSig <- true
 		} else if command == "w" {
 			r.WallSig <- true
@@ -340,7 +329,7 @@ func (r *RobotStruct) Explore() error {
 		fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
 
 		if r.RobotEnergy == 0 {
-			lcd.Display(1, "Energy Level is 0")
+			lcd.Display(1, "Energy: 0")
 			os.Exit(0)
 		}
 
