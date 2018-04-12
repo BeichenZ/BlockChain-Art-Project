@@ -169,7 +169,9 @@ func main() {
 	ips = ips[1 : len(ips)-2]
 
 	timeout := time.Duration(100 * time.Millisecond)
-	go scanForNeighbours(ips[:10], ipv4Addr, timeout, robot, Port)
+
+	hardCodedIp :=  []string{"169.254.240.1", "169.254.240.2", "169.254.240.3", "169.254.240.4"}
+	go scanForNeighbours(hardCodedIp, ipv4Addr, timeout, robot, Port)
 	go robot.CallNeighbours()
 	//leftObstacleButtonPin := bgpio.NewInput(LeftObstacleButton_Pin)
 	//rightObstacleButtonPin := bgpio.NewInput(RightObstacleButton_Pin)

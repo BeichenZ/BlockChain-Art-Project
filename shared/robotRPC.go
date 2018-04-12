@@ -222,14 +222,16 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 			robotRPC.PiRobot.State.Unlock()
 		}
 		responsePayload.WithInComRadius = true
-		fmt.Println("RPC: ReceivePossibleNeighboursPayload() I will return true for client", p.NeighbourID)
+		//fmt.Println("RPC: ReceivePossibleNeighboursPayload() I will return true for client", p.NeighbourID)
 		//// This robot (server) will add the client and its neighbours to itself
 		SaveNeighbour(robotRPC.PiRobot, p.ItsNeighbours)
+		//fmt.Printf("RPC: ReceivePossibleNeighboursPayload() ",responsePayload)
 
 	} else {
 		//skip the request client
 		responsePayload.WithInComRadius = false
-		fmt.Println("RPC: ReceivePossibleNeighboursPayload() I will return false for client", p.NeighbourID)
+		//fmt.Println("RPC: ReceivePossibleNeighboursPayload() I will return false for client", p.NeighbourID)
+		//fmt.Printf("RPC: ReceivePossibleNeighboursPayload() ",responsePayload)
 	}
 
 	return nil

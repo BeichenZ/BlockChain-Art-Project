@@ -940,7 +940,7 @@ func (r *RobotStruct) CallNeighbours() {
 				}
 
 				SaveNeighbour(r, responsePayload.NeighboursNeighbourRobots) // Client robot saves the other robot and its neighbours which ARE in CR
-
+				fmt.Printf("After calling SaveNeighbour() Client ", responsePayload)
 				r.State.Lock()
 				checkJOINState := r.State.rState == JOIN
 				r.State.Unlock()
@@ -1107,13 +1107,6 @@ func (r *RobotStruct) SendMapToLocalServer() {
 		buf := new(bytes.Buffer)
 		encoder := gob.NewEncoder(buf)
 		err := encoder.Encode(r.RMap)
-
-		fmt.Println("AAAAAAAAAAA================================================")
-		fmt.Println(r.RMap)
-		fmt.Println("BBBBBB================================================")
-
-		fmt.Println(RandomMapGenerator())
-		fmt.Println("CCCCCCCCCCCCC================================================")
 
 		if err != nil {
 			continue
