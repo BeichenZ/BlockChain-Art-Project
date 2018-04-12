@@ -116,7 +116,7 @@ func main() {
 	logname := "Robot" + ipv4Addr.String() + Port + "-Log.txt"
 	robot := shared.InitRobot(RobotID, shared.Map{
 		ExploredPath: make(map[shared.Coordinate]shared.PointStruct),
-		FrameOfRef:   1,
+		FrameOfRef:   RobotID,
 	}, RobotInitialPosition, Logger, ipv4Addr.String()+Port, logname)
 	fmt.Println("Robot current location before reading from log ", robot.CurLocation)
 	// Open up user defined port RPC connection
@@ -182,7 +182,7 @@ func main() {
 	//go robot.MonitorFrontObsButtonOnPin(frontObstacleButtonPin)
 
 	// robot.MonitorButtons()
-	//go robot.SendMapToLocalServer()
+	go robot.SendMapToLocalServer()
 	// for {
 	// 	// wait for user input
 	// 	// if button is pressed, break out of the loop

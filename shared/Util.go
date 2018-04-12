@@ -28,10 +28,10 @@ func Round(n float64) float64 {
 func RandomMapGenerator() Map{
 	var sampleMap = Map{}
 	sampleMap.ExploredPath = make(map[Coordinate] PointStruct)
-	for j := 0; j< NUMOFPATHTOGENERATE; j++{
-		myPoint := Coordinate{float64(j), float64(j)}
-		sampleMap.ExploredPath[myPoint] = PointStruct{myPoint, false, 0, false}
-	}
+	//for j := 0; j< NUMOFPATHTOGENERATE; j++{
+	//	myPoint := Coordinate{float64(j), float64(j)}
+	//	sampleMap.ExploredPath[myPoint] = PointStruct{myPoint, false, 0, false}
+	//}
 
 	return sampleMap
 }
