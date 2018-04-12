@@ -351,13 +351,16 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println("front wall sig received")
 			r.UpdateMap(Wall)
 			r.ModifyPathForWall()
+			fmt.Println("Cur path after wall: ", r.CurPath)
 			// Display task with GPIO
 		case <-r.RightWallSig:
 			fmt.Println("right wall sig received")
 			r.UpdateMap(RightWall)
+			fmt.Println("Cur path after rightwall: ", r.CurPath)
 		case <-r.LeftWallSig:
 			fmt.Println("left wall sig received")
 			r.UpdateMap(LeftWall)
+			fmt.Println("Cur path after leftwall: ", r.CurPath)
 		case <-r.BusySig: // TODO whole thing
 
 			fmt.Println("3 Explore() busy sig received. Robot ID %+v Robot state: %+v", r.RobotID, r.State)
@@ -1103,14 +1106,38 @@ func (r *RobotStruct) SendMapToLocalServer() {
 		// Encode Map info
 		buf := new(bytes.Buffer)
 		encoder := gob.NewEncoder(buf)
-		err := encoder.Encode(RandomMapGenerator())
+		err := encoder.Encode(r.RMap)
+
+		fmt.Println("AAAAAAAAAAA================================================")
+		fmt.Println(r.RMap)
+		fmt.Println("BBBBBB================================================")
+
+		fmt.Println(RandomMapGenerator())
+		fmt.Println("CCCCCCCCCCCCC================================================")
+
 		if err != nil {
 			continue
 		}
+
+		buffer := bytes.NewBuffer(buf.Bytes())
+
+		var decodedMap Map
+
+		decoder := gob.NewDecoder(buffer)
+		err = decoder.Decode(&decodedMap)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println(decodedMap)
+
+
+
 		fmt.Println("Encoded map")
 		// output := string(buf.Bytes())
 		// Send it to local Server using TCP
-		conn, err := net.Dial("tcp", ":8888")
+		// 169.254.115.49
+		conn, err := net.Dial("tcp", "169.254.115.49:8888")
 		if err != nil {
 			fmt.Println(err)
 			continue
