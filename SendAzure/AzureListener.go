@@ -61,7 +61,7 @@ func GetAllMaps(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRequestFromLocalListener(conn net.Conn) {
-	buf := make([]byte, 1024)
+	buf := make([]byte, 65536)
 	infoLen, err := conn.Read(buf)
 
 	if err != nil {
