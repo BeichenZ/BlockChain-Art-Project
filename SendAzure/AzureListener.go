@@ -1,14 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"sync"
-	"bytes"
-	"encoding/gob"
+
 	"../shared"
 )
 
@@ -22,7 +23,6 @@ type InformationToWebApp struct {
 	sync.RWMutex
 	all map[int][]CoordinateStruct
 }
-
 
 func DecodeMap(sentMap []byte) shared.Map {
 
@@ -61,7 +61,7 @@ func GetAllMaps(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRequestFromLocalListener(conn net.Conn) {
-	buf := make([]byte, 1024)
+	buf := make([]byte, 65536)
 	infoLen, err := conn.Read(buf)
 
 	if err != nil {
