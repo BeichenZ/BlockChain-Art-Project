@@ -2,23 +2,24 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import HeatMap from './HeatMap';
+import rotateMatrix from 'rotate-matrix';
 
 const xLabels = new Array(50).fill(0).map((_, i) => "");
 const yLabels = new Array(50).fill(0).map((_, i) => "");
 let data1 = new Array(yLabels.length)
-  .fill(100)
+  .fill(50)
   .map(() => new Array(xLabels.length).fill(50));
 
 let data2 = new Array(yLabels.length)
-.fill(100)
+.fill(50)
 .map(() => new Array(xLabels.length).fill(50));
 
 let data3 = new Array(yLabels.length)
-.fill(100)
+.fill(50)
 .map(() => new Array(xLabels.length).fill(50));
 
 let data4 = new Array(yLabels.length)
-  .fill(100)
+  .fill(50)
   .map(() => new Array(xLabels.length).fill(50));
 
 
@@ -74,7 +75,7 @@ class App extends Component {
           <HeatMap
               xLabels={xLabels}
               yLabels={yLabels}
-              data={resultArray[0]}
+              data={rotateMatrix(resultArray[0], 3)}
               height={4.5}
               xLabelWidth={1}
               background={"red"}
@@ -85,7 +86,7 @@ class App extends Component {
           <HeatMap
               xLabels={xLabels}
               yLabels={yLabels}
-              data={resultArray[1]}
+              data={rotateMatrix(resultArray[1], 3)}
               height={4.5}
               xLabelWidth={1}
               background={"blue"}
@@ -96,7 +97,7 @@ class App extends Component {
           <HeatMap
               xLabels={xLabels}
               yLabels={yLabels}
-              data={resultArray[2]}
+              data={rotateMatrix(resultArray[2], 3)}
               height={4.5}
               xLabelWidth={1}
               background={"green"}
@@ -107,7 +108,7 @@ class App extends Component {
           <HeatMap
               xLabels={xLabels}
               yLabels={yLabels}
-              data={resultArray[3]}
+              data={rotateMatrix(resultArray[3], 3)}
               height={4.5}
               xLabelWidth={1}
               background={"yellow"}
