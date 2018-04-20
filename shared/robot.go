@@ -83,6 +83,7 @@ type RobotStruct struct {
 	State                 RobotMutexState
 	joinInfo              JoiningInfo
 	exchangeFlag          CanExchangeInfoWithRobots
+	lcdDisplay            *hd44780.GPIO4bit
 }
 
 type Robot interface {
@@ -264,11 +265,6 @@ func (r *RobotStruct) RespondToButtons() error {
 func (r *RobotStruct) Explore() error {
 	fmt.Printf("1 Explore() start of explore. Robot ID %+v\n", r.RobotID)
 
-	lcd := hd44780.NewGPIO4bit()
-	if err := lcd.Open(); err != nil {
-		panic("Cannot OPen lcd:" + err.Error())
-	}
-	defer lcd.Close()
 
 	for {
 
@@ -325,11 +321,11 @@ func (r *RobotStruct) Explore() error {
 			fmt.Println("Current path direction incorrect")
 			break
 		}
-		lcd.DisplayLines(dir)
+		r.lcdDisplay.Display(0,dir+" "+strconv.Itoa(int(r.CurLocation.X))+" "+strconv.Itoa(int(r.CurLocation.Y)))
 		fmt.Println(" 2 Explore() \nWaiting for signal to proceed.....")
 
 		if r.RobotEnergy == 0 {
-			lcd.Display(1, "Energy: 0")
+			r.lcdDisplay.Display(1, "Energy: 0")
 			os.Exit(0)
 		}
 
@@ -362,8 +358,10 @@ func (r *RobotStruct) Explore() error {
 			r.UpdateMap(LeftWall)
 			fmt.Println("Cur path after leftwall: ", r.CurPath)
 		case <-r.BusySig: // TODO whole thing
-
+			r.lcdDisplay.Display(1, "BUSY")
 			fmt.Println("3 Explore() busy sig received. Robot ID %+v Robot state: %+v", r.RobotID, r.State)
+
+
 
 			//listOfNeighbourMaps :=  make([]Map, len(r.RobotNeighbours))
 
@@ -953,7 +951,7 @@ func (r *RobotStruct) CallNeighbours() {
 				r.State.Lock()
 				r.State.rState = JOIN
 				r.State.Unlock()
-
+				r.lcdDisplay.Display(1, "JOINING")
 				StartClock(responsePayload.NeighbourState, r, responsePayload.RemainingTime)
 			} else {
 				client.Close()
@@ -1054,7 +1052,14 @@ func InitRobot(rID int, initMap Map, ic Coordinate, logger *govec.GoLog, robotIP
 		State:              RobotMutexState{rState: ROAM},
 		joinInfo:           JoiningInfo{time.Now(), true},
 		exchangeFlag:       CanExchangeInfoWithRobots{flag: true},
+		lcdDisplay:         nil,
 	}
+
+	if err := newRobot.lcdDisplay.Open(); err != nil {
+		panic("Cannot OPen lcd:" + err.Error())
+	}
+
+	newRobot.lcdDisplay.Display(1, "ROAM")
 	// newRobot.CurPath.ListOfPCoordinates = append(newRobot.CurPath.ListOfPCoordinates, shared.PointStruct{PointKind: true})
 
 	//tempEXploredMap := make(map[Coordinate]PointStruct)
@@ -1083,6 +1088,7 @@ func (r *RobotStruct) UpdateStateForNewJourney() {
 	r.State.Lock()
 	r.State.rState = ROAM
 	r.State.Unlock()
+	r.lcdDisplay.Display(1, "ROAMING")
 
 	go func() {
 		counter := 0
