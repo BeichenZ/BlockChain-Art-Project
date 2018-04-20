@@ -1054,7 +1054,7 @@ func InitRobot(rID int, initMap Map, ic Coordinate, logger *govec.GoLog, robotIP
 		exchangeFlag:       CanExchangeInfoWithRobots{flag: true},
 		lcdDisplay:         nil,
 	}
-
+	newRobot.lcdDisplay = hd44780.NewGPIO4bit()
 	if err := newRobot.lcdDisplay.Open(); err != nil {
 		panic("Cannot OPen lcd:" + err.Error())
 	}
