@@ -107,7 +107,7 @@ func main() {
 	fmt.Println(ipv4Addr.String() + Port)
 	fmt.Println("----------------------")
 
-	Logger := govec.InitGoVector("Robot"+os.Args[2], "LogFile"+os.Args[2]+Port)
+	Logger := govec.InitGoVector("Robot"+strconv.Itoa(RobotID), "LogFile"+strconv.Itoa(RobotID)+Port)
 	resolvedIPAddr := Port
 	// resolvedIPAddress, error := net.ResolveTCPAddr("tcp", Port)
 	// if error != nil {
