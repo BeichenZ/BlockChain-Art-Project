@@ -49,7 +49,7 @@ func handleRequest(conn net.Conn) {
 WaitingForInternet:
 	for {
 		//13.91.38.239:8080 is the Azure IP
-		conn, err := net.Dial("tcp", "13.91.38.239:8080")
+		conn, err := net.Dial("tcp", "13.91.18.201:8080")
 		if err != nil {
 			continue
 		} else {
