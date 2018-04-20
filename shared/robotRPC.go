@@ -68,7 +68,7 @@ func (robotRPC *RobotRPC) ReceiveTaskDecsionResponse(senderTaskDecision *TaskDes
 	fmt.Println("RPC:Receive task response from neighbour: ", senderTaskDecision.SenderAddr)
 	robotRPC.PiRobot.ReceivedTasksResponse = append(robotRPC.PiRobot.ReceivedTasksResponse, *senderTaskDecision)
 	fmt.Println("RPC: ", robotRPC.PiRobot.ReceivedTasksResponse)
-	robotRPC.PiRobot.Logger.UnpackReceive("Robot "+ strconv.Itoa(robotRPC.PiRobot.RobotID)+" Receive task response from neighbour "+strconv.Itoa(senderTaskDecision.SenderID), senderTaskDecision.SendlogMessage, &incommingMessage)
+	robotRPC.PiRobot.Logger.UnpackReceive("Robot "+strconv.Itoa(robotRPC.PiRobot.RobotID)+" Receive task response from neighbour "+strconv.Itoa(senderTaskDecision.SenderID), senderTaskDecision.SendlogMessage, &incommingMessage)
 	return nil
 }
 
@@ -225,6 +225,7 @@ func (robotRPC *RobotRPC) ReceivePossibleNeighboursPayload(p *FarNeighbourPayloa
 		//fmt.Println("RPC: ReceivePossibleNeighboursPayload() I will return true for client", p.NeighbourID)
 		//// This robot (server) will add the client and its neighbours to itself
 		SaveNeighbour(robotRPC.PiRobot, p.ItsNeighbours)
+		StartClock(ROAM, robotRPC.PiRobot, TIMETOJOINSECONDUNIT)
 		//fmt.Printf("RPC: ReceivePossibleNeighboursPayload() ",responsePayload)
 
 	} else {
