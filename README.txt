@@ -1,6 +1,7 @@
 Introduction:
 
--Use Golang to Develop A BlockChain Based Application that Enable Multiple Users to Collaboratively Modify a
-Computer Drawing. Each user's operation is verfied, pushed and recorded by a simple block-chain implemented from scratch.
-
--Use JavaScript,HTML,CSS to Develop the Client Application while the initializing registration server is deployed on Azure.
+The objective of this project is to build a distributed system in which the peer robts will work
+together to map out the area they are in. Each robot will communicate its finding with its
+neighbours only when they come within a certain range of other robots within an Ad-hoc network. The robots will
+exchange their maps, resolve any conflicts between these maps and its local one, and
+coordinate how to explore the undiscovered areas. At the same time, robots will upload the map in consensus to the server(for display only) in the Azure cloud to display the result.
